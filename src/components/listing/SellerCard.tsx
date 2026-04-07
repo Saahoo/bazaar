@@ -3,7 +3,7 @@
 
 import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { User, CheckCircle, Phone, Smartphone, MessageSquare, Eye, EyeOff, Star } from 'lucide-react';
+import { User, CheckCircle, Phone, MessageSquare, Eye, EyeOff, Star } from 'lucide-react';
 import { Locale, isRTL } from '@/lib/i18n/config';
 import type { SellerData } from './ListingDetail';
 

@@ -144,6 +144,30 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
   const detailsRef = useRef<StepDetailsHandle>(null);
   const reDetailsRef = useRef<StepPropertyDetailsHandle>(null);
 
+  const updateFormData = useCallback((updates: Partial<PostAdFormData>) => {
+    setFormData((prev) => ({ ...prev, ...updates }));
+  }, []);
+
+  const updateREData = useCallback((updates: Partial<RealEstateFormData>) => {
+    setReData((prev) => ({ ...prev, ...updates }));
+  }, []);
+
+  const updateVHData = useCallback((updates: Partial<VehiclesFormData>) => {
+    setVhData((prev) => ({ ...prev, ...updates }));
+  }, []);
+
+  const handleCategorySelect = useCallback(
+    (categoryId: number) => {
+      const changingCategory = formData.categoryId !== categoryId;
+      updateFormData({ categoryId });
+      if (changingCategory) {
+        setReData(INITIAL_RE_DATA);
+        setVhData(INITIAL_VH_DATA);
+      }
+    },
+    [updateFormData, formData.categoryId]
+  );
+
   // Auth gate — require login to post an ad
   if (authLoading) {
     return (
@@ -199,30 +223,6 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       default: return '';
     }
   };
-
-  const updateFormData = useCallback((updates: Partial<PostAdFormData>) => {
-    setFormData((prev) => ({ ...prev, ...updates }));
-  }, []);
-
-  const updateREData = useCallback((updates: Partial<RealEstateFormData>) => {
-    setReData((prev) => ({ ...prev, ...updates }));
-  }, []);
-
-  const updateVHData = useCallback((updates: Partial<VehiclesFormData>) => {
-    setVhData((prev) => ({ ...prev, ...updates }));
-  }, []);
-
-  const handleCategorySelect = useCallback(
-    (categoryId: number) => {
-      const changingCategory = formData.categoryId !== categoryId;
-      updateFormData({ categoryId });
-      if (changingCategory) {
-        setReData(INITIAL_RE_DATA);
-        setVhData(INITIAL_VH_DATA);
-      }
-    },
-    [updateFormData, formData.categoryId]
-  );
 
   const currentStepKey = steps[currentStep] as StepKey;
 
@@ -302,7 +302,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       let price = typeof formData.price === 'number' ? formData.price : 0;
       let currency = formData.currency;
       let city = formData.city;
-      let phone = formData.phone;
+      let _phone = formData.phone;
       let condition = formData.condition;
       let photosList = formData.photos.photos;
 
@@ -318,7 +318,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         price = Number(reData.propertyDetails.price) || price;
         currency = reData.propertyDetails.currency || currency;
         city = reData.address.city || city;
-        phone = reData.contact.phone || phone;
+        _phone = reData.contact.phone || _phone;
         condition = 'good';
         photosList = reData.media.photos;
       } else if (isVehicles) {
@@ -332,7 +332,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         price = Number(vhData.condition.price) || price;
         currency = vhData.condition.currency || currency;
         city = vhData.address.city || city;
-        phone = vhData.contact.phone || phone;
+        _phone = vhData.contact.phone || _phone;
         condition = 'good';
         photosList = vhData.media.photos;
       }

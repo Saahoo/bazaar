@@ -8,7 +8,7 @@ import { useListings } from '@/lib/hooks/useListings';
 import { ListingCard } from '@/components/search/ListingCard';
 
 interface SimilarListingsProps {
-  categoryId: string;
+  categoryId: number;
   currentListingId: string;
   locale: Locale;
 }
