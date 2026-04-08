@@ -18,6 +18,7 @@ interface MyAdsTabProps {
 interface DashboardListing {
   id: string;
   title: string;
+  description: string | null;
   category_id: number;
   price: number;
   currency: string;
@@ -45,6 +46,14 @@ export const MyAdsTab: React.FC<MyAdsTabProps> = ({ locale }) => {
   const [deleteReason, setDeleteReason] = useState('');
   const [deleteNote, setDeleteNote] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [editTarget, setEditTarget] = useState<DashboardListing | null>(null);
+  const [editReason, setEditReason] = useState('');
+  const [editNote, setEditNote] = useState('');
+  const [editTitle, setEditTitle] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editPrice, setEditPrice] = useState('');
+  const [editError, setEditError] = useState('');
+  const [savingEditId, setSavingEditId] = useState<string | null>(null);
 
   const deleteReasonOptions =
     locale === 'ps'
@@ -71,6 +80,25 @@ export const MyAdsTab: React.FC<MyAdsTabProps> = ({ locale }) => {
             { value: 'other', label: 'Other' },
           ];
 
+    const editReasonOptions =
+      locale === 'ps'
+        ? [
+            { value: 'update_information', label: 'د اعلان معلومات تازه کول' },
+            { value: 'increase_price', label: 'بیه زیاتول' },
+            { value: 'decrease_price', label: 'بیه کمول' },
+          ]
+        : locale === 'fa'
+          ? [
+              { value: 'update_information', label: 'به‌روزرسانی اطلاعات آگهی' },
+              { value: 'increase_price', label: 'افزایش قیمت' },
+              { value: 'decrease_price', label: 'کاهش قیمت' },
+            ]
+          : [
+              { value: 'update_information', label: 'Update post information' },
+              { value: 'increase_price', label: 'Increase price' },
+              { value: 'decrease_price', label: 'Decrease price' },
+            ];
+
   useEffect(() => {
     if (!user) {
       setLoading(false);
@@ -80,7 +108,7 @@ export const MyAdsTab: React.FC<MyAdsTabProps> = ({ locale }) => {
     const loadListings = async () => {
       const { data } = await supabase
         .from('listings')
-        .select('id, title, category_id, price, currency, status, view_count, photos(photo_url, display_order)')
+        .select('id, title, description, category_id, price, currency, status, view_count, photos(photo_url, display_order)')
         .eq('user_id', user.id)
         .is('deleted_at', null)
         .order('created_at', { ascending: false });
@@ -96,6 +124,26 @@ export const MyAdsTab: React.FC<MyAdsTabProps> = ({ locale }) => {
     setDeleteTarget(listing);
     setDeleteReason('');
     setDeleteNote('');
+  };
+
+  const openEditDialog = (listing: DashboardListing) => {
+    setEditTarget(listing);
+    setEditReason('');
+    setEditNote('');
+    setEditError('');
+    setEditTitle(listing.title);
+    setEditDescription(listing.description || '');
+    setEditPrice(String(listing.price));
+  };
+
+  const closeEditDialog = () => {
+    setEditTarget(null);
+    setEditReason('');
+    setEditNote('');
+    setEditError('');
+    setEditTitle('');
+    setEditDescription('');
+    setEditPrice('');
   };
 
   const closeDeleteDialog = () => {
@@ -129,6 +177,111 @@ export const MyAdsTab: React.FC<MyAdsTabProps> = ({ locale }) => {
 
     setMyListings((prev) => prev.filter((item) => item.id !== deleteTarget.id));
     closeDeleteDialog();
+  };
+
+  const saveEdit = async () => {
+    if (!user || !editTarget || !editReason) return;
+
+    const trimmedTitle = editTitle.trim();
+    const trimmedDescription = editDescription.trim();
+    const newPrice = Number(editPrice);
+
+    if (!trimmedTitle || !Number.isFinite(newPrice) || newPrice <= 0) {
+      setEditError(
+        locale === 'en'
+          ? 'Please provide a valid title and price.'
+          : locale === 'ps'
+            ? 'مهرباني وکړئ معتبر سرلیک او بیه ورکړئ.'
+            : 'لطفا عنوان و قیمت معتبر وارد کنید.'
+      );
+      return;
+    }
+
+    const oldPrice = Number(editTarget.price);
+    const priceChangeType = newPrice > oldPrice ? 'increase' : newPrice < oldPrice ? 'decrease' : 'none';
+
+    if (priceChangeType === 'increase' && editReason !== 'increase_price') {
+      setEditError(
+        locale === 'en'
+          ? 'Price increased. Please select "Increase price" as reason.'
+          : locale === 'ps'
+            ? 'بیه زیاته شوې. مهرباني وکړئ "بیه زیاتول" دلیل وټاکئ.'
+            : 'قیمت افزایش یافته است. لطفا دلیل "افزایش قیمت" را انتخاب کنید.'
+      );
+      return;
+    }
+
+    if (priceChangeType === 'decrease' && editReason !== 'decrease_price') {
+      setEditError(
+        locale === 'en'
+          ? 'Price decreased. Please select "Decrease price" as reason.'
+          : locale === 'ps'
+            ? 'بیه کمه شوې. مهرباني وکړئ "بیه کمول" دلیل وټاکئ.'
+            : 'قیمت کاهش یافته است. لطفا دلیل "کاهش قیمت" را انتخاب کنید.'
+      );
+      return;
+    }
+
+    if (priceChangeType === 'none' && editReason !== 'update_information') {
+      setEditError(
+        locale === 'en'
+          ? 'Price did not change. Please select "Update post information".'
+          : locale === 'ps'
+            ? 'بیه نه ده بدله شوې. مهرباني وکړئ "د اعلان معلومات تازه کول" وټاکئ.'
+            : 'قیمت تغییر نکرده است. لطفا "به‌روزرسانی اطلاعات آگهی" را انتخاب کنید.'
+      );
+      return;
+    }
+
+    setEditError('');
+    setSavingEditId(editTarget.id);
+
+    const { error: updateError } = await supabase
+      .from('listings')
+      .update({
+        title: trimmedTitle,
+        description: trimmedDescription || null,
+        price: newPrice,
+        last_edit_reason_code: editReason,
+        last_edit_reason_note: editNote.trim() || null,
+      })
+      .eq('id', editTarget.id)
+      .eq('user_id', user.id)
+      .is('deleted_at', null);
+
+    if (!updateError && priceChangeType !== 'none') {
+      await supabase.from('listing_price_history').insert({
+        listing_id: editTarget.id,
+        old_price: oldPrice,
+        new_price: newPrice,
+        currency: editTarget.currency,
+        change_type: priceChangeType,
+        reason_code: editReason,
+        changed_by: user.id,
+      });
+    }
+
+    setSavingEditId(null);
+
+    if (updateError) {
+      setEditError(updateError.message);
+      return;
+    }
+
+    setMyListings((prev) =>
+      prev.map((item) =>
+        item.id === editTarget.id
+          ? {
+              ...item,
+              title: trimmedTitle,
+              description: trimmedDescription || null,
+              price: newPrice,
+            }
+          : item
+      )
+    );
+
+    closeEditDialog();
   };
 
   if (loading) {
@@ -193,6 +346,7 @@ export const MyAdsTab: React.FC<MyAdsTabProps> = ({ locale }) => {
               >
                 <button
                   type="button"
+                  onClick={() => openEditDialog(listing)}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
                   title={tCommon('edit')}
                 >
@@ -287,6 +441,126 @@ export const MyAdsTab: React.FC<MyAdsTabProps> = ({ locale }) => {
                 className="px-3.5 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {deletingId === deleteTarget.id ? tCommon('loading') : tCommon('delete')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {editTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50">
+          <div className={`w-full max-w-lg bg-white rounded-xl shadow-xl border border-slate-200 p-5 max-h-[90vh] overflow-y-auto ${isRtl ? 'text-right' : 'text-left'}`}>
+            <h3 className="text-base font-semibold text-slate-900 mb-4">
+              {locale === 'en' ? 'Edit listing' : locale === 'ps' ? 'اعلان سمول' : 'ویرایش آگهی'}
+            </h3>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-sm text-slate-600 mb-1">
+                  {locale === 'en' ? 'Title' : locale === 'ps' ? 'سرلیک' : 'عنوان'}
+                </label>
+                <input
+                  type="text"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  className={`w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-200 ${isRtl ? 'text-right' : 'text-left'}`}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm text-slate-600 mb-1">
+                  {locale === 'en' ? 'Description' : locale === 'ps' ? 'تشریح' : 'توضیحات'}
+                </label>
+                <textarea
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  rows={4}
+                  className={`w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-200 ${isRtl ? 'text-right' : 'text-left'}`}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm text-slate-600 mb-1">
+                  {locale === 'en' ? 'Price' : locale === 'ps' ? 'بیه' : 'قیمت'}
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  value={editPrice}
+                  onChange={(e) => setEditPrice(e.target.value)}
+                  className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-200"
+                  dir="ltr"
+                />
+              </div>
+            </div>
+
+            <div className="mt-5">
+              <p className="text-sm font-medium text-slate-800 mb-2">
+                {locale === 'en' ? 'Reason for edit' : locale === 'ps' ? 'د سمون دلیل' : 'دلیل ویرایش'}
+              </p>
+              <div className="space-y-2">
+                {editReasonOptions.map((opt) => (
+                  <label
+                    key={opt.value}
+                    className={`flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer transition ${
+                      editReason === opt.value
+                        ? 'border-primary-500 bg-primary-50'
+                        : 'border-slate-200 hover:border-slate-300'
+                    } ${isRtl ? 'flex-row-reverse' : ''}`}
+                  >
+                    <input
+                      type="radio"
+                      name="editReason"
+                      value={opt.value}
+                      checked={editReason === opt.value}
+                      onChange={(e) => setEditReason(e.target.value)}
+                      className="accent-primary-600"
+                    />
+                    <span className="text-sm text-slate-700">{opt.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <textarea
+                value={editNote}
+                onChange={(e) => setEditNote(e.target.value)}
+                placeholder={
+                  locale === 'en'
+                    ? 'Optional note...'
+                    : locale === 'ps'
+                      ? 'اختیاري یادښت...'
+                      : 'یادداشت اختیاری...'
+                }
+                className={`w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-200 ${isRtl ? 'text-right' : 'text-left'}`}
+                rows={3}
+              />
+            </div>
+
+            {editError && <p className="text-sm text-red-600 mt-3">{editError}</p>}
+
+            <div className={`mt-5 flex items-center gap-2 ${isRtl ? 'flex-row-reverse' : 'justify-end'}`}>
+              <button
+                type="button"
+                onClick={closeEditDialog}
+                className="px-3.5 py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200"
+              >
+                {tCommon('cancel')}
+              </button>
+              <button
+                type="button"
+                onClick={saveEdit}
+                disabled={!editReason || savingEditId === editTarget.id}
+                className="px-3.5 py-2 text-sm font-medium text-white bg-primary-600 rounded-lg hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {savingEditId === editTarget.id
+                  ? tCommon('loading')
+                  : locale === 'en'
+                    ? 'Save changes'
+                    : locale === 'ps'
+                      ? 'بدلونونه خوندي کړئ'
+                      : 'ذخیره تغییرات'}
               </button>
             </div>
           </div>

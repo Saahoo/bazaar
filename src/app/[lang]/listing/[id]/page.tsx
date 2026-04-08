@@ -66,6 +66,7 @@ export default async function ListingPage({ params }: PageProps) {
       created_at: mockListing.created_at,
       photos: mockListing.photos,
       metadata: {},
+      price_history: [],
     };
 
     return (
@@ -88,7 +89,7 @@ export default async function ListingPage({ params }: PageProps) {
     notFound();
   }
 
-  const [{ data: profile, error: profileError }, { data: photos }] = await Promise.all([
+  const [{ data: profile, error: profileError }, { data: photos }, { data: priceHistory }] = await Promise.all([
     supabase
       .from('profiles')
       .select('*')
@@ -99,6 +100,11 @@ export default async function ListingPage({ params }: PageProps) {
       .select('photo_url, display_order')
       .eq('listing_id', id)
       .order('display_order', { ascending: true }),
+    supabase
+      .from('listing_price_history')
+      .select('old_price, new_price, currency, change_type, reason_code, changed_at')
+      .eq('listing_id', id)
+      .order('changed_at', { ascending: false }),
   ]);
 
   if (profileError) {
@@ -124,6 +130,7 @@ export default async function ListingPage({ params }: PageProps) {
   const listingData = {
     ...listing,
     photos: (photos || []).map((p) => p.photo_url),
+    price_history: priceHistory || [],
   };
 
   // Increment view count (fire and forget)

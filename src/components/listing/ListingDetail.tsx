@@ -30,6 +30,14 @@ export interface ListingData {
   created_at: string;
   photos: string[];
   metadata?: Record<string, unknown>;
+  price_history?: Array<{
+    old_price: number;
+    new_price: number;
+    currency: string;
+    change_type: 'increase' | 'decrease';
+    reason_code?: string | null;
+    changed_at: string;
+  }>;
 }
 
 export interface SellerData {
@@ -85,6 +93,17 @@ export const ListingDetail: React.FC<ListingDetailProps> = ({ listing, seller, l
   );
 
   const hasPhotos = listing.photos.length > 0;
+  const priceHistory = listing.price_history || [];
+
+  const getReasonLabel = (reasonCode?: string | null) => {
+    if (reasonCode === 'increase_price') {
+      return locale === 'en' ? 'Price increased by seller' : locale === 'ps' ? 'بیه د پلورونکي لخوا زیاته شوې' : 'قیمت توسط فروشنده افزایش یافت';
+    }
+    if (reasonCode === 'decrease_price') {
+      return locale === 'en' ? 'Price reduced by seller' : locale === 'ps' ? 'بیه د پلورونکي لخوا کمه شوې' : 'قیمت توسط فروشنده کاهش یافت';
+    }
+    return locale === 'en' ? 'Price updated' : locale === 'ps' ? 'بیه تازه شوه' : 'قیمت به‌روزرسانی شد';
+  };
 
   return (
     <div className="container mx-auto px-4 py-6 md:py-8">
@@ -157,6 +176,41 @@ export const ListingDetail: React.FC<ListingDetailProps> = ({ listing, seller, l
           >
             {formatCurrency(listing.price, listing.currency)}
           </p>
+
+          {priceHistory.length > 0 && (
+            <div className="mb-5 bg-white border border-slate-200 rounded-lg p-4">
+              <h3 className={`text-sm font-semibold text-slate-900 mb-3 ${isRtl ? 'text-right' : 'text-left'}`}>
+                {locale === 'en' ? 'Price History' : locale === 'ps' ? 'د بیې تاریخچه' : 'تاریخچه قیمت'}
+              </h3>
+              <div className="space-y-2">
+                {priceHistory.map((item, idx) => {
+                  const changeDate = new Date(item.changed_at).toLocaleDateString(
+                    locale === 'en' ? 'en-US' : locale === 'ps' ? 'ps-AF' : 'fa-AF',
+                    { year: 'numeric', month: 'short', day: 'numeric' }
+                  );
+
+                  return (
+                    <div
+                      key={`${item.changed_at}-${idx}`}
+                      className={`flex items-center justify-between gap-2 text-xs p-2.5 rounded-lg border ${
+                        item.change_type === 'increase'
+                          ? 'bg-red-50 border-red-100'
+                          : 'bg-green-50 border-green-100'
+                      } ${isRtl ? 'flex-row-reverse' : ''}`}
+                    >
+                      <div className={`${isRtl ? 'text-right' : 'text-left'}`}>
+                        <p className="font-medium text-slate-800">
+                          {formatCurrency(Number(item.old_price), item.currency)} {'->'} {formatCurrency(Number(item.new_price), item.currency)}
+                        </p>
+                        <p className="text-slate-500 mt-0.5">{getReasonLabel(item.reason_code)}</p>
+                      </div>
+                      <span className="text-slate-500 whitespace-nowrap">{changeDate}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Condition badge + category */}
           <div className={`flex items-center gap-3 mb-5 flex-wrap ${isRtl ? 'flex-row-reverse' : ''}`}>

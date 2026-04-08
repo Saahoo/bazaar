@@ -99,7 +99,9 @@ CREATE TABLE listings (
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   deleted_at TIMESTAMPTZ,
   deletion_reason_code VARCHAR(50),
-  deletion_reason_note TEXT
+  deletion_reason_note TEXT,
+  last_edit_reason_code VARCHAR(50),
+  last_edit_reason_note TEXT
 );
 
 CREATE INDEX idx_listings_user ON listings(user_id);
@@ -108,6 +110,23 @@ CREATE INDEX idx_listings_status ON listings(status);
 CREATE INDEX idx_listings_created ON listings(created_at DESC);
 CREATE INDEX idx_listings_city ON listings(city);
 CREATE INDEX idx_listings_metadata ON listings USING GIN(metadata);
+
+-- ============================================
+-- LISTING PRICE HISTORY TABLE
+-- ============================================
+CREATE TABLE listing_price_history (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  listing_id UUID NOT NULL REFERENCES listings(id) ON DELETE CASCADE,
+  old_price DECIMAL(12, 2) NOT NULL,
+  new_price DECIMAL(12, 2) NOT NULL,
+  currency VARCHAR(10) DEFAULT 'AFN',
+  change_type VARCHAR(20) NOT NULL CHECK (change_type IN ('increase', 'decrease')),
+  reason_code VARCHAR(50),
+  changed_by UUID REFERENCES profiles(id),
+  changed_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX idx_listing_price_history_listing ON listing_price_history(listing_id, changed_at DESC);
 
 -- ============================================
 -- PHOTOS TABLE
@@ -247,6 +266,7 @@ ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
 ALTER TABLE saved_searches ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_relationships ENABLE ROW LEVEL SECURITY;
+ALTER TABLE listing_price_history ENABLE ROW LEVEL SECURITY;
 
 -- ============================================
 -- RLS POLICIES
@@ -278,6 +298,20 @@ CREATE POLICY "Users can update own listings"
 CREATE POLICY "Users can delete own listings"
   ON listings FOR DELETE
   USING (auth.uid() = user_id);
+
+CREATE POLICY "Anyone can view listing price history"
+  ON listing_price_history FOR SELECT USING (true);
+
+CREATE POLICY "Sellers can insert own listing price history"
+  ON listing_price_history FOR INSERT
+  WITH CHECK (
+    auth.uid() = changed_by
+    AND EXISTS (
+      SELECT 1 FROM listings l
+      WHERE l.id = listing_id
+      AND l.user_id = auth.uid()
+    )
+  );
 
 -- Photos: viewable if listing visible, owner manages
 CREATE POLICY "Anyone can view photos"
