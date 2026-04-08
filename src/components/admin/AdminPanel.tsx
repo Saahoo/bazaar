@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Shield, Tags, Flag, Save, Trash2 } from 'lucide-react';
+import { Shield, Tags, Flag, Save, Trash2, GripVertical } from 'lucide-react';
 import { Locale, isRTL } from '@/lib/i18n/config';
 import { createClient } from '@/lib/supabase/client';
 import { MAIN_CATEGORIES } from '@/lib/constants/categories';
@@ -47,6 +47,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
   const [loadingListings, setLoadingListings] = useState(true);
   const [saving, setSaving] = useState(false);
   const [syncingDefaults, setSyncingDefaults] = useState(false);
+  const [savingOrder, setSavingOrder] = useState(false);
+  const [draggingParentId, setDraggingParentId] = useState<number | null>(null);
+  const [dragOverParentId, setDragOverParentId] = useState<number | null>(null);
+  const [draggingChildInfo, setDraggingChildInfo] = useState<{ id: number; parentId: number } | null>(null);
+  const [dragOverChildId, setDragOverChildId] = useState<number | null>(null);
 
   const [catForm, setCatForm] = useState({
     id: 0,
@@ -95,6 +100,16 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
       .replace(/[^a-z0-9\s-]/g, '')
       .replace(/\s+/g, '-')
       .replace(/-+/g, '-');
+
+  const saveSortOrder = useCallback(async (updates: { id: number; sort_order: number }[]) => {
+    setSavingOrder(true);
+    await Promise.all(
+      updates.map(({ id, sort_order }) =>
+        supabase.from('categories').update({ sort_order }).eq('id', id)
+      )
+    );
+    setSavingOrder(false);
+  }, [supabase]);
 
   const loadCategories = useCallback(async () => {
     setLoadingCats(true);
@@ -268,6 +283,54 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
       childMap.set(parentId, existing);
     });
 
+  const handleParentDrop = (targetId: number) => {
+    if (draggingParentId === null || draggingParentId === targetId) {
+      setDraggingParentId(null);
+      setDragOverParentId(null);
+      return;
+    }
+    const sorted = [...parentCategories];
+    const fromIdx = sorted.findIndex((c) => c.id === draggingParentId);
+    const toIdx = sorted.findIndex((c) => c.id === targetId);
+    if (fromIdx === -1 || toIdx === -1) return;
+    const [moved] = sorted.splice(fromIdx, 1);
+    sorted.splice(toIdx, 0, moved);
+    const updates = sorted.map((c, i) => ({ id: c.id, sort_order: (i + 1) * 10 }));
+    setCategories((prev) => {
+      const children = prev.filter((c) => c.parent_id !== null);
+      const newParents = sorted.map((c, i) => ({ ...c, sort_order: (i + 1) * 10 }));
+      return [...newParents, ...children];
+    });
+    saveSortOrder(updates);
+    setDraggingParentId(null);
+    setDragOverParentId(null);
+  };
+
+  const handleChildDrop = (targetId: number, parentId: number) => {
+    if (!draggingChildInfo || draggingChildInfo.parentId !== parentId || draggingChildInfo.id === targetId) {
+      setDraggingChildInfo(null);
+      setDragOverChildId(null);
+      return;
+    }
+    const children = [...(childMap.get(parentId) || [])];
+    const fromIdx = children.findIndex((c) => c.id === draggingChildInfo.id);
+    const toIdx = children.findIndex((c) => c.id === targetId);
+    if (fromIdx === -1 || toIdx === -1) return;
+    const [moved] = children.splice(fromIdx, 1);
+    children.splice(toIdx, 0, moved);
+    const updates = children.map((c, i) => ({ id: c.id, sort_order: (i + 1) * 10 }));
+    setCategories((prev) =>
+      prev.map((c) => {
+        if (c.parent_id !== parentId) return c;
+        const idx = children.findIndex((r) => r.id === c.id);
+        return idx !== -1 ? { ...c, sort_order: (idx + 1) * 10 } : c;
+      })
+    );
+    saveSortOrder(updates);
+    setDraggingChildInfo(null);
+    setDragOverChildId(null);
+  };
+
   return (
     <div className="container mx-auto px-4">
       <div className="flex items-center gap-3 mb-5">
@@ -368,19 +431,35 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
           </div>
 
           <div className="bg-white border border-slate-200 rounded-xl p-4">
-            <h2 className="text-base font-semibold text-slate-900 mb-3">Existing Categories</h2>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-base font-semibold text-slate-900">Existing Categories</h2>
+              {savingOrder && <span className="text-xs text-slate-500 animate-pulse">Saving order…</span>}
+            </div>
             {loadingCats ? (
               <p className="text-slate-500 text-sm">Loading...</p>
             ) : (
               <div className="space-y-2 max-h-[70vh] overflow-y-auto">
                 {parentCategories.map((parent) => {
                   const children = childMap.get(parent.id) || [];
+                  const isDraggingThis = draggingParentId === parent.id;
+                  const isDropTarget = dragOverParentId === parent.id && !isDraggingThis;
                   return (
-                    <div key={parent.id} className="border border-slate-200 rounded-lg p-3">
+                    <div
+                      key={parent.id}
+                      draggable
+                      onDragStart={() => setDraggingParentId(parent.id)}
+                      onDragOver={(e) => { e.preventDefault(); setDragOverParentId(parent.id); }}
+                      onDrop={() => handleParentDrop(parent.id)}
+                      onDragEnd={() => { setDraggingParentId(null); setDragOverParentId(null); }}
+                      className={`border rounded-lg p-3 transition-all select-none ${isDraggingThis ? 'opacity-40 cursor-grabbing' : 'cursor-grab'} ${isDropTarget ? 'border-primary-400 ring-2 ring-primary-100' : 'border-slate-200'}`}
+                    >
                       <div className={`flex items-start justify-between gap-2 ${rtl ? 'flex-row-reverse' : ''}`}>
-                        <div className={`min-w-0 ${rtl ? 'text-right' : 'text-left'}`}>
-                          <p className="text-sm font-semibold text-slate-900 truncate">{parent.name_en}</p>
-                          <p className="text-xs text-slate-500 truncate">/{parent.slug}</p>
+                        <div className={`flex items-center gap-2 min-w-0 ${rtl ? 'flex-row-reverse' : ''}`}>
+                          <GripVertical className="w-4 h-4 text-slate-300 shrink-0" />
+                          <div className={`min-w-0 ${rtl ? 'text-right' : 'text-left'}`}>
+                            <p className="text-sm font-semibold text-slate-900 truncate">{parent.name_en}</p>
+                            <p className="text-xs text-slate-500 truncate">/{parent.slug}</p>
+                          </div>
                         </div>
                         <div className={`flex items-center gap-1 ${rtl ? 'flex-row-reverse' : ''}`}>
                           <button onClick={() => editCategory(parent)} className="px-2 py-1 text-xs rounded bg-slate-100 text-slate-700 hover:bg-slate-200">Edit</button>
@@ -395,18 +474,33 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
 
                       {children.length > 0 && (
                         <div className="mt-2 space-y-1.5 border-t border-slate-100 pt-2">
-                          {children.map((child) => (
-                            <div key={child.id} className={`flex items-center justify-between text-sm ${rtl ? 'flex-row-reverse' : ''}`}>
-                              <div className={`min-w-0 ${rtl ? 'text-right' : 'text-left'}`}>
-                                <p className="text-slate-700 truncate">↳ {child.name_en}</p>
-                                <p className="text-xs text-slate-500 truncate">/{child.slug}</p>
+                          {children.map((child) => {
+                            const isDraggingChild = draggingChildInfo?.id === child.id;
+                            const isChildDropTarget = dragOverChildId === child.id && draggingChildInfo?.id !== child.id && draggingChildInfo?.parentId === parent.id;
+                            return (
+                            <div
+                              key={child.id}
+                              draggable
+                              onDragStart={(e) => { e.stopPropagation(); setDraggingChildInfo({ id: child.id, parentId: parent.id }); }}
+                              onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setDragOverChildId(child.id); }}
+                              onDrop={(e) => { e.stopPropagation(); handleChildDrop(child.id, parent.id); }}
+                              onDragEnd={(e) => { e.stopPropagation(); setDraggingChildInfo(null); setDragOverChildId(null); }}
+                              className={`flex items-center justify-between text-sm rounded px-1 py-0.5 transition-all select-none ${isDraggingChild ? 'opacity-40 cursor-grabbing' : 'cursor-grab'} ${isChildDropTarget ? 'ring-2 ring-primary-300 bg-primary-50' : ''} ${rtl ? 'flex-row-reverse' : ''}`}
+                            >
+                              <div className={`flex items-center gap-1.5 min-w-0 ${rtl ? 'flex-row-reverse' : ''}`}>
+                                <GripVertical className="w-3.5 h-3.5 text-slate-300 shrink-0" />
+                                <div className={`min-w-0 ${rtl ? 'text-right' : 'text-left'}`}>
+                                  <p className="text-slate-700 truncate">↳ {child.name_en}</p>
+                                  <p className="text-xs text-slate-500 truncate">/{child.slug}</p>
+                                </div>
                               </div>
                               <div className={`flex items-center gap-1 ${rtl ? 'flex-row-reverse' : ''}`}>
                                 <button onClick={() => editCategory(child)} className="px-2 py-1 text-xs rounded bg-slate-100 text-slate-700 hover:bg-slate-200">Edit</button>
                                 <button onClick={() => deleteCategory(child.id)} className="px-2 py-1 text-xs rounded bg-red-50 text-red-600 hover:bg-red-100">Delete</button>
                               </div>
                             </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       )}
                     </div>
