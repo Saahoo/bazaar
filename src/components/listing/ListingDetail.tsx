@@ -36,6 +36,12 @@ export interface SellerData {
   display_name: string;
   avatar_url: string | null;
   phone: string;
+  city?: string | null;
+  bio?: string | null;
+  profile_type?: string | null;
+  company_name?: string | null;
+  age?: number | null;
+  sex?: string | null;
   verified: boolean;
   rating: number;
   member_since: string;

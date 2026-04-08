@@ -15,6 +15,14 @@ CREATE TABLE profiles (
   avatar_url TEXT,
   bio TEXT,
   city VARCHAR(100),
+  district VARCHAR(100),
+  address_line TEXT,
+  profile_type VARCHAR(20) DEFAULT 'personal',
+  age INTEGER,
+  sex VARCHAR(20),
+  company_name VARCHAR(150),
+  occupation VARCHAR(120),
+  website TEXT,
   verified_phone BOOLEAN DEFAULT FALSE,
   is_seller BOOLEAN DEFAULT FALSE,
   seller_rating DECIMAL(3, 2),
@@ -209,6 +217,22 @@ CREATE TABLE saved_searches (
 CREATE INDEX idx_saved_searches_user ON saved_searches(user_id);
 
 -- ============================================
+-- USER RELATIONSHIPS TABLE
+-- ============================================
+CREATE TABLE user_relationships (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  target_user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  relation_type VARCHAR(20) NOT NULL CHECK (relation_type IN ('friend', 'favorite')),
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, target_user_id, relation_type),
+  CHECK (user_id <> target_user_id)
+);
+
+CREATE INDEX idx_user_relationships_user ON user_relationships(user_id, relation_type);
+CREATE INDEX idx_user_relationships_target ON user_relationships(target_user_id, relation_type);
+
+-- ============================================
 -- ENABLE ROW LEVEL SECURITY
 -- ============================================
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
@@ -220,6 +244,7 @@ ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
 ALTER TABLE saved_searches ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_relationships ENABLE ROW LEVEL SECURITY;
 
 -- ============================================
 -- RLS POLICIES
@@ -318,6 +343,16 @@ CREATE POLICY "Anyone can view reviews"
 
 CREATE POLICY "Users can create reviews"
   ON reviews FOR INSERT WITH CHECK (auth.uid() = reviewer_id);
+
+-- User relationships: readable for profile stats, writable by owner only
+CREATE POLICY "Anyone can view user relationships"
+  ON user_relationships FOR SELECT USING (true);
+
+CREATE POLICY "Users can create own user relationships"
+  ON user_relationships FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete own user relationships"
+  ON user_relationships FOR DELETE USING (auth.uid() = user_id);
 
 -- Saved searches: users manage own
 CREATE POLICY "Users can manage own saved searches"

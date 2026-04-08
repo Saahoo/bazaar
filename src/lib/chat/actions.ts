@@ -59,6 +59,32 @@ export async function getOrCreateConversation(
   return data!.id;
 }
 
+/** Get or create a direct conversation between two users without a listing */
+export async function getOrCreateDirectConversation(
+  buyerId: string,
+  sellerId: string
+): Promise<string> {
+  const { data: existing, error: existingError } = await supabase
+    .from('conversations')
+    .select('id')
+    .is('listing_id', null)
+    .eq('buyer_id', buyerId)
+    .eq('seller_id', sellerId)
+    .limit(1);
+
+  if (existingError) throw existingError;
+  if (existing && existing.length > 0) return existing[0].id;
+
+  const { data, error } = await supabase
+    .from('conversations')
+    .insert({ listing_id: null, buyer_id: buyerId, seller_id: sellerId })
+    .select('id')
+    .single();
+
+  if (error) throw error;
+  return data!.id;
+}
+
 /** Fetch all conversations for current user */
 export async function fetchConversations(userId: string): Promise<Conversation[]> {
   const { data, error } = await supabase

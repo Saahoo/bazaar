@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { User, Mail, Phone, MapPin, Camera, Edit3, ShieldCheck, Package, Heart, MessageSquare, Loader2 } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Camera, Edit3, ShieldCheck, Package, Heart, MessageSquare, Loader2, Building2, Briefcase, Globe, BadgeInfo } from 'lucide-react';
 import { isRTL, Locale } from '@/lib/i18n/config';
 import { useAuth } from '@/lib/context/AuthContext';
 import { createClient } from '@/lib/supabase/client';
@@ -26,7 +26,23 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ locale }) => {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [city, setCity] = useState('');
+  const [district, setDistrict] = useState('');
+  const [addressLine, setAddressLine] = useState('');
+  const [profileType, setProfileType] = useState<'personal' | 'vendor'>('personal');
+  const [age, setAge] = useState('');
+  const [sex, setSex] = useState('');
+  const [companyName, setCompanyName] = useState('');
+  const [occupation, setOccupation] = useState('');
+  const [website, setWebsite] = useState('');
+  const [bio, setBio] = useState('');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [stats, setStats] = useState({
+    activeListings: 0,
+    favorites: 0,
+    messages: 0,
+    friends: 0,
+    favoriteUsers: 0,
+  });
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,20 +54,66 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ locale }) => {
   useEffect(() => {
     if (user) {
       setEmail(user.email || '');
-      // Load profile data from profiles table (not auth metadata)
-      supabase
-        .from('profiles')
-        .select('display_name, phone, city, avatar_url')
-        .eq('id', user.id)
-        .single()
-        .then(({ data }) => {
-          if (data) {
-            setName(data.display_name || '');
-            setPhone(data.phone || '');
-            setCity(data.city || '');
-            setAvatarUrl(data.avatar_url || null);
-          }
+
+      const loadProfile = async () => {
+        const [{ data }, { count: activeListings }, { count: favorites }, { count: messages }, { count: friends }, { count: favoriteUsers }] = await Promise.all([
+          supabase
+            .from('profiles')
+            .select('display_name, phone, city, district, address_line, avatar_url, profile_type, age, sex, company_name, occupation, website, bio')
+            .eq('id', user.id)
+            .single(),
+          supabase
+            .from('listings')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', user.id)
+            .eq('status', 'active')
+            .is('deleted_at', null),
+          supabase
+            .from('favorites')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', user.id),
+          supabase
+            .from('conversations')
+            .select('id', { count: 'exact', head: true })
+            .or(`buyer_id.eq.${user.id},seller_id.eq.${user.id}`),
+          supabase
+            .from('user_relationships')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', user.id)
+            .eq('relation_type', 'friend'),
+          supabase
+            .from('user_relationships')
+            .select('id', { count: 'exact', head: true })
+            .eq('user_id', user.id)
+            .eq('relation_type', 'favorite'),
+        ]);
+
+        if (data) {
+          setName(data.display_name || '');
+          setPhone(data.phone || '');
+          setCity(data.city || '');
+          setDistrict(data.district || '');
+          setAddressLine(data.address_line || '');
+          setAvatarUrl(data.avatar_url || null);
+          setProfileType((data.profile_type as 'personal' | 'vendor') || 'personal');
+          setAge(data.age ? String(data.age) : '');
+          setSex(data.sex || '');
+          setCompanyName(data.company_name || '');
+          setOccupation(data.occupation || '');
+          setWebsite(data.website || '');
+          setBio(data.bio || '');
+        }
+
+        setStats({
+          activeListings: activeListings || 0,
+          favorites: favorites || 0,
+          messages: messages || 0,
+          friends: friends || 0,
+          favoriteUsers: favoriteUsers || 0,
         });
+      };
+
+      loadProfile();
     }
   }, [user, supabase]);
 
@@ -124,6 +186,16 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ locale }) => {
           display_name: name,
           phone,
           city,
+          district,
+          address_line: addressLine,
+          profile_type: profileType,
+          age: age ? Number(age) : null,
+          sex: sex || null,
+          company_name: profileType === 'vendor' ? companyName : null,
+          occupation: occupation || null,
+          website: website || null,
+          bio: bio || null,
+          is_seller: profileType === 'vendor',
         })
         .eq('id', user!.id);
 
@@ -210,6 +282,10 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ locale }) => {
                   <ShieldCheck className="w-5 h-5 text-green-500" />
                 )}
               </div>
+              <p className="text-xs text-primary-700 font-medium mt-1">{profileType === 'vendor' ? 'Vendor Profile' : 'Personal Profile'}</p>
+              {profileType === 'vendor' && companyName && (
+                <p className="text-sm text-slate-700 mt-1">{companyName}</p>
+              )}
               <p className="text-sm text-slate-500">{email}</p>
             </div>
             <button
@@ -227,12 +303,13 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ locale }) => {
           </div>
 
           {/* Stats */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
             {[
-              { icon: Package, label: t('activeListings'), value: 0, color: 'text-primary-600 bg-primary-50' },
-              { icon: Heart, label: t('myFavorites'), value: 0, color: 'text-red-500 bg-red-50' },
-              { icon: MessageSquare, label: t('myMessages'), value: 0, color: 'text-green-600 bg-green-50' },
-              { icon: User, label: t('totalViews'), value: 0, color: 'text-purple-600 bg-purple-50' },
+              { icon: Package, label: t('activeListings'), value: stats.activeListings, color: 'text-primary-600 bg-primary-50' },
+              { icon: Heart, label: t('myFavorites'), value: stats.favorites, color: 'text-red-500 bg-red-50' },
+              { icon: MessageSquare, label: t('myMessages'), value: stats.messages, color: 'text-green-600 bg-green-50' },
+              { icon: User, label: 'Friends', value: stats.friends, color: 'text-indigo-600 bg-indigo-50' },
+              { icon: BadgeInfo, label: 'Favorite Users', value: stats.favoriteUsers, color: 'text-amber-600 bg-amber-50' },
             ].map((stat) => (
               <div key={stat.label} className="flex flex-col items-center p-4 bg-slate-50 rounded-xl">
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-2 ${stat.color}`}>
@@ -253,6 +330,21 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ locale }) => {
         </h2>
 
         <div className="space-y-5">
+          <div>
+            <label className={labelClass}>Profile Type</label>
+            {isEditing ? (
+              <select value={profileType} onChange={(e) => setProfileType(e.target.value as 'personal' | 'vendor')} className={`${inputClass} bg-white`}>
+                <option value="personal">Personal</option>
+                <option value="vendor">Vendor</option>
+              </select>
+            ) : (
+              <div className={`flex items-center gap-3 px-4 py-2.5 bg-slate-50 rounded-lg ${rtl ? 'flex-row-reverse' : ''}`}>
+                <Building2 className="w-4 h-4 text-slate-400" />
+                <span className="text-slate-700">{profileType === 'vendor' ? 'Vendor Profile' : 'Personal Profile'}</span>
+              </div>
+            )}
+          </div>
+
           {/* Name */}
           <div>
             <label className={labelClass}>{tForm('name')}</label>
@@ -297,6 +389,110 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ locale }) => {
               <div className={`flex items-center gap-3 px-4 py-2.5 bg-slate-50 rounded-lg ${rtl ? 'flex-row-reverse' : ''}`}>
                 <MapPin className="w-4 h-4 text-slate-400" />
                 <span className="text-slate-700">{city || '—'}</span>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label className={labelClass}>District</label>
+            {isEditing ? (
+              <input type="text" value={district} onChange={(e) => setDistrict(e.target.value)} className={inputClass} dir={rtl ? 'rtl' : 'ltr'} />
+            ) : (
+              <div className={`flex items-center gap-3 px-4 py-2.5 bg-slate-50 rounded-lg ${rtl ? 'flex-row-reverse' : ''}`}>
+                <MapPin className="w-4 h-4 text-slate-400" />
+                <span className="text-slate-700">{district || '—'}</span>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label className={labelClass}>Address</label>
+            {isEditing ? (
+              <input type="text" value={addressLine} onChange={(e) => setAddressLine(e.target.value)} className={inputClass} dir={rtl ? 'rtl' : 'ltr'} />
+            ) : (
+              <div className={`flex items-center gap-3 px-4 py-2.5 bg-slate-50 rounded-lg ${rtl ? 'flex-row-reverse' : ''}`}>
+                <MapPin className="w-4 h-4 text-slate-400" />
+                <span className="text-slate-700">{addressLine || '—'}</span>
+              </div>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className={labelClass}>Age</label>
+              {isEditing ? (
+                <input type="number" min="0" value={age} onChange={(e) => setAge(e.target.value)} className={inputClass} dir="ltr" />
+              ) : (
+                <div className={`flex items-center gap-3 px-4 py-2.5 bg-slate-50 rounded-lg ${rtl ? 'flex-row-reverse' : ''}`}>
+                  <User className="w-4 h-4 text-slate-400" />
+                  <span className="text-slate-700">{age || '—'}</span>
+                </div>
+              )}
+            </div>
+            <div>
+              <label className={labelClass}>Sex</label>
+              {isEditing ? (
+                <select value={sex} onChange={(e) => setSex(e.target.value)} className={`${inputClass} bg-white`}>
+                  <option value="">Select sex</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                </select>
+              ) : (
+                <div className={`flex items-center gap-3 px-4 py-2.5 bg-slate-50 rounded-lg ${rtl ? 'flex-row-reverse' : ''}`}>
+                  <User className="w-4 h-4 text-slate-400" />
+                  <span className="text-slate-700">{sex || '—'}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {profileType === 'vendor' && (
+            <div>
+              <label className={labelClass}>Company Name</label>
+              {isEditing ? (
+                <input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} className={inputClass} dir={rtl ? 'rtl' : 'ltr'} />
+              ) : (
+                <div className={`flex items-center gap-3 px-4 py-2.5 bg-slate-50 rounded-lg ${rtl ? 'flex-row-reverse' : ''}`}>
+                  <Building2 className="w-4 h-4 text-slate-400" />
+                  <span className="text-slate-700">{companyName || '—'}</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div>
+            <label className={labelClass}>Occupation</label>
+            {isEditing ? (
+              <input type="text" value={occupation} onChange={(e) => setOccupation(e.target.value)} className={inputClass} dir={rtl ? 'rtl' : 'ltr'} />
+            ) : (
+              <div className={`flex items-center gap-3 px-4 py-2.5 bg-slate-50 rounded-lg ${rtl ? 'flex-row-reverse' : ''}`}>
+                <Briefcase className="w-4 h-4 text-slate-400" />
+                <span className="text-slate-700">{occupation || '—'}</span>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label className={labelClass}>Website</label>
+            {isEditing ? (
+              <input type="url" value={website} onChange={(e) => setWebsite(e.target.value)} className={inputClass} dir="ltr" />
+            ) : (
+              <div className={`flex items-center gap-3 px-4 py-2.5 bg-slate-50 rounded-lg ${rtl ? 'flex-row-reverse' : ''}`}>
+                <Globe className="w-4 h-4 text-slate-400" />
+                <span className="text-slate-700 break-all">{website || '—'}</span>
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label className={labelClass}>Bio</label>
+            {isEditing ? (
+              <textarea value={bio} onChange={(e) => setBio(e.target.value)} className={`${inputClass} min-h-28 resize-y`} dir={rtl ? 'rtl' : 'ltr'} />
+            ) : (
+              <div className={`flex items-start gap-3 px-4 py-2.5 bg-slate-50 rounded-lg ${rtl ? 'flex-row-reverse' : ''}`}>
+                <BadgeInfo className="w-4 h-4 text-slate-400 mt-0.5" />
+                <span className="text-slate-700 whitespace-pre-line">{bio || '—'}</span>
               </div>
             )}
           </div>

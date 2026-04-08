@@ -24,7 +24,7 @@ export default async function ListingPage({ params }: PageProps) {
     .from('listings')
     .select(`
       *,
-      profiles(id, display_name, avatar_url, phone, verified_phone, is_seller, seller_rating, seller_badge, created_at),
+      profiles(id, display_name, avatar_url, phone, bio, city, district, address_line, profile_type, age, sex, company_name, occupation, website, verified_phone, is_seller, seller_rating, seller_badge, created_at),
       photos(photo_url, display_order)
     `)
     .eq('id', id)
@@ -43,6 +43,12 @@ export default async function ListingPage({ params }: PageProps) {
     display_name: (profile?.display_name as string) || '',
     avatar_url: (profile?.avatar_url as string) || null,
     phone: (profile?.phone as string) || '',
+    city: (profile?.city as string) || '',
+    bio: (profile?.bio as string) || '',
+    profile_type: (profile?.profile_type as string) || 'personal',
+    company_name: (profile?.company_name as string) || '',
+    age: Number(profile?.age) || null,
+    sex: (profile?.sex as string) || '',
     verified: (profile?.verified_phone as boolean) || false,
     rating: Number(profile?.seller_rating) || 0,
     member_since: (profile?.created_at as string) || listing.created_at,

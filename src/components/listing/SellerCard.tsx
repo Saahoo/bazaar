@@ -2,10 +2,12 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { useTranslations } from 'next-intl';
-import { User, CheckCircle, Phone, MessageSquare, Eye, EyeOff, Star } from 'lucide-react';
+import { User, CheckCircle, Phone, Eye, EyeOff, Star, Building2 } from 'lucide-react';
 import { Locale, isRTL } from '@/lib/i18n/config';
 import type { SellerData } from './ListingDetail';
+import { ProfileRelationButtons } from '@/components/profile/ProfileRelationButtons';
 
 interface SellerCardProps {
   seller: SellerData;
@@ -30,7 +32,10 @@ export const SellerCard: React.FC<SellerCardProps> = ({ seller, locale }) => {
   return (
     <div className="bg-white border border-slate-200 rounded-lg overflow-hidden sticky top-24">
       {/* Seller header */}
-      <div className={`flex items-center gap-3 p-4 border-b border-slate-100 ${isRtl ? 'flex-row-reverse' : ''}`}>
+      <Link
+        href={`/${locale}/profile/${seller.id}`}
+        className={`flex items-center gap-3 p-4 border-b border-slate-100 hover:bg-slate-50 transition ${isRtl ? 'flex-row-reverse' : ''}`}
+      >
         {/* Avatar */}
         <div className="w-14 h-14 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0 overflow-hidden border border-slate-200">
           {seller.avatar_url ? (
@@ -54,8 +59,14 @@ export const SellerCard: React.FC<SellerCardProps> = ({ seller, locale }) => {
               {tCommon('verified')}
             </span>
           )}
+          {seller.profile_type === 'vendor' && seller.company_name && (
+            <div className={`mt-1 flex items-center gap-1 text-xs text-primary-700 ${isRtl ? 'flex-row-reverse justify-end' : ''}`}>
+              <Building2 className="w-3 h-3" />
+              <span>{seller.company_name}</span>
+            </div>
+          )}
         </div>
-      </div>
+      </Link>
 
       {/* Seller info */}
       <div className="px-4 py-3 border-b border-slate-100">
@@ -113,7 +124,7 @@ export const SellerCard: React.FC<SellerCardProps> = ({ seller, locale }) => {
       )}
 
       {/* Action buttons */}
-      <div className="p-4 space-y-2">
+      <div className="p-4 space-y-3">
         {seller.phone && (
           <a
             href={`tel:${seller.phone}`}
@@ -124,12 +135,13 @@ export const SellerCard: React.FC<SellerCardProps> = ({ seller, locale }) => {
           </a>
         )}
 
-        <button
-          className={`w-full flex items-center justify-center gap-2 px-4 py-2.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors font-medium text-sm ${isRtl ? 'flex-row-reverse' : ''}`}
-        >
-          <MessageSquare className="w-4 h-4" />
-          {t('messageSeller')}
-        </button>
+        <ProfileRelationButtons
+          locale={locale}
+          targetUserId={seller.id}
+          targetName={seller.display_name}
+          targetPhone={seller.phone}
+          compact
+        />
       </div>
     </div>
   );
