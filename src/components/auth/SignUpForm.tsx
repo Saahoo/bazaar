@@ -62,7 +62,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ locale }) => {
         setError(locale === 'en'
           ? 'An account already exists with this email.'
           : locale === 'ps'
-            ? 'دا بریښنالیک له مخکې ثبت شوی دی.'
+            ? 'دا بریښنالیک له مخکې ثبت سوی دی.'
             : 'حسابی با این ایمیل قبلاً وجود دارد.');
       } else {
         setError(authError.message);
@@ -75,7 +75,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ locale }) => {
       setError(locale === 'en'
         ? 'An account already exists with this email.'
         : locale === 'ps'
-          ? 'دا بریښنالیک له مخکې ثبت شوی دی.'
+          ? 'دا بریښنالیک له مخکې ثبت سوی دی.'
           : 'حسابی با این ایمیل قبلاً وجود دارد.');
       return;
     }
