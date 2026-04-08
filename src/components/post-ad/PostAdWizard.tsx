@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight, Check, LogIn } from 'lucide-react';
@@ -24,6 +24,7 @@ import { StepVehicleCondition, VehicleConditionData } from './vehicles/StepVehic
 import { StepVehicleAddress, VehicleAddressData } from './vehicles/StepVehicleAddress';
 import { StepVehicleMedia, VehicleMediaData } from './vehicles/StepVehicleMedia';
 import { StepVehicleContact, VehicleContactData } from './vehicles/StepVehicleContact';
+import { DynamicWizardFields, WizardFormConfig, isWizardRequiredFieldsValid } from './DynamicWizardFields';
 import type { VehicleType as VehicleTypeEnum } from '@/lib/constants/vehicles';
 
 // Category IDs
@@ -139,6 +140,9 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [wizardConfig, setWizardConfig] = useState<WizardFormConfig>({ sections: [], lists: [] });
+  const [wizardValues, setWizardValues] = useState<Record<string, unknown>>({});
+  const [loadingWizardConfig, setLoadingWizardConfig] = useState(false);
   const supabase = createClient();
 
   const detailsRef = useRef<StepDetailsHandle>(null);
@@ -163,10 +167,45 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       if (changingCategory) {
         setReData(INITIAL_RE_DATA);
         setVhData(INITIAL_VH_DATA);
+        setWizardValues({});
       }
     },
     [updateFormData, formData.categoryId]
   );
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadWizardConfig = async () => {
+      if (!formData.categoryId) {
+        if (mounted) setWizardConfig({ sections: [], lists: [] });
+        return;
+      }
+
+      setLoadingWizardConfig(true);
+      const { data } = await supabase
+        .from('categories')
+        .select('options_json')
+        .eq('id', formData.categoryId)
+        .single();
+
+      if (!mounted) return;
+
+      const raw = (data?.options_json || {}) as Record<string, unknown>;
+      const wf = (raw.wizard_forms || {}) as Partial<WizardFormConfig>;
+      setWizardConfig({
+        sections: Array.isArray(wf.sections) ? (wf.sections as WizardFormConfig['sections']) : [],
+        lists: Array.isArray(wf.lists) ? (wf.lists as WizardFormConfig['lists']) : [],
+      });
+      setLoadingWizardConfig(false);
+    };
+
+    loadWizardConfig();
+
+    return () => {
+      mounted = false;
+    };
+  }, [formData.categoryId, supabase]);
 
   // Auth gate — require login to post an ad
   if (authLoading) {
@@ -226,12 +265,19 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
 
   const currentStepKey = steps[currentStep] as StepKey;
 
+  const shouldShowDynamicFields =
+    currentStepKey === 'stepDetails' || currentStepKey === 'reStepDetails' || currentStepKey === 'vhStepSpecs';
+
+  const hasDynamicFields = wizardConfig.sections.length > 0 || wizardConfig.lists.length > 0;
+
   const canProceed = (): boolean => {
+    const requiredDynamicValid = !shouldShowDynamicFields || !hasDynamicFields || isWizardRequiredFieldsValid(wizardConfig, wizardValues);
+
     switch (currentStepKey) {
       case 'stepCategory':
         return formData.categoryId !== null;
       case 'stepDetails':
-        return true;
+        return requiredDynamicValid;
       case 'stepPhotos':
         return true;
       case 'stepContact':
@@ -240,7 +286,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       case 'reStepType':
         return reData.propertyType !== '' && reData.purpose !== '';
       case 'reStepDetails':
-        return true;
+        return requiredDynamicValid;
       case 'reStepAddress':
         return reData.address.city !== '';
       case 'reStepMedia':
@@ -251,7 +297,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       case 'vhStepType':
         return vhData.title !== '' && vhData.description !== '' && vhData.vehicleType !== '';
       case 'vhStepSpecs':
-        return vhData.specs.year !== '' && vhData.specs.make !== '' && vhData.specs.model !== '';
+        return vhData.specs.year !== '' && vhData.specs.make !== '' && vhData.specs.model !== '' && requiredDynamicValid;
       case 'vhStepCondition':
         return vhData.condition.price !== '';
       case 'vhStepAddress':
@@ -312,6 +358,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
           purpose: reData.purpose,
           ...reData.propertyDetails,
           ...reData.address,
+          wizard_forms: wizardValues,
         };
         title = reData.propertyDetails.title || title;
         description = reData.propertyDetails.description || description;
@@ -326,6 +373,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
           vehicleType: vhData.vehicleType,
           ...vhData.specs,
           ...vhData.condition,
+          wizard_forms: wizardValues,
         };
         title = vhData.title || title;
         description = vhData.description || description;
@@ -335,6 +383,11 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         _phone = vhData.contact.phone || _phone;
         condition = 'good';
         photosList = vhData.media.photos;
+      } else {
+        metadata = {
+          ...metadata,
+          wizard_forms: wizardValues,
+        };
       }
 
       // Insert listing
@@ -394,6 +447,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
     setVhData(INITIAL_VH_DATA);
     setCurrentStep(0);
     setSubmitted(false);
+    setWizardValues({});
   };
 
   if (submitted) {
@@ -676,6 +730,17 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
           </div>
         )}
         {renderStepContent()}
+        {loadingWizardConfig && shouldShowDynamicFields && (
+          <p className="text-sm text-slate-500 mt-4">Loading extra fields...</p>
+        )}
+        {!loadingWizardConfig && shouldShowDynamicFields && hasDynamicFields && (
+          <DynamicWizardFields
+            locale={locale}
+            config={wizardConfig}
+            values={wizardValues}
+            onChange={(key, value) => setWizardValues((prev) => ({ ...prev, [key]: value }))}
+          />
+        )}
       </div>
 
       {/* Navigation Buttons */}

@@ -89,6 +89,63 @@ const EMPTY_WIZARD_CONFIG: WizardFormConfig = {
   lists: [],
 };
 
+const normalizeStringArray = (value: unknown): string[] =>
+  Array.isArray(value) ? value.map((v) => String(v).trim()).filter(Boolean) : [];
+
+const normalizeWizardConfig = (value: unknown): WizardFormConfig => {
+  if (!value || typeof value !== 'object') return EMPTY_WIZARD_CONFIG;
+
+  const raw = value as Record<string, unknown>;
+  const rawSections = Array.isArray(raw.sections) ? raw.sections : [];
+  const rawLists = Array.isArray(raw.lists) ? raw.lists : [];
+
+  const sections: WizardSection[] = rawSections.map((section, sectionIdx) => {
+    const s = (section && typeof section === 'object' ? section : {}) as Record<string, unknown>;
+    const rawFields = Array.isArray(s.fields) ? s.fields : [];
+
+    return {
+      id: String(s.id || `section_${sectionIdx + 1}`),
+      title: String(s.title || ''),
+      fields: rawFields.map((field, fieldIdx) => {
+        const f = (field && typeof field === 'object' ? field : {}) as Record<string, unknown>;
+        const rawType = String(f.type || 'text');
+        const type: WizardFieldType = ['text', 'number', 'textarea', 'select', 'checkbox'].includes(rawType)
+          ? (rawType as WizardFieldType)
+          : 'text';
+
+        return {
+          id: String(f.id || `field_${sectionIdx + 1}_${fieldIdx + 1}`),
+          label: String(f.label || ''),
+          type,
+          required: Boolean(f.required),
+          options: normalizeStringArray(f.options),
+        };
+      }),
+    };
+  });
+
+  const lists: WizardListGroup[] = rawLists.map((list, listIdx) => {
+    const l = (list && typeof list === 'object' ? list : {}) as Record<string, unknown>;
+    const rawSubLists = (Array.isArray(l.sub_lists) ? l.sub_lists : Array.isArray(l.subLists) ? l.subLists : []) as unknown[];
+
+    return {
+      id: String(l.id || `list_${listIdx + 1}`),
+      title: String(l.title || ''),
+      values: normalizeStringArray(l.values),
+      sub_lists: rawSubLists.map((sub, subIdx) => {
+        const s = (sub && typeof sub === 'object' ? sub : {}) as Record<string, unknown>;
+        return {
+          id: String(s.id || `sub_${listIdx + 1}_${subIdx + 1}`),
+          title: String(s.title || ''),
+          values: normalizeStringArray(s.values),
+        };
+      }),
+    };
+  });
+
+  return { sections, lists };
+};
+
 export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
   const rtl = isRTL(locale);
   const supabase = createClient();
@@ -417,15 +474,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
   };
 
   const readWizardConfig = (category: CategoryRow | undefined): WizardFormConfig => {
-    if (!category?.options_json || typeof category.options_json !== 'object') {
-      return EMPTY_WIZARD_CONFIG;
-    }
+    if (!category?.options_json || typeof category.options_json !== 'object') return EMPTY_WIZARD_CONFIG;
+
     const raw = category.options_json as Record<string, unknown>;
-    const wizardForms = (raw.wizard_forms as WizardFormConfig | undefined) || EMPTY_WIZARD_CONFIG;
-    return {
-      sections: Array.isArray(wizardForms.sections) ? wizardForms.sections : [],
-      lists: Array.isArray(wizardForms.lists) ? wizardForms.lists : [],
-    };
+    const source = raw.wizard_forms ?? raw.wizardForms ?? raw.wizard_form ?? raw.wizard;
+    return normalizeWizardConfig(source);
   };
 
   const onSelectWizardCategory = (id: string) => {
@@ -433,6 +486,26 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
     const category = categories.find((c) => c.id === Number(id));
     setWizardConfig(readWizardConfig(category));
   };
+
+  useEffect(() => {
+    if (activeTab !== TAB_WIZARD || categories.length === 0) return;
+
+    if (wizardCategoryId) {
+      const selected = categories.find((c) => c.id === Number(wizardCategoryId));
+      if (selected) {
+        setWizardConfig(readWizardConfig(selected));
+        return;
+      }
+    }
+
+    const firstWithConfig = categories.find((c) => {
+      const cfg = readWizardConfig(c);
+      return cfg.sections.length > 0 || cfg.lists.length > 0;
+    });
+
+    const fallback = firstWithConfig || categories[0];
+    if (fallback) onSelectWizardCategory(String(fallback.id));
+  }, [activeTab, categories, wizardCategoryId]);
 
   const saveWizardConfig = async () => {
     if (!wizardCategoryId) return;
@@ -576,6 +649,19 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
   };
 
   const parentCategories = categories.filter((c) => c.parent_id === null);
+  const wizardSavedByCategory = categories
+    .map((c) => {
+      const cfg = readWizardConfig(c);
+      return {
+        id: c.id,
+        name_en: c.name_en,
+        parent_id: c.parent_id,
+        sections: cfg.sections.length,
+        lists: cfg.lists.length,
+      };
+    })
+    .filter((c) => c.sections > 0 || c.lists > 0);
+
   const childMap = new Map<number, CategoryRow[]>();
   categories
     .filter((c) => c.parent_id !== null)
@@ -896,8 +982,30 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
           </div>
         </div>
       ) : activeTab === TAB_WIZARD ? (
-        <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          <div className="bg-white border border-slate-200 rounded-xl p-4">
+            <h3 className="text-sm font-semibold text-slate-900 mb-3">Saved Wizard Forms</h3>
+            {wizardSavedByCategory.length === 0 ? (
+              <p className="text-sm text-slate-500">No saved wizard forms yet.</p>
+            ) : (
+              <div className="space-y-2 max-h-[70vh] overflow-y-auto">
+                {wizardSavedByCategory.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => onSelectWizardCategory(String(item.id))}
+                    className={`w-full text-left rounded-lg border px-3 py-2 transition ${wizardCategoryId === String(item.id) ? 'border-primary-400 bg-primary-50' : 'border-slate-200 bg-white hover:border-primary-300'}`}
+                  >
+                    <p className="text-sm font-semibold text-slate-900">{item.parent_id ? `↳ ${item.name_en}` : item.name_en}</p>
+                    <p className="text-xs text-slate-500">{item.sections} sections • {item.lists} lists</p>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-4 lg:col-span-2">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <select
               value={wizardCategoryId}
               onChange={(e) => onSelectWizardCategory(e.target.value)}
@@ -918,9 +1026,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
             >
               {savingWizard ? 'Saving...' : 'Save wizard form'}
             </button>
-          </div>
+            </div>
 
-          {wizardCategoryId ? (
+            {wizardCategoryId ? (
             <>
               <div className="border border-slate-200 rounded-lg p-3">
                 <div className="flex items-center justify-between mb-3">
@@ -1032,6 +1140,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
           ) : (
             <p className="text-sm text-slate-500">Select a category to manage its posting wizard sections/lists/sub-lists.</p>
           )}
+          </div>
         </div>
       ) : (
         <div className="bg-white border border-slate-200 rounded-xl p-4">
