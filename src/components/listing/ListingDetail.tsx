@@ -25,6 +25,7 @@ export interface ListingData {
   view_count: number;
   favorite_count: number;
   status: string;
+  phone_visible?: boolean;
   created_at: string;
   photos: string[];
   metadata?: Record<string, unknown>;
@@ -162,7 +163,14 @@ export const ListingDetail: React.FC<ListingDetailProps> = ({ listing, seller, l
 
           {/* Action buttons */}
           <div className="mb-6 border-b border-slate-200 pb-5">
-            <ActionButtons locale={locale} />
+            <ActionButtons
+              locale={locale}
+              listingId={listing.id}
+              listingTitle={listing.title}
+              sellerId={seller.id}
+              sellerPhone={seller.phone}
+              phoneVisible={listing.phone_visible}
+            />
           </div>
 
           {/* Description */}

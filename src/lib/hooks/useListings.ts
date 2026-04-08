@@ -30,6 +30,7 @@ export interface Listing {
   // Joined fields
   seller_name?: string;
   seller_avatar?: string | null;
+  seller_phone?: string | null;
   photos?: string[];
 }
 
@@ -58,7 +59,7 @@ export function useListings(filters: ListingFilters = {}) {
         .from('listings')
         .select(`
           *,
-          profiles(display_name, avatar_url),
+          profiles(display_name, avatar_url, phone),
           photos(photo_url, display_order)
         `)
         .eq('status', 'active')
@@ -106,13 +107,14 @@ export function useListings(filters: ListingFilters = {}) {
 
       // Transform data to flatten joined fields
       const transformed: Listing[] = (data || []).map((row: Record<string, unknown>) => {
-        const profiles = row.profiles as { display_name: string; avatar_url: string | null } | null;
+        const profiles = row.profiles as { display_name: string; avatar_url: string | null; phone: string | null } | null;
         const photos = row.photos as { photo_url: string; display_order: number }[] | null;
 
         return {
           ...row,
           seller_name: profiles?.display_name || '',
           seller_avatar: profiles?.avatar_url || null,
+          seller_phone: profiles?.phone || null,
           photos: (photos || [])
             .sort((a: { display_order: number }, b: { display_order: number }) => a.display_order - b.display_order)
             .map((p: { photo_url: string }) => p.photo_url),

@@ -4,11 +4,15 @@
 import React from 'react';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
-import { Eye, MapPin, Clock, ImageIcon } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Eye, MapPin, Clock, ImageIcon, MessageCircle, Share2, Heart, Flag, Phone, UserPlus } from 'lucide-react';
 import { Locale, isRTL } from '@/lib/i18n/config';
 import { formatCurrency } from '@/lib/constants/currencies';
 import { getCityName } from '@/lib/constants/cities';
 import type { Listing } from '@/lib/hooks/useListings';
+import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/lib/context/AuthContext';
+import { getOrCreateConversation } from '@/lib/chat/actions';
 
 interface ListingCardProps {
   listing: Listing;
@@ -74,6 +78,9 @@ const conditionKeyMap: Record<string, string> = {
 
 export const ListingCard: React.FC<ListingCardProps> = ({ listing, locale }) => {
   const tCommon = useTranslations('common');
+  const router = useRouter();
+  const supabase = createClient();
+  const { user } = useAuth();
   const isRtl = isRTL(locale);
   const title = listing.title;
   const conditionKey = conditionKeyMap[listing.condition] || 'good';
@@ -81,10 +88,123 @@ export const ListingCard: React.FC<ListingCardProps> = ({ listing, locale }) => 
   const conditionColor = conditionColors[listing.condition] || conditionColors.good;
   const timeAgo = getTimeAgo(listing.created_at, locale);
   const photos = listing.photos || [];
+  const [isFavorite, setIsFavorite] = React.useState(false);
+  const [favoriteLoading, setFavoriteLoading] = React.useState(false);
+  const [chatLoading, setChatLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!user) {
+      setIsFavorite(false);
+      return;
+    }
+
+    const checkFavorite = async () => {
+      const { data } = await supabase
+        .from('favorites')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('listing_id', listing.id)
+        .maybeSingle();
+
+      setIsFavorite(Boolean(data));
+    };
+
+    checkFavorite();
+  }, [user, supabase, listing.id]);
+
+  const openLogin = () => router.push(`/${locale}/login`);
+
+  const handleChat = async () => {
+    if (!user) {
+      openLogin();
+      return;
+    }
+    if (user.id === listing.user_id) return;
+
+    setChatLoading(true);
+    try {
+      const conversationId = await getOrCreateConversation(listing.id, user.id, listing.user_id);
+      router.push(`/${locale}/messages?conv=${conversationId}`);
+    } catch {
+      router.push(`/${locale}/messages`);
+    } finally {
+      setChatLoading(false);
+    }
+  };
+
+  const handleAddUser = async () => {
+    if (!user) {
+      openLogin();
+      return;
+    }
+    if (user.id === listing.user_id) return;
+
+    // Adding a user creates (or opens) a conversation so they appear in each other's messages.
+    await handleChat();
+  };
+
+  const handleFavorite = async () => {
+    if (!user) {
+      openLogin();
+      return;
+    }
+    setFavoriteLoading(true);
+    try {
+      if (isFavorite) {
+        await supabase
+          .from('favorites')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('listing_id', listing.id);
+        setIsFavorite(false);
+      } else {
+        await supabase
+          .from('favorites')
+          .insert({ user_id: user.id, listing_id: listing.id });
+        setIsFavorite(true);
+      }
+    } finally {
+      setFavoriteLoading(false);
+    }
+  };
+
+  const handleShare = async () => {
+    const url = `${window.location.origin}/${locale}/listing/${listing.id}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: listing.title, url });
+        return;
+      } catch {
+        // Fall through to clipboard copy.
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      alert('Link copied');
+    } catch {
+      window.prompt('Copy this link:', url);
+    }
+  };
+
+  const handleReport = () => {
+    const url = `${window.location.origin}/${locale}/listing/${listing.id}`;
+    const subject = encodeURIComponent(`Report listing ${listing.id}`);
+    const body = encodeURIComponent(`Please review this listing:\n${url}`);
+    window.location.href = `mailto:support@bazaar.local?subject=${subject}&body=${body}`;
+  };
+
+  const handleCall = () => {
+    const phone = listing.phone_visible ? listing.seller_phone : null;
+    if (!phone) {
+      alert('Phone number is not available.');
+      return;
+    }
+    window.location.href = `tel:${phone}`;
+  };
 
   return (
-    <Link href={`/${locale}/listing/${listing.id}`} className="block group">
-      <div className="bg-white rounded-lg border border-slate-200 overflow-hidden hover:shadow-md transition-shadow duration-200">
+    <div className="bg-white rounded-lg border border-slate-200 overflow-hidden hover:shadow-md transition-shadow duration-200 group">
+      <Link href={`/${locale}/listing/${listing.id}`} className="block">
         {/* Thumbnail */}
         <div className="relative aspect-[4/3] bg-slate-100 flex items-center justify-center">
           {photos.length > 0 ? (
@@ -139,7 +259,70 @@ export const ListingCard: React.FC<ListingCardProps> = ({ listing, locale }) => 
             </span>
           </div>
         </div>
+
+      </Link>
+
+      {/* Quick actions */}
+      <div className={`grid grid-cols-3 gap-2 p-3 border-t border-slate-100 ${isRtl ? 'text-right' : ''}`}>
+        <button
+          type="button"
+          onClick={handleChat}
+          disabled={chatLoading || user?.id === listing.user_id}
+          className="flex items-center justify-center gap-1.5 px-2 py-2 rounded-md text-xs font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+        >
+          <MessageCircle className="w-3.5 h-3.5" />
+          {tCommon('chat')}
+        </button>
+
+        <button
+          type="button"
+          onClick={handleShare}
+          className="flex items-center justify-center gap-1.5 px-2 py-2 rounded-md text-xs font-medium text-slate-700 hover:bg-slate-100"
+        >
+          <Share2 className="w-3.5 h-3.5" />
+          {tCommon('share')}
+        </button>
+
+        <button
+          type="button"
+          onClick={handleFavorite}
+          disabled={favoriteLoading}
+          className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-md text-xs font-medium hover:bg-slate-100 disabled:opacity-50 ${
+            isFavorite ? 'text-red-600' : 'text-slate-700'
+          }`}
+        >
+          <Heart className={`w-3.5 h-3.5 ${isFavorite ? 'fill-current' : ''}`} />
+          {tCommon('favorite')}
+        </button>
+
+        <button
+          type="button"
+          onClick={handleReport}
+          className="flex items-center justify-center gap-1.5 px-2 py-2 rounded-md text-xs font-medium text-slate-700 hover:bg-slate-100"
+        >
+          <Flag className="w-3.5 h-3.5" />
+          {tCommon('report')}
+        </button>
+
+        <button
+          type="button"
+          onClick={handleCall}
+          className="flex items-center justify-center gap-1.5 px-2 py-2 rounded-md text-xs font-medium text-slate-700 hover:bg-slate-100"
+        >
+          <Phone className="w-3.5 h-3.5" />
+          {tCommon('call')}
+        </button>
+
+        <button
+          type="button"
+          onClick={handleAddUser}
+          disabled={chatLoading || user?.id === listing.user_id}
+          className="flex items-center justify-center gap-1.5 px-2 py-2 rounded-md text-xs font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+        >
+          <UserPlus className="w-3.5 h-3.5" />
+          Add User
+        </button>
       </div>
-    </Link>
+    </div>
   );
 };
