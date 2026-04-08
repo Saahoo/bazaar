@@ -5,7 +5,6 @@ import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { LayoutGrid, Heart, MessageCircle, User } from 'lucide-react';
 import { Locale, isRTL } from '@/lib/i18n/config';
-import { MOCK_USERS } from '@/lib/constants/mock-data';
 import { StatsCards } from './StatsCards';
 import { MyAdsTab } from './MyAdsTab';
 import { MyFavoritesTab } from './MyFavoritesTab';
@@ -29,8 +28,6 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ locale }) => {
   const isRtl = isRTL(locale);
   const [activeTab, setActiveTab] = useState<TabType>('ads');
 
-  const currentUser = MOCK_USERS[0];
-
   const tabs: TabItem[] = [
     { key: 'ads', labelKey: 'myAds', icon: <LayoutGrid className="w-5 h-5" /> },
     { key: 'favorites', labelKey: 'myFavorites', icon: <Heart className="w-5 h-5" /> },
@@ -47,7 +44,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ locale }) => {
       case 'messages':
         return <MyMessagesTab locale={locale} />;
       case 'profile':
-        return <MyProfileTab locale={locale} user={currentUser} />;
+        return <MyProfileTab locale={locale} />;
       default:
         return null;
     }

@@ -1,11 +1,12 @@
 // src/components/dashboard/StatsCards.tsx
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Eye, MousePointerClick, Package, Star } from 'lucide-react';
 import { Locale, isRTL } from '@/lib/i18n/config';
-import { MOCK_LISTINGS, MOCK_USERS } from '@/lib/constants/mock-data';
+import { useAuth } from '@/lib/context/AuthContext';
+import { createClient } from '@/lib/supabase/client';
 
 interface StatsCardsProps {
   locale: Locale;
@@ -14,34 +15,66 @@ interface StatsCardsProps {
 export const StatsCards: React.FC<StatsCardsProps> = ({ locale }) => {
   const t = useTranslations('dashboard');
   const isRtl = isRTL(locale);
+  const { user } = useAuth();
+  const supabase = createClient();
+  const [statsData, setStatsData] = useState({
+    totalViews: 0,
+    totalClicks: 0,
+    activeListings: 0,
+    rating: 0,
+  });
 
-  const currentUser = MOCK_USERS[0];
-  const activeListingsCount = MOCK_LISTINGS.filter(
-    (l) => l.user_id === 'u1' && l.status === 'active'
-  ).length;
+  useEffect(() => {
+    if (!user) return;
+
+    const loadStats = async () => {
+      const [{ data: listings }, { data: profile }] = await Promise.all([
+        supabase
+          .from('listings')
+          .select('view_count, favorite_count, status')
+          .eq('user_id', user.id)
+          .is('deleted_at', null),
+        supabase
+          .from('profiles')
+          .select('seller_rating')
+          .eq('id', user.id)
+          .single(),
+      ]);
+
+      const rows = listings || [];
+      setStatsData({
+        totalViews: rows.reduce((sum, item) => sum + (item.view_count || 0), 0),
+        totalClicks: rows.reduce((sum, item) => sum + (item.favorite_count || 0), 0),
+        activeListings: rows.filter((item) => item.status === 'active').length,
+        rating: Number(profile?.seller_rating) || 0,
+      });
+    };
+
+    loadStats();
+  }, [user, supabase]);
 
   const stats = [
     {
       label: t('totalViews'),
-      value: '1,234',
+      value: String(statsData.totalViews),
       icon: <Eye className="w-5 h-5 text-primary-600" />,
       bgColor: 'bg-primary-100',
     },
     {
       label: t('totalClicks'),
-      value: '567',
+      value: String(statsData.totalClicks),
       icon: <MousePointerClick className="w-5 h-5 text-green-600" />,
       bgColor: 'bg-green-100',
     },
     {
       label: t('activeListings'),
-      value: String(activeListingsCount),
+      value: String(statsData.activeListings),
       icon: <Package className="w-5 h-5 text-amber-600" />,
       bgColor: 'bg-amber-100',
     },
     {
       label: t('myRating'),
-      value: String(currentUser.rating),
+      value: statsData.rating > 0 ? statsData.rating.toFixed(1) : '0.0',
       icon: <Star className="w-5 h-5 text-purple-600" />,
       bgColor: 'bg-purple-100',
     },

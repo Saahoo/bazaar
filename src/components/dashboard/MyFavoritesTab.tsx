@@ -1,50 +1,79 @@
 // src/components/dashboard/MyFavoritesTab.tsx
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Heart } from 'lucide-react';
 import { Locale } from '@/lib/i18n/config';
-import { MOCK_LISTINGS } from '@/lib/constants/mock-data';
 import { ListingCard } from '@/components/search/ListingCard';
 import type { Listing } from '@/lib/hooks/useListings';
+import { useAuth } from '@/lib/context/AuthContext';
+import { createClient } from '@/lib/supabase/client';
 
 interface MyFavoritesTabProps {
   locale: Locale;
 }
 
+interface FavoriteRow {
+  listing: Record<string, unknown> | Record<string, unknown>[] | null;
+}
+
 export const MyFavoritesTab: React.FC<MyFavoritesTabProps> = ({ locale }) => {
   const t = useTranslations('dashboard');
-  // Mock favorites: first 4 active listings
-  const mockListings = MOCK_LISTINGS.filter((l) => l.status === 'active').slice(0, 4);
+  const tCommon = useTranslations('common');
+  const { user } = useAuth();
+  const supabase = createClient();
+  const [favoriteListings, setFavoriteListings] = useState<Listing[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Adapt mock data to Listing shape expected by ListingCard
-  const favoriteListings: Listing[] = mockListings.map((m) => ({
-    id: m.id,
-    user_id: m.user_id,
-    category_id: m.category_id,
-    title: m.title.en,
-    description: m.description.en,
-    price: m.price,
-    currency: m.currency,
-    condition: m.condition,
-    phone_visible: true,
-    from_owner: false,
-    urgent: false,
-    negotiable: false,
-    city: m.city,
-    address: null,
-    latitude: null,
-    longitude: null,
-    view_count: m.view_count,
-    favorite_count: m.favorite_count,
-    status: m.status,
-    metadata: {},
-    created_at: m.created_at,
-    expires_at: m.created_at,
-    updated_at: m.created_at,
-    photos: m.photos,
-  }));
+  useEffect(() => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    const loadFavorites = async () => {
+      const { data } = await supabase
+        .from('favorites')
+        .select(`
+          listing:listings(
+            *,
+            profiles(display_name, avatar_url, phone),
+            photos(photo_url, display_order)
+          )
+        `)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      const rows = ((data || []) as FavoriteRow[])
+        .map((row) => (Array.isArray(row.listing) ? row.listing[0] : row.listing))
+        .filter(Boolean)
+        .map((listing) => {
+          const current = listing as Record<string, unknown>;
+          const profiles = current.profiles as { display_name: string; avatar_url: string | null; phone: string | null } | null;
+          const photos = current.photos as { photo_url: string; display_order: number }[] | null;
+
+          return {
+            ...current,
+            seller_name: profiles?.display_name || '',
+            seller_avatar: profiles?.avatar_url || null,
+            seller_phone: profiles?.phone || null,
+            photos: (photos || [])
+              .sort((a, b) => a.display_order - b.display_order)
+              .map((photo) => photo.photo_url),
+          } as Listing;
+        });
+
+      setFavoriteListings(rows as Listing[]);
+      setLoading(false);
+    };
+
+    loadFavorites();
+  }, [user, supabase]);
+
+  if (loading) {
+    return <div className="text-center py-12 text-slate-400">{tCommon('loading')}</div>;
+  }
 
   if (favoriteListings.length === 0) {
     return (
