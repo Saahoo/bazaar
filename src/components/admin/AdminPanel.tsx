@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Shield, Tags, Flag, Save, Trash2 } from 'lucide-react';
 import { Locale, isRTL } from '@/lib/i18n/config';
 import { createClient } from '@/lib/supabase/client';
+import { MAIN_CATEGORIES } from '@/lib/constants/categories';
 
 interface AdminPanelProps {
   locale: Locale;
@@ -45,6 +46,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
   const [loadingCats, setLoadingCats] = useState(true);
   const [loadingListings, setLoadingListings] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [syncingDefaults, setSyncingDefaults] = useState(false);
 
   const [catForm, setCatForm] = useState({
     id: 0,
@@ -86,6 +88,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
     [locale]
   );
 
+  const slugify = (value: string) =>
+    value
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-');
+
   const loadCategories = useCallback(async () => {
     setLoadingCats(true);
     const { data } = await supabase
@@ -95,6 +105,28 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
     setCategories((data as CategoryRow[]) || []);
     setLoadingCats(false);
   }, [supabase]);
+
+  const syncDefaultCategories = useCallback(async () => {
+    setSyncingDefaults(true);
+
+    const payload = MAIN_CATEGORIES.map((cat, idx) => ({
+      name_en: cat.name_en,
+      name_ps: cat.name_ps,
+      name_fa: cat.name_fa,
+      slug: slugify(cat.name_en),
+      icon_name: cat.icon,
+      parent_id: null,
+      sort_order: idx + 1,
+      options_json: {},
+    }));
+
+    await supabase
+      .from('categories')
+      .upsert(payload, { onConflict: 'slug' });
+
+    setSyncingDefaults(false);
+    await loadCategories();
+  }, [supabase, loadCategories]);
 
   const loadListings = useCallback(async () => {
     setLoadingListings(true);
@@ -128,6 +160,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
     loadCategories();
     loadListings();
   }, [loadCategories, loadListings]);
+
+  useEffect(() => {
+    if (!loadingCats && categories.length > 0 && categories.length < MAIN_CATEGORIES.length) {
+      syncDefaultCategories();
+    }
+  }, [loadingCats, categories, syncDefaultCategories]);
 
   const resetCategoryForm = () => {
     setCatForm({
@@ -220,6 +258,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
   };
 
   const parentCategories = categories.filter((c) => c.parent_id === null);
+  const childMap = new Map<number, CategoryRow[]>();
+  categories
+    .filter((c) => c.parent_id !== null)
+    .forEach((child) => {
+      const parentId = child.parent_id as number;
+      const existing = childMap.get(parentId) || [];
+      existing.push(child);
+      childMap.set(parentId, existing);
+    });
 
   return (
     <div className="container mx-auto px-4">
@@ -304,6 +351,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
                   {saving ? 'Saving...' : catForm.id ? 'Update' : 'Create'}
                 </span>
               </button>
+              <button
+                type="button"
+                onClick={syncDefaultCategories}
+                disabled={syncingDefaults}
+                className="px-3.5 py-2 rounded-lg bg-slate-100 text-slate-700 text-sm font-medium hover:bg-slate-200 disabled:opacity-60"
+              >
+                {syncingDefaults ? 'Syncing...' : 'Sync all default categories'}
+              </button>
               {catForm.id > 0 && (
                 <button onClick={resetCategoryForm} className="px-3.5 py-2 rounded-lg bg-slate-100 text-slate-700 text-sm font-medium hover:bg-slate-200">
                   Cancel edit
@@ -318,27 +373,45 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
               <p className="text-slate-500 text-sm">Loading...</p>
             ) : (
               <div className="space-y-2 max-h-[70vh] overflow-y-auto">
-                {categories.map((cat) => (
-                  <div key={cat.id} className="border border-slate-200 rounded-lg p-3">
-                    <div className={`flex items-start justify-between gap-2 ${rtl ? 'flex-row-reverse' : ''}`}>
-                      <div className={`min-w-0 ${rtl ? 'text-right' : 'text-left'}`}>
-                        <p className="text-sm font-semibold text-slate-900 truncate">
-                          {cat.parent_id ? '↳ ' : ''}{cat.name_en}
-                        </p>
-                        <p className="text-xs text-slate-500 truncate">/{cat.slug}</p>
+                {parentCategories.map((parent) => {
+                  const children = childMap.get(parent.id) || [];
+                  return (
+                    <div key={parent.id} className="border border-slate-200 rounded-lg p-3">
+                      <div className={`flex items-start justify-between gap-2 ${rtl ? 'flex-row-reverse' : ''}`}>
+                        <div className={`min-w-0 ${rtl ? 'text-right' : 'text-left'}`}>
+                          <p className="text-sm font-semibold text-slate-900 truncate">{parent.name_en}</p>
+                          <p className="text-xs text-slate-500 truncate">/{parent.slug}</p>
+                        </div>
+                        <div className={`flex items-center gap-1 ${rtl ? 'flex-row-reverse' : ''}`}>
+                          <button onClick={() => editCategory(parent)} className="px-2 py-1 text-xs rounded bg-slate-100 text-slate-700 hover:bg-slate-200">Edit</button>
+                          <button onClick={() => deleteCategory(parent.id)} className="px-2 py-1 text-xs rounded bg-red-50 text-red-600 hover:bg-red-100">
+                            <span className={`inline-flex items-center gap-1 ${rtl ? 'flex-row-reverse' : ''}`}>
+                              <Trash2 className="w-3 h-3" />
+                              Delete
+                            </span>
+                          </button>
+                        </div>
                       </div>
-                      <div className={`flex items-center gap-1 ${rtl ? 'flex-row-reverse' : ''}`}>
-                        <button onClick={() => editCategory(cat)} className="px-2 py-1 text-xs rounded bg-slate-100 text-slate-700 hover:bg-slate-200">Edit</button>
-                        <button onClick={() => deleteCategory(cat.id)} className="px-2 py-1 text-xs rounded bg-red-50 text-red-600 hover:bg-red-100">
-                          <span className={`inline-flex items-center gap-1 ${rtl ? 'flex-row-reverse' : ''}`}>
-                            <Trash2 className="w-3 h-3" />
-                            Delete
-                          </span>
-                        </button>
-                      </div>
+
+                      {children.length > 0 && (
+                        <div className="mt-2 space-y-1.5 border-t border-slate-100 pt-2">
+                          {children.map((child) => (
+                            <div key={child.id} className={`flex items-center justify-between text-sm ${rtl ? 'flex-row-reverse' : ''}`}>
+                              <div className={`min-w-0 ${rtl ? 'text-right' : 'text-left'}`}>
+                                <p className="text-slate-700 truncate">↳ {child.name_en}</p>
+                                <p className="text-xs text-slate-500 truncate">/{child.slug}</p>
+                              </div>
+                              <div className={`flex items-center gap-1 ${rtl ? 'flex-row-reverse' : ''}`}>
+                                <button onClick={() => editCategory(child)} className="px-2 py-1 text-xs rounded bg-slate-100 text-slate-700 hover:bg-slate-200">Edit</button>
+                                <button onClick={() => deleteCategory(child.id)} className="px-2 py-1 text-xs rounded bg-red-50 text-red-600 hover:bg-red-100">Delete</button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
