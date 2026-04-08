@@ -41,6 +41,35 @@ export const MyAdsTab: React.FC<MyAdsTabProps> = ({ locale }) => {
   const supabase = createClient();
   const [myListings, setMyListings] = useState<DashboardListing[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteTarget, setDeleteTarget] = useState<DashboardListing | null>(null);
+  const [deleteReason, setDeleteReason] = useState('');
+  const [deleteNote, setDeleteNote] = useState('');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const deleteReasonOptions =
+    locale === 'ps'
+      ? [
+          { value: 'sold', label: 'توکی خرڅ شو' },
+          { value: 'no_longer_selling', label: 'نور یې پلورل نه غواړم' },
+          { value: 'posted_by_mistake', label: 'په تېروتنه پوسټ شوی و' },
+          { value: 'not_available', label: 'توکی نور نشته' },
+          { value: 'other', label: 'نور' },
+        ]
+      : locale === 'fa'
+        ? [
+            { value: 'sold', label: 'کالا فروخته شد' },
+            { value: 'no_longer_selling', label: 'دیگر نمی‌خواهم بفروشم' },
+            { value: 'posted_by_mistake', label: 'به اشتباه ثبت شده بود' },
+            { value: 'not_available', label: 'کالا دیگر موجود نیست' },
+            { value: 'other', label: 'سایر' },
+          ]
+        : [
+            { value: 'sold', label: 'Item is sold' },
+            { value: 'no_longer_selling', label: "Don't want to sell anymore" },
+            { value: 'posted_by_mistake', label: 'Posted by mistake' },
+            { value: 'not_available', label: 'Item is no longer available' },
+            { value: 'other', label: 'Other' },
+          ];
 
   useEffect(() => {
     if (!user) {
@@ -62,6 +91,45 @@ export const MyAdsTab: React.FC<MyAdsTabProps> = ({ locale }) => {
 
     loadListings();
   }, [user, supabase]);
+
+  const openDeleteDialog = (listing: DashboardListing) => {
+    setDeleteTarget(listing);
+    setDeleteReason('');
+    setDeleteNote('');
+  };
+
+  const closeDeleteDialog = () => {
+    setDeleteTarget(null);
+    setDeleteReason('');
+    setDeleteNote('');
+  };
+
+  const confirmDelete = async () => {
+    if (!user || !deleteTarget || !deleteReason) return;
+
+    setDeletingId(deleteTarget.id);
+
+    const { error } = await supabase
+      .from('listings')
+      .update({
+        deleted_at: new Date().toISOString(),
+        deletion_reason_code: deleteReason,
+        deletion_reason_note: deleteReason === 'other' ? deleteNote || null : null,
+        status: deleteReason === 'sold' ? 'sold' : 'expired',
+      })
+      .eq('id', deleteTarget.id)
+      .eq('user_id', user.id)
+      .is('deleted_at', null);
+
+    setDeletingId(null);
+
+    if (error) {
+      return;
+    }
+
+    setMyListings((prev) => prev.filter((item) => item.id !== deleteTarget.id));
+    closeDeleteDialog();
+  };
 
   if (loading) {
     return <div className="text-center py-12 text-slate-400">{tCommon('loading')}</div>;
@@ -133,6 +201,7 @@ export const MyAdsTab: React.FC<MyAdsTabProps> = ({ locale }) => {
                 </button>
                 <button
                   type="button"
+                  onClick={() => openDeleteDialog(listing)}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
                   title={tCommon('delete')}
                 >
@@ -149,6 +218,78 @@ export const MyAdsTab: React.FC<MyAdsTabProps> = ({ locale }) => {
         <div className="text-center py-12 text-slate-500">
           <ImageIcon className="w-12 h-12 mx-auto mb-3 text-slate-300" />
           <p>{t('myAds')}</p>
+        </div>
+      )}
+
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50">
+          <div className={`w-full max-w-md bg-white rounded-xl shadow-xl border border-slate-200 p-5 ${isRtl ? 'text-right' : 'text-left'}`}>
+            <h3 className="text-base font-semibold text-slate-900 mb-2">
+              {locale === 'en'
+                ? 'Why are you deleting this listing?'
+                : locale === 'ps'
+                  ? 'ولې دا اعلان حذف کوئ؟'
+                  : 'چرا این آگهی را حذف می‌کنید؟'}
+            </h3>
+            <p className="text-sm text-slate-500 mb-4 truncate">{deleteTarget.title}</p>
+
+            <div className="space-y-2 mb-4">
+              {deleteReasonOptions.map((opt) => (
+                <label
+                  key={opt.value}
+                  className={`flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer transition ${
+                    deleteReason === opt.value
+                      ? 'border-primary-500 bg-primary-50'
+                      : 'border-slate-200 hover:border-slate-300'
+                  } ${isRtl ? 'flex-row-reverse' : ''}`}
+                >
+                  <input
+                    type="radio"
+                    name="deleteReason"
+                    value={opt.value}
+                    checked={deleteReason === opt.value}
+                    onChange={(e) => setDeleteReason(e.target.value)}
+                    className="accent-primary-600"
+                  />
+                  <span className="text-sm text-slate-700">{opt.label}</span>
+                </label>
+              ))}
+            </div>
+
+            {deleteReason === 'other' && (
+              <textarea
+                value={deleteNote}
+                onChange={(e) => setDeleteNote(e.target.value)}
+                placeholder={
+                  locale === 'en'
+                    ? 'Please add a short reason...'
+                    : locale === 'ps'
+                      ? 'مهرباني وکړئ لنډ دلیل ولیکئ...'
+                      : 'لطفا دلیل کوتاه بنویسید...'
+                }
+                className={`w-full px-3 py-2.5 mb-4 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-200 ${isRtl ? 'text-right' : 'text-left'}`}
+                rows={3}
+              />
+            )}
+
+            <div className={`flex items-center gap-2 ${isRtl ? 'flex-row-reverse' : 'justify-end'}`}>
+              <button
+                type="button"
+                onClick={closeDeleteDialog}
+                className="px-3.5 py-2 text-sm font-medium text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200"
+              >
+                {tCommon('cancel')}
+              </button>
+              <button
+                type="button"
+                onClick={confirmDelete}
+                disabled={!deleteReason || deletingId === deleteTarget.id || (deleteReason === 'other' && !deleteNote.trim())}
+                className="px-3.5 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {deletingId === deleteTarget.id ? tCommon('loading') : tCommon('delete')}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

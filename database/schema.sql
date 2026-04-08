@@ -97,7 +97,9 @@ CREATE TABLE listings (
   created_at TIMESTAMPTZ DEFAULT NOW(),
   expires_at TIMESTAMPTZ DEFAULT (NOW() + INTERVAL '30 days'),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
-  deleted_at TIMESTAMPTZ
+  deleted_at TIMESTAMPTZ,
+  deletion_reason_code VARCHAR(50),
+  deletion_reason_note TEXT
 );
 
 CREATE INDEX idx_listings_user ON listings(user_id);
