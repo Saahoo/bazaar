@@ -10,6 +10,8 @@ interface PageProps {
   params: Promise<{ lang: string; id: string }>;
 }
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 export default async function ListingPage({ params }: PageProps) {
   const { lang, id } = await params;
 
@@ -20,18 +22,7 @@ export default async function ListingPage({ params }: PageProps) {
   const locale = lang as Locale;
   const supabase = await createClient();
 
-  // Fetch listing with seller profile and photos
-  const { data: listing } = await supabase
-    .from('listings')
-    .select(`
-      *,
-      profiles(id, display_name, avatar_url, phone, bio, city, district, address_line, profile_type, age, sex, company_name, occupation, website, verified_phone, is_seller, seller_rating, seller_badge, created_at),
-      photos(photo_url, display_order)
-    `)
-    .eq('id', id)
-    .maybeSingle();
-
-  if (!listing) {
+  if (!UUID_PATTERN.test(id)) {
     const mockListing = getMockListing(id);
     if (!mockListing) {
       notFound();
@@ -87,9 +78,28 @@ export default async function ListingPage({ params }: PageProps) {
     );
   }
 
-  // Flatten joined data
-  const profile = listing.profiles as Record<string, unknown> | null;
-  const photos = (listing.photos as { photo_url: string; display_order: number }[] | null) || [];
+  const { data: listing } = await supabase
+    .from('listings')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle();
+
+  if (!listing) {
+    notFound();
+  }
+
+  const [{ data: profile }, { data: photos }] = await Promise.all([
+    supabase
+      .from('profiles')
+      .select('id, display_name, avatar_url, phone, bio, city, district, address_line, profile_type, age, sex, company_name, occupation, website, verified_phone, is_seller, seller_rating, seller_badge, created_at')
+      .eq('id', listing.user_id)
+      .maybeSingle(),
+    supabase
+      .from('photos')
+      .select('photo_url, display_order')
+      .eq('listing_id', id)
+      .order('display_order', { ascending: true }),
+  ]);
 
   const seller = {
     id: (profile?.id as string) || listing.user_id,
@@ -109,9 +119,7 @@ export default async function ListingPage({ params }: PageProps) {
 
   const listingData = {
     ...listing,
-    photos: photos
-      .sort((a, b) => a.display_order - b.display_order)
-      .map((p) => p.photo_url),
+    photos: (photos || []).map((p) => p.photo_url),
   };
 
   // Increment view count (fire and forget)
