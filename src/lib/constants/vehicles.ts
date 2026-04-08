@@ -13,6 +13,7 @@ export interface VehicleMake {
 export interface VehicleModel {
   key: string;
   name: string;
+  options?: readonly string[];
 }
 
 // Vehicle types with translations
@@ -566,3 +567,87 @@ export const TRIM_LEVELS = [
   'base', 'standard', 'comfort', 'gl', 'xl', 'limited', 'premium',
   'sport', 'titanium', 'platinum', 'executive',
 ] as const;
+
+// ── Options available by vehicle type ──────────────────────────
+// Base options that almost every car type can have
+const BASE_CAR_OPTIONS: VehicleOption[] = [
+  'abs', 'airbags', 'bluetooth', 'fogLights', 'alloyWheels', 'tintedWindows',
+];
+
+// Options typically found on premium / higher-trim cars
+const PREMIUM_OPTIONS: VehicleOption[] = [
+  ...BASE_CAR_OPTIONS,
+  'leatherSeats', 'touchScreen', 'sunroof', 'rearCamera', 'heatedSeats',
+  'cruiseControl', 'keylessEntry', 'navigation', 'parkingSensors', 'roofRack',
+];
+
+// Default options per vehicle type (without considering make)
+const OPTIONS_BY_VEHICLE_TYPE: Record<VehicleType, VehicleOption[]> = {
+  sedan: [...BASE_CAR_OPTIONS, 'leatherSeats', 'touchScreen', 'rearCamera', 'cruiseControl',
+    'keylessEntry', 'navigation', 'parkingSensors', 'sunroof', 'heatedSeats'],
+  suv: [...PREMIUM_OPTIONS],
+  van: [...BASE_CAR_OPTIONS, 'rearCamera', 'parkingSensors', 'touchScreen', 'cruiseControl', 'roofRack'],
+  truck: ['abs', 'airbags', 'bluetooth', 'fogLights', 'tintedWindows', 'rearCamera', 'parkingSensors'],
+  pickup: [...BASE_CAR_OPTIONS, 'rearCamera', 'parkingSensors', 'touchScreen', 'cruiseControl', 'roofRack'],
+  hatchback: [...BASE_CAR_OPTIONS, 'touchScreen', 'rearCamera', 'keylessEntry', 'parkingSensors'],
+  coupe: [...PREMIUM_OPTIONS],
+  motorcycle: ['abs'],
+};
+
+// Premium makes that unlock all options for their vehicle type
+const PREMIUM_MAKES = new Set([
+  'bmw', 'mercedesBenz', 'audi', 'ford',
+]);
+
+// Budget makes where only basic options are available
+const BUDGET_MAKES = new Set([
+  'suzuki', 'bajaj', 'tata',
+]);
+
+// Budget option subset (for budget makes)
+const BUDGET_OPTIONS: VehicleOption[] = [
+  'abs', 'airbags', 'bluetooth', 'fogLights', 'tintedWindows', 'alloyWheels',
+];
+
+/**
+ * Get the list of vehicle options available for a given combination.
+ * - vehicleType determines the base option set
+ * - make refines: premium makes get all options, budget makes get fewer
+ * - model can override if it has its own `options` array
+ */
+export function getOptionsForVehicle(
+  vehicleType: VehicleType,
+  makeKey?: string,
+  modelKey?: string,
+): VehicleOption[] {
+  // If we can find the specific model and it has options defined, use those
+  if (makeKey && modelKey) {
+    const makes = getMakesForType(vehicleType);
+    const make = makes.find((m) => m.key === makeKey);
+    const model = make?.models.find((m) => m.key === modelKey);
+    if (model?.options && model.options.length > 0) {
+      return model.options as VehicleOption[];
+    }
+  }
+
+  // Get base options for vehicle type
+  const typeOptions = OPTIONS_BY_VEHICLE_TYPE[vehicleType] || BASE_CAR_OPTIONS;
+
+  // Refine by make tier
+  if (makeKey) {
+    if (PREMIUM_MAKES.has(makeKey)) {
+      // Premium makes: union of type options + premium options (deduplicated)
+      const combined = new Set([...typeOptions, ...PREMIUM_OPTIONS]);
+      return VEHICLE_OPTIONS.filter((opt) => combined.has(opt));
+    }
+    if (BUDGET_MAKES.has(makeKey)) {
+      // Budget makes: intersection of type options and budget options
+      const budgetSet = new Set(BUDGET_OPTIONS);
+      return typeOptions.filter((opt) => budgetSet.has(opt));
+    }
+  }
+
+  // Keep order consistent with VEHICLE_OPTIONS
+  const typeSet = new Set(typeOptions);
+  return VEHICLE_OPTIONS.filter((opt) => typeSet.has(opt));
+}

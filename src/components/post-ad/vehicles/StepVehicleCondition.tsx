@@ -6,8 +6,8 @@ import { isRTL, Locale } from '@/lib/i18n/config';
 import { CURRENCIES } from '@/lib/constants/currencies';
 import {
   VEHICLE_COLORS, VehicleColor, HandDrive, HAND_DRIVES,
-  DAMAGE_TYPES, DamageType, VEHICLE_OPTIONS, VehicleOption,
-  AFGHANISTAN_CITIES,
+  DAMAGE_TYPES, DamageType, VehicleOption,
+  AFGHANISTAN_CITIES, VehicleType, getOptionsForVehicle,
 } from '@/lib/constants/vehicles';
 
 export interface VehicleConditionData {
@@ -26,12 +26,18 @@ export interface VehicleConditionData {
 
 interface StepVehicleConditionProps {
   locale: Locale;
+  vehicleType: VehicleType;
+  make: string;
+  model: string;
   data: VehicleConditionData;
   onChange: (data: Partial<VehicleConditionData>) => void;
 }
 
 export const StepVehicleCondition: React.FC<StepVehicleConditionProps> = ({
   locale,
+  vehicleType,
+  make,
+  model,
   data,
   onChange,
 }) => {
@@ -39,6 +45,8 @@ export const StepVehicleCondition: React.FC<StepVehicleConditionProps> = ({
   const tForm = useTranslations('form');
   const tCommon = useTranslations('common');
   const rtl = isRTL(locale);
+
+  const availableOptions = getOptionsForVehicle(vehicleType, make, model);
 
   const inputClass =
     `w-full px-4 py-2.5 border border-slate-300 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-500 ${rtl ? 'text-right' : 'text-left'}`;
@@ -260,7 +268,7 @@ export const StepVehicleCondition: React.FC<StepVehicleConditionProps> = ({
           {t('otherOptions')}
         </h3>
         <div className={`flex flex-wrap gap-2 ${rtl ? 'flex-row-reverse' : ''}`}>
-          {VEHICLE_OPTIONS.map((opt) => {
+          {availableOptions.map((opt) => {
             const isSelected = (data.otherOptions || []).includes(opt);
             return (
               <button

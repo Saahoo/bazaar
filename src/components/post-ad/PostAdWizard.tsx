@@ -572,6 +572,9 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         return (
           <StepVehicleCondition
             locale={locale}
+            vehicleType={vhData.vehicleType as VehicleTypeEnum}
+            make={vhData.specs.make}
+            model={vhData.specs.model}
             data={vhData.condition}
             onChange={(data) =>
               setVhData((prev) => ({
