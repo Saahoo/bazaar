@@ -14,6 +14,7 @@ export interface VehicleModel {
   key: string;
   name: string;
   options?: readonly string[];
+  trimLevels?: readonly string[];
 }
 
 // Vehicle types with translations
@@ -567,6 +568,41 @@ export const TRIM_LEVELS = [
   'base', 'standard', 'comfort', 'gl', 'xl', 'limited', 'premium',
   'sport', 'titanium', 'platinum', 'executive',
 ] as const;
+export type TrimLevel = typeof TRIM_LEVELS[number];
+
+const TRIMS_BY_VEHICLE_TYPE: Record<VehicleType, TrimLevel[]> = {
+  sedan: ['base', 'standard', 'comfort', 'gl', 'xl', 'limited', 'premium', 'sport', 'executive'],
+  suv: ['standard', 'comfort', 'limited', 'premium', 'sport', 'titanium', 'platinum', 'executive'],
+  van: ['base', 'standard', 'comfort', 'gl', 'xl', 'limited'],
+  truck: ['base', 'standard', 'gl', 'xl', 'limited', 'premium', 'titanium'],
+  pickup: ['base', 'standard', 'gl', 'xl', 'limited', 'sport', 'titanium', 'platinum'],
+  hatchback: ['base', 'standard', 'comfort', 'gl', 'xl', 'sport'],
+  coupe: ['standard', 'comfort', 'limited', 'premium', 'sport', 'executive'],
+  motorcycle: ['base', 'standard', 'sport', 'premium'],
+};
+
+const PREMIUM_TRIMS: TrimLevel[] = ['limited', 'premium', 'sport', 'titanium', 'platinum', 'executive'];
+const BUDGET_TRIMS: TrimLevel[] = ['base', 'standard', 'comfort', 'gl', 'xl'];
+
+const MODEL_TRIM_OVERRIDES: Record<string, TrimLevel[]> = {
+  landCruiser: ['limited', 'premium', 'sport', 'titanium', 'platinum', 'executive'],
+  prado: ['limited', 'premium', 'sport', 'titanium', 'executive'],
+  hilux: ['base', 'standard', 'gl', 'xl', 'limited', 'sport'],
+  corolla: ['base', 'standard', 'comfort', 'gl', 'xl', 'limited'],
+  camry: ['standard', 'comfort', 'limited', 'premium', 'sport', 'executive'],
+  civic: ['base', 'standard', 'sport', 'premium'],
+  accord: ['standard', 'comfort', 'limited', 'premium', 'sport'],
+  cClass: ['standard', 'premium', 'sport', 'executive'],
+  eClass: ['comfort', 'premium', 'sport', 'executive', 'platinum'],
+  sClass: ['limited', 'premium', 'sport', 'titanium', 'platinum', 'executive'],
+  x5: ['limited', 'premium', 'sport', 'titanium', 'platinum'],
+  x7: ['premium', 'sport', 'titanium', 'platinum', 'executive'],
+  f150: ['base', 'standard', 'xl', 'limited', 'sport', 'titanium', 'platinum'],
+  ranger: ['base', 'standard', 'gl', 'xl', 'limited', 'sport'],
+  gs150: ['base', 'standard', 'sport'],
+  ninja: ['standard', 'sport', 'premium'],
+  cbr: ['standard', 'sport', 'premium'],
+};
 
 // ── Options available by vehicle type ──────────────────────────
 // Base options that almost every car type can have
@@ -650,4 +686,38 @@ export function getOptionsForVehicle(
   // Keep order consistent with VEHICLE_OPTIONS
   const typeSet = new Set(typeOptions);
   return VEHICLE_OPTIONS.filter((opt) => typeSet.has(opt));
+}
+
+export function getTrimLevelsForVehicle(
+  vehicleType: VehicleType,
+  makeKey?: string,
+  modelKey?: string,
+): TrimLevel[] {
+  if (makeKey && modelKey) {
+    const makes = getMakesForType(vehicleType);
+    const make = makes.find((m) => m.key === makeKey);
+    const model = make?.models.find((m) => m.key === modelKey);
+    if (model?.trimLevels && model.trimLevels.length > 0) {
+      return model.trimLevels as TrimLevel[];
+    }
+    const modelOverride = MODEL_TRIM_OVERRIDES[modelKey];
+    if (modelOverride && modelOverride.length > 0) {
+      return modelOverride;
+    }
+  }
+
+  const typeTrims = TRIMS_BY_VEHICLE_TYPE[vehicleType] || [...TRIM_LEVELS];
+
+  if (makeKey) {
+    if (PREMIUM_MAKES.has(makeKey)) {
+      const combined = new Set<TrimLevel>([...typeTrims, ...PREMIUM_TRIMS]);
+      return TRIM_LEVELS.filter((trim) => combined.has(trim));
+    }
+    if (BUDGET_MAKES.has(makeKey)) {
+      const budgetSet = new Set<TrimLevel>(BUDGET_TRIMS);
+      return typeTrims.filter((trim) => budgetSet.has(trim));
+    }
+  }
+
+  return typeTrims;
 }

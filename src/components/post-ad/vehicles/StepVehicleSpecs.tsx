@@ -7,7 +7,7 @@ import {
   VehicleType, EngineType, GearType, BodyType,
   getMakesForType, getModelsForMake, getMakeName,
   ENGINE_TYPES, GEAR_TYPES, BODY_TYPES, ENGINE_SIZES,
-  TRIM_LEVELS, getYearRange,
+  getTrimLevelsForVehicle, getYearRange,
 } from '@/lib/constants/vehicles';
 
 export interface VehicleSpecsData {
@@ -44,6 +44,7 @@ export const StepVehicleSpecs: React.FC<StepVehicleSpecsProps> = ({
 
   const makes = getMakesForType(vehicleType);
   const models = data.make ? getModelsForMake(vehicleType, data.make) : [];
+  const trimLevels = getTrimLevelsForVehicle(vehicleType, data.make, data.model);
   const years = getYearRange();
 
   const handleMakeChange = (makeKey: string) => {
@@ -142,10 +143,11 @@ export const StepVehicleSpecs: React.FC<StepVehicleSpecsProps> = ({
           value={data.trimLevel}
           onChange={(e) => onChange({ trimLevel: e.target.value })}
           className={`${inputClass} bg-white`}
+          disabled={!data.make}
           dir={rtl ? 'rtl' : 'ltr'}
         >
-          <option value="">{t('selectTrim')}</option>
-          {TRIM_LEVELS.map((tl) => (
+          <option value="">{data.make ? t('selectTrim') : t('selectMakeFirst')}</option>
+          {trimLevels.map((tl) => (
             <option key={tl} value={tl}>{t(`trim_${tl}`)}</option>
           ))}
         </select>
