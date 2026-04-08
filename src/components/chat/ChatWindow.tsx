@@ -3,6 +3,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
+import Link from 'next/link';
 import { Send, ArrowLeft, ArrowRight } from 'lucide-react';
 import { Locale, isRTL } from '@/lib/i18n/config';
 import { useAuth } from '@/lib/context/AuthContext';
@@ -19,6 +20,7 @@ interface ChatWindowProps {
   locale: Locale;
   conversation: Conversation;
   onBack: () => void;
+  onDelete: (conv: Conversation) => void;
 }
 
 function formatTime(dateString: string): string {
@@ -45,7 +47,7 @@ function formatDateSeparator(dateString: string, locale: Locale): string {
   });
 }
 
-export const ChatWindow: React.FC<ChatWindowProps> = ({ locale, conversation, onBack }) => {
+export const ChatWindow: React.FC<ChatWindowProps> = ({ locale, conversation, onBack, onDelete }) => {
   const t = useTranslations('common');
   const { user } = useAuth();
   const isRtl = isRTL(locale);
@@ -76,7 +78,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ locale, conversation, on
 
     // Mark as read
     if (user) {
-      markMessagesAsRead(conversation.id, user.id);
+      markMessagesAsRead(conversation.id, user.id).catch(() => {});
     }
 
     return () => { cancelled = true; };
@@ -93,7 +95,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ locale, conversation, on
 
       // Mark as read if not from current user
       if (user && newMsg.sender_id !== user.id) {
-        markMessagesAsRead(conversation.id, user.id);
+        markMessagesAsRead(conversation.id, user.id).catch(() => {});
       }
     });
 
@@ -153,17 +155,38 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ locale, conversation, on
         >
           <BackArrow className="w-5 h-5" />
         </button>
-        <div className="w-9 h-9 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center font-semibold text-sm flex-shrink-0">
-          {(conversation.other_user_name || 'U').charAt(0).toUpperCase()}
+        <div className="w-9 h-9 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center font-semibold text-sm flex-shrink-0 overflow-hidden">
+          {conversation.other_user_avatar ? (
+            <img src={conversation.other_user_avatar} alt={conversation.other_user_name || 'User'} className="w-full h-full object-cover" />
+          ) : (
+            (conversation.other_user_name || 'U').charAt(0).toUpperCase()
+          )}
         </div>
         <div className={`flex-1 min-w-0 ${isRtl ? 'text-right' : 'text-left'}`}>
-          <p className="text-sm font-semibold text-slate-900 truncate">
-            {conversation.other_user_name || 'User'}
-          </p>
+          {conversation.other_user_id ? (
+            <Link
+              href={`/${locale}/profile/${conversation.other_user_id}`}
+              className="text-sm font-semibold text-slate-900 truncate hover:text-primary-600 hover:underline"
+            >
+              {conversation.other_user_name || 'User'}
+            </Link>
+          ) : (
+            <p className="text-sm font-semibold text-slate-900 truncate">
+              {conversation.other_user_name || 'User'}
+            </p>
+          )}
           {conversation.listing_title && (
             <p className="text-xs text-slate-500 truncate">{conversation.listing_title}</p>
           )}
         </div>
+        <button
+          onClick={() => onDelete(conversation)}
+          className="text-xs text-slate-500 hover:text-red-600 px-2 py-1 rounded hover:bg-red-50"
+          aria-label={t('delete')}
+          title={t('delete')}
+        >
+          {t('delete')}
+        </button>
       </div>
 
       {/* Messages Area */}

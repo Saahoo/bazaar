@@ -308,6 +308,10 @@ CREATE POLICY "Users can create conversations"
   ON conversations FOR INSERT
   WITH CHECK (auth.uid() = buyer_id);
 
+CREATE POLICY "Users can delete own conversations"
+  ON conversations FOR DELETE
+  USING (auth.uid() = buyer_id OR auth.uid() = seller_id);
+
 -- Messages: conversation participants only
 CREATE POLICY "Users can view messages in own conversations"
   ON messages FOR SELECT
@@ -326,6 +330,23 @@ CREATE POLICY "Users can send messages in own conversations"
     EXISTS (
       SELECT 1 FROM conversations c
       WHERE c.id = conversation_id
+      AND (c.buyer_id = auth.uid() OR c.seller_id = auth.uid())
+    )
+  );
+
+CREATE POLICY "Users can mark messages as read"
+  ON messages FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM conversations c
+      WHERE c.id = messages.conversation_id
+      AND (c.buyer_id = auth.uid() OR c.seller_id = auth.uid())
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM conversations c
+      WHERE c.id = messages.conversation_id
       AND (c.buyer_id = auth.uid() OR c.seller_id = auth.uid())
     )
   );

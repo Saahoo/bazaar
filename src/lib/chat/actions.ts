@@ -11,6 +11,7 @@ export interface Conversation {
   created_at: string;
   // Joined fields
   listing_title?: string;
+  other_user_id?: string;
   other_user_name?: string;
   other_user_avatar?: string | null;
   last_message?: string;
@@ -113,6 +114,7 @@ export async function fetchConversations(userId: string): Promise<Conversation[]
       const seller = conv.seller as { display_name: string; avatar_url: string | null } | null;
 
       const isBuyer = conv.buyer_id === userId;
+      const otherUserId = (isBuyer ? conv.seller_id : conv.buyer_id) as string;
       const other = isBuyer ? seller : buyer;
 
       // Last message
@@ -140,6 +142,7 @@ export async function fetchConversations(userId: string): Promise<Conversation[]
         last_message_at: conv.last_message_at as string,
         created_at: conv.created_at as string,
         listing_title: listing?.title || '',
+        other_user_id: otherUserId,
         other_user_name: other?.display_name || 'User',
         other_user_avatar: other?.avatar_url || null,
         last_message: lastMsg?.message_text || '',
@@ -210,12 +213,24 @@ export async function sendMessage(
 
 /** Mark messages as read */
 export async function markMessagesAsRead(conversationId: string, userId: string) {
-  await supabase
+  const { error } = await supabase
     .from('messages')
     .update({ is_read: true, read_at: new Date().toISOString() })
     .eq('conversation_id', conversationId)
     .neq('sender_id', userId)
     .eq('is_read', false);
+
+  if (error) throw error;
+}
+
+/** Delete conversation for current participant (messages are cascade-deleted) */
+export async function deleteConversation(conversationId: string): Promise<void> {
+  const { error } = await supabase
+    .from('conversations')
+    .delete()
+    .eq('id', conversationId);
+
+  if (error) throw error;
 }
 
 /** Get total unread count across all conversations */

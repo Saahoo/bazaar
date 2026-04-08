@@ -10,6 +10,7 @@ import {
   Conversation,
   fetchConversations,
   subscribeToConversations,
+  deleteConversation,
 } from '@/lib/chat/actions';
 import { ConversationList } from './ConversationList';
 import { ChatWindow } from './ChatWindow';
@@ -27,6 +28,32 @@ export const MessagesPage: React.FC<MessagesPageProps> = ({ locale, conversation
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConv, setActiveConv] = useState<Conversation | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const handleSelectConversation = useCallback((conv: Conversation) => {
+    setActiveConv({ ...conv, unread_count: 0 });
+    setConversations((prev) =>
+      prev.map((c) => (c.id === conv.id ? { ...c, unread_count: 0 } : c))
+    );
+  }, []);
+
+  const handleDeleteConversation = useCallback(async (conv: Conversation) => {
+    const confirmed = window.confirm(
+      locale === 'en'
+        ? 'Delete this conversation?'
+        : locale === 'ps'
+          ? 'دا مکالمه حذف شي؟'
+          : 'این گفتگو حذف شود؟'
+    );
+    if (!confirmed) return;
+
+    try {
+      await deleteConversation(conv.id);
+      setConversations((prev) => prev.filter((c) => c.id !== conv.id));
+      setActiveConv((prev) => (prev?.id === conv.id ? null : prev));
+    } catch {
+      // Keep UX simple for now
+    }
+  }, [locale]);
 
   const loadConversations = useCallback(async () => {
     if (!user) return;
@@ -95,7 +122,8 @@ export const MessagesPage: React.FC<MessagesPageProps> = ({ locale, conversation
               locale={locale}
               conversations={conversations}
               activeId={activeConv?.id || null}
-              onSelect={(conv) => setActiveConv(conv)}
+              onSelect={handleSelectConversation}
+              onDelete={handleDeleteConversation}
               loading={loading}
             />
           </div>
@@ -108,6 +136,7 @@ export const MessagesPage: React.FC<MessagesPageProps> = ({ locale, conversation
                   locale={locale}
                   conversation={activeConv}
                   onBack={() => setActiveConv(null)}
+                  onDelete={handleDeleteConversation}
                 />
               </div>
             ) : (

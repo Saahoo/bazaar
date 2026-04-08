@@ -3,6 +3,7 @@
 
 import React from 'react';
 import { useTranslations } from 'next-intl';
+import Link from 'next/link';
 import { MessageCircle } from 'lucide-react';
 import { Locale, isRTL } from '@/lib/i18n/config';
 import { Conversation } from '@/lib/chat/actions';
@@ -12,6 +13,7 @@ interface ConversationListProps {
   conversations: Conversation[];
   activeId: string | null;
   onSelect: (conv: Conversation) => void;
+  onDelete: (conv: Conversation) => void;
   loading: boolean;
 }
 
@@ -36,6 +38,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
   conversations,
   activeId,
   onSelect,
+  onDelete,
   loading,
 }) => {
   const t = useTranslations('common');
@@ -67,10 +70,17 @@ export const ConversationList: React.FC<ConversationListProps> = ({
         const initial = (conv.other_user_name || 'U').charAt(0).toUpperCase();
 
         return (
-          <button
+          <div
             key={conv.id}
-            type="button"
+            role="button"
+            tabIndex={0}
             onClick={() => onSelect(conv)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onSelect(conv);
+              }
+            }}
             className={`
               w-full p-3 transition-colors cursor-pointer
               ${isRtl ? 'text-right' : 'text-left'}
@@ -78,14 +88,28 @@ export const ConversationList: React.FC<ConversationListProps> = ({
             `}
           >
             <div className={`flex items-start gap-3 ${isRtl ? 'flex-row-reverse' : ''}`}>
-              <div className="w-10 h-10 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center font-semibold text-sm flex-shrink-0">
-                {initial}
+              <div className="w-10 h-10 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center font-semibold text-sm flex-shrink-0 overflow-hidden">
+                {conv.other_user_avatar ? (
+                  <img src={conv.other_user_avatar} alt={conv.other_user_name || 'User'} className="w-full h-full object-cover" />
+                ) : (
+                  initial
+                )}
               </div>
               <div className={`flex-1 min-w-0 ${isRtl ? 'text-right' : 'text-left'}`}>
                 <div className={`flex items-center justify-between gap-2 ${isRtl ? 'flex-row-reverse' : ''}`}>
-                  <span className={`text-sm truncate ${hasUnread ? 'font-bold text-slate-900' : 'font-medium text-slate-700'}`}>
-                    {conv.other_user_name || 'User'}
-                  </span>
+                  {conv.other_user_id ? (
+                    <Link
+                      href={`/${locale}/profile/${conv.other_user_id}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className={`text-sm truncate hover:underline ${hasUnread ? 'font-bold text-slate-900' : 'font-medium text-slate-700'}`}
+                    >
+                      {conv.other_user_name || 'User'}
+                    </Link>
+                  ) : (
+                    <span className={`text-sm truncate ${hasUnread ? 'font-bold text-slate-900' : 'font-medium text-slate-700'}`}>
+                      {conv.other_user_name || 'User'}
+                    </span>
+                  )}
                   <span className="text-xs text-slate-400 flex-shrink-0">
                     {timeAgo(conv.last_message_at, locale)}
                   </span>
@@ -102,10 +126,22 @@ export const ConversationList: React.FC<ConversationListProps> = ({
                       {conv.unread_count}
                     </span>
                   )}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(conv);
+                    }}
+                    className="text-xs text-slate-400 hover:text-red-600 px-1"
+                    aria-label={t('delete')}
+                    title={t('delete')}
+                  >
+                    ×
+                  </button>
                 </div>
               </div>
             </div>
-          </button>
+          </div>
         );
       })}
     </div>
