@@ -142,6 +142,56 @@ const ICON_MAP: Record<string, React.ReactNode> = {
       />
     </svg>
   ),
+  sofa: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M5 10V7a2 2 0 012-2h10a2 2 0 012 2v3m-14 0a2 2 0 00-2 2v2a1 1 0 001 1h16a1 1 0 001-1v-2a2 2 0 00-2-2m-14 0h14M6 15v3m12-3v3"
+      />
+    </svg>
+  ),
+  phone: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+      />
+    </svg>
+  ),
+  paw: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M12 18c-3.5 0-6-2.5-6-5 0-1.5.5-2.5 1.5-3.5S10 8 12 8s3.5.5 4.5 1.5S18 11.5 18 13c0 2.5-2.5 5-6 5zm-5-9a2 2 0 100-4 2 2 0 000 4zm10 0a2 2 0 100-4 2 2 0 000 4zm-7-3a2 2 0 100-4 2 2 0 000 4zm4 0a2 2 0 100-4 2 2 0 000 4z"
+      />
+    </svg>
+  ),
+  baby: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M12 2a4 4 0 014 4v1h1a3 3 0 013 3v2a7 7 0 01-14 0v-2a3 3 0 013-3h1V6a4 4 0 014-4zm-2 10a1 1 0 100 2 1 1 0 000-2zm4 0a1 1 0 100 2 1 1 0 000-2z"
+      />
+    </svg>
+  ),
+  hammer: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+      />
+    </svg>
+  ),
 };
 
 export const CategoryGrid: React.FC<CategoryGridProps> = ({ locale }) => {
@@ -155,7 +205,7 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({ locale }) => {
         </h2>
 
         <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
-          {MAIN_CATEGORIES.slice(0, 12).map((category) => (
+          {MAIN_CATEGORIES.map((category) => (
             <Link
               key={category.id}
               href={`/${locale}/search?category=${category.id}`}
