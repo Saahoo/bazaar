@@ -11,6 +11,7 @@ import { getCategoryName } from '@/lib/constants/categories';
 import { SellerCard } from './SellerCard';
 import { ActionButtons } from './ActionButtons';
 import { SimilarListings } from './SimilarListings';
+import { ListingSpecsTable } from './ListingSpecsTable';
 
 export interface ListingData {
   id: string;
@@ -192,6 +193,15 @@ export const ListingDetail: React.FC<ListingDetailProps> = ({ listing, seller, l
               {description}
             </p>
           </div>
+
+          {/* Category-specific specs (vehicles / real estate) */}
+          {listing.metadata && Object.keys(listing.metadata).length > 0 && (
+            <ListingSpecsTable
+              metadata={listing.metadata}
+              categoryId={listing.category_id}
+              locale={locale}
+            />
+          )}
 
           {/* Details / meta info */}
           <div className="bg-white border border-slate-200 rounded-lg p-5 mb-6">
