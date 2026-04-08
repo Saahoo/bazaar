@@ -4,6 +4,7 @@ import { Header } from '@/components/layout/Header';
 import { ListingDetail } from '@/components/listing/ListingDetail';
 import { Locale, LOCALES } from '@/lib/i18n/config';
 import { createClient } from '@/lib/supabase/server';
+import { getMockListing, getMockUser, getListingTitle, getListingDescription } from '@/lib/constants/mock-data';
 
 interface PageProps {
   params: Promise<{ lang: string; id: string }>;
@@ -28,10 +29,62 @@ export default async function ListingPage({ params }: PageProps) {
       photos(photo_url, display_order)
     `)
     .eq('id', id)
-    .single();
+    .maybeSingle();
 
   if (!listing) {
-    notFound();
+    const mockListing = getMockListing(id);
+    if (!mockListing) {
+      notFound();
+    }
+
+    const mockSeller = getMockUser(mockListing.user_id);
+    if (!mockSeller) {
+      notFound();
+    }
+
+    const seller = {
+      id: mockSeller.id,
+      display_name: mockSeller.display_name,
+      avatar_url: null,
+      phone: mockSeller.phone,
+      city: null,
+      bio: mockSeller.bio,
+      profile_type: 'personal',
+      company_name: null,
+      age: null,
+      sex: null,
+      verified: mockSeller.verified,
+      rating: mockSeller.rating,
+      member_since: mockSeller.member_since,
+    };
+
+    const listingData = {
+      id: mockListing.id,
+      user_id: mockListing.user_id,
+      category_id: mockListing.category_id,
+      title: getListingTitle(mockListing, locale),
+      description: getListingDescription(mockListing, locale),
+      price: mockListing.price,
+      currency: mockListing.currency,
+      condition: mockListing.condition,
+      city: mockListing.city,
+      view_count: mockListing.view_count,
+      favorite_count: mockListing.favorite_count,
+      status: mockListing.status,
+      phone_visible: true,
+      created_at: mockListing.created_at,
+      photos: mockListing.photos,
+      metadata: {},
+    };
+
+    return (
+      <>
+        <Header locale={locale} />
+        <main className="flex-1 bg-slate-50">
+          <ListingDetail listing={listingData} seller={seller} locale={locale} />
+        </main>
+      </>
+    );
   }
 
   // Flatten joined data
