@@ -4,7 +4,7 @@ import React from 'react';
 import { useTranslations } from 'next-intl';
 import { MapPin } from 'lucide-react';
 import { isRTL, Locale } from '@/lib/i18n/config';
-import { POPULAR_CITIES, getCityName } from '@/lib/constants/cities';
+import { useCities, getManagedCityName } from '@/lib/hooks/useCities';
 
 export interface AddressData {
   city: string;
@@ -32,6 +32,7 @@ export const StepAddress: React.FC<StepAddressProps> = ({
 }) => {
   const t = useTranslations('postAd.realEstate');
   const rtl = isRTL(locale);
+  const { cities } = useCities();
 
   const inputClass =
     `w-full px-4 py-2.5 border border-slate-300 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-500 ${rtl ? 'text-right' : 'text-left'}`;
@@ -66,9 +67,9 @@ export const StepAddress: React.FC<StepAddressProps> = ({
             dir={rtl ? 'rtl' : 'ltr'}
           >
             <option value="">{t('city')}</option>
-            {POPULAR_CITIES.map((city) => (
+            {cities.map((city) => (
               <option key={city.name_en} value={city.name_en}>
-                {getCityName(city.name_en, locale)} — {city.country}
+                {getManagedCityName(city, locale)}{city.country ? ` — ${city.country}` : ''}
               </option>
             ))}
           </select>

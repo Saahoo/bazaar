@@ -75,9 +75,3 @@ BEGIN
       );
   END IF;
 END $$;
-
-update profiles p
-set role = 'admin'
-from auth.users u
-where p.id = u.id
-  and u.email = 'your-email@example.com';

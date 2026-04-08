@@ -4,9 +4,9 @@ import React from 'react';
 import { useTranslations } from 'next-intl';
 import { MapPin, Phone, Mail, Tag } from 'lucide-react';
 import { isRTL, Locale } from '@/lib/i18n/config';
-import { POPULAR_CITIES, getCityName } from '@/lib/constants/cities';
 import { getCategoryName } from '@/lib/constants/categories';
 import { CURRENCIES } from '@/lib/constants/currencies';
+import { useCities, getManagedCityName } from '@/lib/hooks/useCities';
 import type { PostAdFormData } from './PostAdWizard';
 
 interface StepContactData {
@@ -32,6 +32,7 @@ export const StepContact: React.FC<StepContactProps> = ({
   const tForm = useTranslations('form');
   const tPostAd = useTranslations('postAd');
   const rtl = isRTL(locale);
+  const { cities } = useCities();
 
   const inputClass =
     `w-full px-4 py-2.5 border border-slate-300 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-500 ${rtl ? 'text-right' : 'text-left'}`;
@@ -59,9 +60,9 @@ export const StepContact: React.FC<StepContactProps> = ({
             dir={rtl ? 'rtl' : 'ltr'}
           >
             <option value="">{tPostAd('selectCity')}</option>
-            {POPULAR_CITIES.map((city) => (
+            {cities.map((city) => (
               <option key={city.name_en} value={city.name_en}>
-                {getCityName(city.name_en, locale)} — {city.country}
+                {getManagedCityName(city, locale)}{city.country ? ` — ${city.country}` : ''}
               </option>
             ))}
           </select>
@@ -192,7 +193,7 @@ export const StepContact: React.FC<StepContactProps> = ({
                     {tForm('location')}
                   </p>
                   <p className="text-sm font-medium text-slate-900">
-                    {getCityName(data.city, locale)}
+                    {getManagedCityName(cities.find((c) => c.name_en === data.city) || { name_en: data.city }, locale)}
                   </p>
                 </div>
               </div>

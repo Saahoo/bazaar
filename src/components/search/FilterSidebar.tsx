@@ -5,7 +5,7 @@ import React from 'react';
 import { useTranslations } from 'next-intl';
 import { Locale, isRTL } from '@/lib/i18n/config';
 import { MAIN_CATEGORIES, getCategoryName } from '@/lib/constants/categories';
-import { POPULAR_CITIES, getCityName } from '@/lib/constants/cities';
+import { useCities, getManagedCityName } from '@/lib/hooks/useCities';
 
 interface FilterSidebarProps {
   locale: Locale;
@@ -44,6 +44,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
   const t = useTranslations('search');
   const tCommon = useTranslations('common');
   const isRtl = isRTL(locale);
+  const { cities } = useCities();
 
   const handleConditionToggle = (condition: string) => {
     if (selectedConditions.includes(condition)) {
@@ -146,9 +147,9 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
           className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
         >
           <option value="">{tCommon('all')}</option>
-          {POPULAR_CITIES.map((city) => (
+          {cities.map((city) => (
             <option key={city.name_en} value={city.name_en}>
-              {getCityName(city.name_en, locale)}
+              {getManagedCityName(city, locale)}
             </option>
           ))}
         </select>

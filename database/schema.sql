@@ -73,6 +73,24 @@ CREATE INDEX idx_categories_slug ON categories(slug);
 CREATE INDEX idx_categories_parent ON categories(parent_id);
 
 -- ============================================
+-- CITIES TABLE (admin-managed)
+-- ============================================
+CREATE TABLE IF NOT EXISTS cities (
+  id SERIAL PRIMARY KEY,
+  name_en VARCHAR(100) NOT NULL UNIQUE,
+  name_ps VARCHAR(100),
+  name_fa VARCHAR(100),
+  country VARCHAR(100),
+  latitude DECIMAL(9, 6),
+  longitude DECIMAL(9, 6),
+  featured BOOLEAN DEFAULT FALSE,
+  sort_order INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_cities_sort_order ON cities(sort_order);
+
+-- ============================================
 -- LISTINGS TABLE
 -- ============================================
 CREATE TABLE listings (
@@ -270,6 +288,7 @@ ALTER TABLE reviews ENABLE ROW LEVEL SECURITY;
 ALTER TABLE saved_searches ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_relationships ENABLE ROW LEVEL SECURITY;
 ALTER TABLE listing_price_history ENABLE ROW LEVEL SECURITY;
+ALTER TABLE cities ENABLE ROW LEVEL SECURITY;
 
 -- ============================================
 -- RLS POLICIES
@@ -287,6 +306,26 @@ CREATE POLICY "Users can insert own profile"
 
 CREATE POLICY "Anyone can view categories"
   ON categories FOR SELECT USING (true);
+
+CREATE POLICY "Anyone can view cities"
+  ON cities FOR SELECT USING (true);
+
+CREATE POLICY "Admins can manage cities"
+  ON cities FOR ALL
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid()
+      AND p.role = 'admin'
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid()
+      AND p.role = 'admin'
+    )
+  );
 
 CREATE POLICY "Admins can manage categories"
   ON categories FOR ALL
