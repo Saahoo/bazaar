@@ -28,6 +28,7 @@ CREATE TABLE profiles (
   seller_rating DECIMAL(3, 2),
   seller_badge VARCHAR(20), -- bronze, silver, gold
   languages TEXT[] DEFAULT '{"en"}',
+  role VARCHAR(20) DEFAULT 'user', -- user, admin
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -62,6 +63,7 @@ CREATE TABLE categories (
   name_fa VARCHAR(100) NOT NULL,
   slug VARCHAR(100) UNIQUE NOT NULL,
   parent_id INTEGER REFERENCES categories(id),
+  options_json JSONB DEFAULT '{}'::jsonb, -- makes/options/config per category or subcategory
   icon_name VARCHAR(50),
   sort_order INTEGER DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT NOW()
@@ -257,6 +259,7 @@ CREATE INDEX idx_user_relationships_target ON user_relationships(target_user_id,
 -- ENABLE ROW LEVEL SECURITY
 -- ============================================
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE listings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE photos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE favorites ENABLE ROW LEVEL SECURITY;
@@ -282,6 +285,26 @@ CREATE POLICY "Users can update own profile"
 CREATE POLICY "Users can insert own profile"
   ON profiles FOR INSERT WITH CHECK (auth.uid() = id);
 
+CREATE POLICY "Anyone can view categories"
+  ON categories FOR SELECT USING (true);
+
+CREATE POLICY "Admins can manage categories"
+  ON categories FOR ALL
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid()
+      AND p.role = 'admin'
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid()
+      AND p.role = 'admin'
+    )
+  );
+
 -- Listings: anyone reads active, owner manages own
 CREATE POLICY "Anyone can view active listings"
   ON listings FOR SELECT
@@ -298,6 +321,33 @@ CREATE POLICY "Users can update own listings"
 CREATE POLICY "Users can delete own listings"
   ON listings FOR DELETE
   USING (auth.uid() = user_id);
+
+CREATE POLICY "Admins can moderate listings"
+  ON listings FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid()
+      AND p.role = 'admin'
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid()
+      AND p.role = 'admin'
+    )
+  );
+
+CREATE POLICY "Admins can delete any listing"
+  ON listings FOR DELETE
+  USING (
+    EXISTS (
+      SELECT 1 FROM profiles p
+      WHERE p.id = auth.uid()
+      AND p.role = 'admin'
+    )
+  );
 
 CREATE POLICY "Anyone can view listing price history"
   ON listing_price_history FOR SELECT USING (true);
