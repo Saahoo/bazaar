@@ -89,6 +89,77 @@ const EMPTY_WIZARD_CONFIG: WizardFormConfig = {
   lists: [],
 };
 
+const BUILTIN_WIZARD_TEMPLATES: Record<string, WizardFormConfig> = {
+  vehicles: {
+    sections: [
+      {
+        id: 'vh_basic',
+        title: 'Vehicle Basic Details',
+        fields: [
+          { id: 'title', label: 'Title', type: 'text', required: true, options: [] },
+          { id: 'description', label: 'Description', type: 'textarea', required: true, options: [] },
+          { id: 'vehicle_type', label: 'Vehicle Type', type: 'select', required: true, options: ['sedan', 'suv', 'truck', 'pickup', 'van', 'motorcycle'] },
+        ],
+      },
+      {
+        id: 'vh_specs',
+        title: 'Vehicle Specs',
+        fields: [
+          { id: 'year', label: 'Year', type: 'number', required: true, options: [] },
+          { id: 'make', label: 'Make', type: 'text', required: true, options: [] },
+          { id: 'model', label: 'Model', type: 'text', required: true, options: [] },
+          { id: 'mileage', label: 'Mileage', type: 'number', required: false, options: [] },
+          { id: 'price', label: 'Price', type: 'number', required: true, options: [] },
+        ],
+      },
+    ],
+    lists: [
+      {
+        id: 'vh_damage',
+        title: 'Damage Details',
+        values: ['No damage', 'Minor scratches', 'Body repair', 'Engine issue'],
+        sub_lists: [
+          { id: 'vh_damage_area', title: 'Damage Area', values: ['Front', 'Rear', 'Left side', 'Right side'] },
+        ],
+      },
+    ],
+  },
+  'real-estate': {
+    sections: [
+      {
+        id: 're_type',
+        title: 'Property Type & Purpose',
+        fields: [
+          { id: 'property_type', label: 'Property Type', type: 'select', required: true, options: ['house', 'apartment', 'land', 'office', 'shop'] },
+          { id: 'purpose', label: 'Purpose', type: 'select', required: true, options: ['sale', 'rent'] },
+        ],
+      },
+      {
+        id: 're_details',
+        title: 'Property Details',
+        fields: [
+          { id: 'title', label: 'Title', type: 'text', required: true, options: [] },
+          { id: 'description', label: 'Description', type: 'textarea', required: true, options: [] },
+          { id: 'price', label: 'Price', type: 'number', required: true, options: [] },
+          { id: 'rooms', label: 'Rooms', type: 'number', required: false, options: [] },
+          { id: 'bathrooms', label: 'Bathrooms', type: 'number', required: false, options: [] },
+          { id: 'area', label: 'Area (sqm)', type: 'number', required: false, options: [] },
+        ],
+      },
+    ],
+    lists: [
+      {
+        id: 're_neighborhood',
+        title: 'Neighborhood Features',
+        values: ['Park', 'School', 'Hospital', 'Market', 'Mosque', 'Transport'],
+        sub_lists: [
+          { id: 're_utilities', title: 'Utilities', values: ['Water', 'Electricity', 'Gas', 'Internet'] },
+        ],
+      },
+    ],
+  },
+};
+
 const normalizeStringArray = (value: unknown): string[] =>
   Array.isArray(value) ? value.map((v) => String(v).trim()).filter(Boolean) : [];
 
@@ -145,6 +216,12 @@ const normalizeWizardConfig = (value: unknown): WizardFormConfig => {
 
   return { sections, lists };
 };
+
+const hasWizardContent = (config: WizardFormConfig): boolean =>
+  config.sections.length > 0 || config.lists.length > 0;
+
+const deepCloneWizardConfig = (config: WizardFormConfig): WizardFormConfig =>
+  JSON.parse(JSON.stringify(config)) as WizardFormConfig;
 
 export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
   const rtl = isRTL(locale);
@@ -481,10 +558,25 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
     return normalizeWizardConfig(source);
   };
 
+  const hasPersistedWizardConfig = (category: CategoryRow | undefined): boolean => {
+    if (!category?.options_json || typeof category.options_json !== 'object') return false;
+    const raw = category.options_json as Record<string, unknown>;
+    return raw.wizard_forms !== undefined || raw.wizardForms !== undefined || raw.wizard_form !== undefined || raw.wizard !== undefined;
+  };
+
+  const getWizardConfigWithTemplate = (category: CategoryRow | undefined): WizardFormConfig => {
+    const saved = readWizardConfig(category);
+    if (hasWizardContent(saved)) return saved;
+
+    const slug = category?.slug || '';
+    const template = BUILTIN_WIZARD_TEMPLATES[slug];
+    return template ? deepCloneWizardConfig(template) : EMPTY_WIZARD_CONFIG;
+  };
+
   const onSelectWizardCategory = useCallback((id: string) => {
     setWizardCategoryId(id);
     const category = categories.find((c) => c.id === Number(id));
-    setWizardConfig(readWizardConfig(category));
+    setWizardConfig(getWizardConfigWithTemplate(category));
   }, [categories]);
 
   useEffect(() => {
@@ -651,11 +743,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
   const parentCategories = categories.filter((c) => c.parent_id === null);
   const wizardSavedByCategory = categories
     .map((c) => {
-      const cfg = readWizardConfig(c);
+      const cfg = getWizardConfigWithTemplate(c);
       return {
         id: c.id,
         name_en: c.name_en,
         parent_id: c.parent_id,
+        persisted: hasPersistedWizardConfig(c),
         sections: cfg.sections.length,
         lists: cfg.lists.length,
       };
@@ -997,7 +1090,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
                     className={`w-full text-left rounded-lg border px-3 py-2 transition ${wizardCategoryId === String(item.id) ? 'border-primary-400 bg-primary-50' : 'border-slate-200 bg-white hover:border-primary-300'}`}
                   >
                     <p className="text-sm font-semibold text-slate-900">{item.parent_id ? `↳ ${item.name_en}` : item.name_en}</p>
-                    <p className="text-xs text-slate-500">{item.sections} sections • {item.lists} lists</p>
+                    <p className="text-xs text-slate-500">{item.sections} sections • {item.lists} lists • {item.persisted ? 'saved' : 'template'}</p>
                   </button>
                 ))}
               </div>
