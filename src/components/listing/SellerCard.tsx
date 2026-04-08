@@ -48,7 +48,7 @@ export const SellerCard: React.FC<SellerCardProps> = ({ seller, locale }) => {
         <div className={`flex-1 min-w-0 ${isRtl ? 'text-right' : 'text-left'}`}>
           <div className={`flex items-center gap-1.5 ${isRtl ? 'flex-row-reverse justify-end' : ''}`}>
             <h3 className="font-bold text-primary-700 truncate text-sm leading-tight">
-              {seller.display_name}
+              {seller.display_name || 'Seller'}
             </h3>
             {seller.verified && (
               <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />

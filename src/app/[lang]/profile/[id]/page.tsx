@@ -69,15 +69,40 @@ export default async function PublicProfile({ params }: PageProps) {
 
   const supabase = await createClient();
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('id, display_name, phone, avatar_url, bio, city, district, address_line, profile_type, age, sex, company_name, occupation, website, verified_phone, seller_rating, created_at')
+    .select('*')
     .eq('id', id)
-    .single();
+    .maybeSingle();
+
+  if (profileError) {
+    console.error('[profile/[id]] profile fetch error:', profileError.message);
+  }
 
   if (!profile) {
     notFound();
   }
+
+  // Map DB row to PublicProfileData — handles schemas with or without migration columns
+  const profileData = {
+    id: profile.id as string,
+    display_name: (profile.display_name as string) || 'User',
+    phone: (profile.phone as string) || null,
+    avatar_url: (profile.avatar_url as string) || null,
+    bio: (profile.bio as string) || null,
+    city: (profile.city as string) || null,
+    district: (profile.district as string) || null,
+    address_line: (profile.address_line as string) || null,
+    profile_type: (profile.profile_type as string) || 'personal',
+    age: (profile.age as number) || null,
+    sex: (profile.sex as string) || null,
+    company_name: (profile.company_name as string) || null,
+    occupation: (profile.occupation as string) || null,
+    website: (profile.website as string) || null,
+    verified_phone: (profile.verified_phone as boolean) || false,
+    seller_rating: (profile.seller_rating as number) || null,
+    created_at: profile.created_at as string,
+  };
 
   const [{ count: activeListings }, { count: friends }, { count: favoriteUsers }] = await Promise.all([
     supabase
@@ -105,7 +130,7 @@ export default async function PublicProfile({ params }: PageProps) {
         <div className="container mx-auto px-4 max-w-5xl">
           <PublicProfilePage
             locale={locale}
-            profile={profile}
+            profile={profileData}
             stats={{
               activeListings: activeListings || 0,
               friends: friends || 0,

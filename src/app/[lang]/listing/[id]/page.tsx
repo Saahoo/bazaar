@@ -88,10 +88,10 @@ export default async function ListingPage({ params }: PageProps) {
     notFound();
   }
 
-  const [{ data: profile }, { data: photos }] = await Promise.all([
+  const [{ data: profile, error: profileError }, { data: photos }] = await Promise.all([
     supabase
       .from('profiles')
-      .select('id, display_name, avatar_url, phone, bio, city, district, address_line, profile_type, age, sex, company_name, occupation, website, verified_phone, is_seller, seller_rating, seller_badge, created_at')
+      .select('*')
       .eq('id', listing.user_id)
       .maybeSingle(),
     supabase
@@ -101,9 +101,13 @@ export default async function ListingPage({ params }: PageProps) {
       .order('display_order', { ascending: true }),
   ]);
 
+  if (profileError) {
+    console.error('[listing/[id]] profile fetch error:', profileError.message);
+  }
+
   const seller = {
     id: (profile?.id as string) || listing.user_id,
-    display_name: (profile?.display_name as string) || '',
+    display_name: (profile?.display_name as string) || 'Unknown Seller',
     avatar_url: (profile?.avatar_url as string) || null,
     phone: (profile?.phone as string) || '',
     city: (profile?.city as string) || '',
