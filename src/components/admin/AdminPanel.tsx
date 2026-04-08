@@ -481,11 +481,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
     return normalizeWizardConfig(source);
   };
 
-  const onSelectWizardCategory = (id: string) => {
+  const onSelectWizardCategory = useCallback((id: string) => {
     setWizardCategoryId(id);
     const category = categories.find((c) => c.id === Number(id));
     setWizardConfig(readWizardConfig(category));
-  };
+  }, [categories]);
 
   useEffect(() => {
     if (activeTab !== TAB_WIZARD || categories.length === 0) return;
@@ -505,7 +505,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
 
     const fallback = firstWithConfig || categories[0];
     if (fallback) onSelectWizardCategory(String(fallback.id));
-  }, [activeTab, categories, wizardCategoryId]);
+  }, [activeTab, categories, wizardCategoryId, onSelectWizardCategory]);
 
   const saveWizardConfig = async () => {
     if (!wizardCategoryId) return;
