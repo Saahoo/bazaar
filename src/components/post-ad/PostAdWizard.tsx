@@ -170,6 +170,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       const changingCategory = formData.categoryId !== categoryId;
       updateFormData({ categoryId });
       setSelectedCategorySlug(categorySlug || null);
+      setCurrentStep((prev) => (prev === 0 ? 1 : prev));
       if (changingCategory) {
         setReData(INITIAL_RE_DATA);
         setVhData(INITIAL_VH_DATA);
