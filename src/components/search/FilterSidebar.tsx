@@ -221,7 +221,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
 
       {/* Category */}
       <Section label={t('filter')} isRtl={isRtl}>
-        <Sel id="category-filter" value={selectedCategory ?? ''} onChange={(v) => onCategoryChange(v === '' ? null : Number(v))} isRtl={isRtl}>
+        <Sel id="category-filter" value={selectedCategory?.toString() ?? ''} onChange={(v) => onCategoryChange(v === '' ? null : Number(v))} isRtl={isRtl}>
           <option value="">{tCommon('all')}</option>
           {MAIN_CATEGORIES.map((cat) => (
             <option key={cat.id} value={cat.id}>{getCategoryName(cat.id, locale)}</option>
@@ -343,7 +343,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
           <Section label={tVH('bodyType')} isRtl={isRtl}>
             <MultiCheck
               options={BODY_TYPES.map((k) => {
-                let label = k;
+                let label: string = k;
                 try { label = tVH(k as Parameters<typeof tVH>[0]); } catch { /* use key */ }
                 return { value: k, label };
               })}

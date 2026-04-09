@@ -39,7 +39,10 @@ const LocationMap: React.FC<{
       L = await import('leaflet');
 
       // Fix default icon paths for webpack/next
-      delete (L.Icon.Default.prototype as Record<string, unknown>)._getIconUrl;
+      const defaultIconPrototype = L.Icon.Default.prototype as unknown as {
+        _getIconUrl?: string;
+      };
+      delete defaultIconPrototype._getIconUrl;
       L.Icon.Default.mergeOptions({
         iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
         iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
@@ -142,6 +145,7 @@ export const StepVehicleAddress: React.FC<StepVehicleAddressProps> = ({
         </label>
         <div className="relative">
           <select
+            aria-label={t('city')}
             value={data.city}
             onChange={(e) => onChange({ city: e.target.value })}
             className={`${inputClass} appearance-none bg-white pr-10`}
