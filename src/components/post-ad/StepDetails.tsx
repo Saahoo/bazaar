@@ -75,10 +75,15 @@ export const StepDetails = forwardRef<StepDetailsHandle, StepDetailsProps>(
 
     useEffect(() => {
       const { title, description, price, currency, condition } = watchedValues;
+      const normalizedPrice =
+        price === undefined || price === null
+          ? ''
+          : Number(price);
+
       onChange({
         title: title || '',
         description: description || '',
-        price: price || '',
+        price: Number.isFinite(normalizedPrice) ? normalizedPrice : '',
         currency: currency || 'AFN',
         condition: condition || '',
       });
