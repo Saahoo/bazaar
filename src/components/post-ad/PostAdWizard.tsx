@@ -3,6 +3,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { ChevronLeft, ChevronRight, Check, LogIn, Save, Eye } from 'lucide-react';
 import { isRTL, Locale } from '@/lib/i18n/config';
 import { useAuth } from '@/lib/context/AuthContext';
@@ -119,6 +120,12 @@ const RE_STEPS = ['stepCategory', 'reStepType', 'reStepDetails', 'reStepAddress'
 // Vehicle steps
 const VH_STEPS = ['stepCategory', 'vhStepType', 'vhStepSpecs', 'vhStepCondition', 'vhStepAddress', 'vhStepMedia', 'vhStepContact'] as const;
 
+const getStepsForCategorySlug = (categorySlug: string | null): readonly string[] => {
+  if (categorySlug === REAL_ESTATE_SLUG) return RE_STEPS;
+  if (categorySlug === VEHICLES_SLUG) return VH_STEPS;
+  return DEFAULT_STEPS;
+};
+
 type StepKey = typeof DEFAULT_STEPS[number] | typeof RE_STEPS[number] | typeof VH_STEPS[number];
 
 interface PostAdWizardProps {
@@ -133,6 +140,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
   const tAuth = useTranslations('auth');
   const rtl = isRTL(locale);
   const { user, loading: authLoading } = useAuth();
+  const searchParams = useSearchParams();
 
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<PostAdFormData>(INITIAL_FORM_DATA);
@@ -148,6 +156,8 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
   const [draftSaved, setDraftSaved] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [selectedCategorySlug, setSelectedCategorySlug] = useState<string | null>(null);
+  const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
+  const [loadingDraft, setLoadingDraft] = useState(false);
   const supabase = createClient();
 
   const detailsRef = useRef<StepDetailsHandle>(null);
@@ -218,6 +228,123 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
     };
   }, [formData.categoryId, supabase]);
 
+  useEffect(() => {
+    const draftId = searchParams.get('draft');
+    if (!user || !draftId) return;
+
+    let mounted = true;
+
+    const loadDraft = async () => {
+      setLoadingDraft(true);
+      setSubmitError(null);
+
+      const { data: draftRow, error: draftError } = await supabase
+        .from('listing_drafts')
+        .select('id, category_id, draft_data')
+        .eq('id', draftId)
+        .eq('user_id', user.id)
+        .single();
+
+      if (draftError || !draftRow) {
+        if (mounted) {
+          setSubmitError(
+            locale === 'en'
+              ? 'Draft could not be loaded.'
+              : locale === 'ps'
+                ? 'مسوده پورته نه شوه.'
+                : 'پیش‌نویس بارگذاری نشد.'
+          );
+          setLoadingDraft(false);
+        }
+        return;
+      }
+
+      const draftData = (draftRow.draft_data || {}) as Record<string, unknown>;
+      const draftFormData = (draftData.formData || {}) as Partial<PostAdFormData>;
+      const draftReData = (draftData.reData || {}) as Partial<RealEstateFormData>;
+      const draftVhData = (draftData.vhData || {}) as Partial<VehiclesFormData>;
+      const categoryId = draftRow.category_id ?? draftFormData.categoryId ?? null;
+
+      let categorySlug: string | null = null;
+      if (categoryId) {
+        const { data: categoryRow } = await supabase
+          .from('categories')
+          .select('slug')
+          .eq('id', categoryId)
+          .single();
+        categorySlug = (categoryRow?.slug as string | undefined) || null;
+      }
+
+      if (!mounted) return;
+
+      setCurrentDraftId(draftRow.id);
+      setSelectedCategorySlug(categorySlug);
+      setFormData({
+        ...INITIAL_FORM_DATA,
+        ...draftFormData,
+        categoryId,
+      });
+      setReData({
+        ...INITIAL_RE_DATA,
+        ...draftReData,
+        propertyType: draftReData.propertyType ?? INITIAL_RE_DATA.propertyType,
+        purpose: draftReData.purpose ?? INITIAL_RE_DATA.purpose,
+        propertyDetails: {
+          ...INITIAL_RE_DATA.propertyDetails,
+          ...((draftReData.propertyDetails as Partial<PropertyDetailsData> | undefined) || {}),
+        },
+        address: {
+          ...INITIAL_RE_DATA.address,
+          ...((draftReData.address as Partial<AddressData> | undefined) || {}),
+        },
+        media: {
+          ...INITIAL_RE_DATA.media,
+          ...((draftReData.media as Partial<MediaData> | undefined) || {}),
+        },
+        contact: {
+          ...INITIAL_RE_DATA.contact,
+          ...((draftReData.contact as Partial<ContactInfoData> | undefined) || {}),
+        },
+      });
+      setVhData({
+        ...INITIAL_VH_DATA,
+        ...draftVhData,
+        specs: {
+          ...INITIAL_VH_DATA.specs,
+          ...((draftVhData.specs as Partial<VehicleSpecsData> | undefined) || {}),
+        },
+        condition: {
+          ...INITIAL_VH_DATA.condition,
+          ...((draftVhData.condition as Partial<VehicleConditionData> | undefined) || {}),
+        },
+        address: {
+          ...INITIAL_VH_DATA.address,
+          ...((draftVhData.address as Partial<VehicleAddressData> | undefined) || {}),
+        },
+        media: {
+          ...INITIAL_VH_DATA.media,
+          ...((draftVhData.media as Partial<VehicleMediaData> | undefined) || {}),
+        },
+        contact: {
+          ...INITIAL_VH_DATA.contact,
+          ...((draftVhData.contact as Partial<VehicleContactData> | undefined) || {}),
+        },
+      });
+      setWizardValues(((draftData.wizardValues as Record<string, unknown> | undefined) || {}));
+
+      const savedStep = typeof draftData.currentStep === 'number' ? draftData.currentStep : (categoryId ? 1 : 0);
+      const restoredSteps = getStepsForCategorySlug(categorySlug);
+      setCurrentStep(Math.max(0, Math.min(savedStep, restoredSteps.length - 1)));
+      setLoadingDraft(false);
+    };
+
+    loadDraft();
+
+    return () => {
+      mounted = false;
+    };
+  }, [locale, searchParams, supabase, user]);
+
   // Auth gate — require login to post an ad
   if (authLoading) {
     return (
@@ -249,9 +376,17 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
     );
   }
 
+  if (loadingDraft) {
+    return (
+      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-12 text-center">
+        <p className="text-slate-500">{tCommon('loading')}</p>
+      </div>
+    );
+  }
+
   const isRealEstate = selectedCategorySlug === REAL_ESTATE_SLUG;
   const isVehicles = selectedCategorySlug === VEHICLES_SLUG;
-  const steps: readonly string[] = isRealEstate ? RE_STEPS : isVehicles ? VH_STEPS : DEFAULT_STEPS;
+  const steps: readonly string[] = getStepsForCategorySlug(selectedCategorySlug);
 
   const getStepLabel = (step: string): string => {
     switch (step) {
@@ -465,6 +600,14 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         }
       }
 
+      if (currentDraftId) {
+        await supabase
+          .from('listing_drafts')
+          .delete()
+          .eq('id', currentDraftId)
+          .eq('user_id', user.id);
+      }
+
       setSubmitted(true);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to submit listing.';
@@ -488,19 +631,43 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
     if (!user) return;
     setSavingDraft(true);
     try {
-      let draftData: Record<string, unknown> = { formData, wizardValues };
+      if (!formData.categoryId) {
+        throw new Error(
+          locale === 'en'
+            ? 'Please select a category before saving a draft.'
+            : locale === 'ps'
+              ? 'د مسودې د ذخیره کولو مخکې مهرباني وکړئ کټګوري وټاکئ.'
+              : 'لطفا قبل از ذخیره پیش‌نویس یک دسته‌بندی انتخاب کنید.'
+        );
+      }
+
+      let draftData: Record<string, unknown> = { formData, wizardValues, currentStep };
       if (isRealEstate) draftData = { ...draftData, reData };
       else if (isVehicles) draftData = { ...draftData, vhData };
-      await supabase.from('listing_drafts').upsert({
+
+      const { data: savedDraft, error: draftError } = await supabase.from('listing_drafts').upsert({
         user_id: user.id,
         category_id: formData.categoryId,
         draft_data: draftData,
         updated_at: new Date().toISOString(),
-      }, { onConflict: 'user_id,category_id' });
+      }, { onConflict: 'user_id,category_id' }).select('id').single();
+
+      if (draftError) {
+        throw new Error(draftError.message);
+      }
+
+      setCurrentDraftId((savedDraft?.id as string | undefined) || currentDraftId);
       setDraftSaved(true);
       setTimeout(() => setDraftSaved(false), 3000);
-    } catch {
-      // silently fail for draft save
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : (
+        locale === 'en'
+          ? 'Failed to save draft.'
+          : locale === 'ps'
+            ? 'د مسودې ذخیره کول ناکام شول.'
+            : 'ذخیره پیش‌نویس ناموفق بود.'
+      );
+      setSubmitError(message);
     } finally {
       setSavingDraft(false);
     }

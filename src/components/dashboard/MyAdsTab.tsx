@@ -27,6 +27,20 @@ interface DashboardListing {
   photos?: { photo_url: string; display_order: number }[] | null;
 }
 
+interface DashboardDraftCategory {
+  name_en: string;
+  name_ps: string;
+  name_fa: string;
+}
+
+interface DashboardDraft {
+  id: string;
+  category_id: number;
+  updated_at: string;
+  draft_data: Record<string, unknown>;
+  categories?: DashboardDraftCategory | DashboardDraftCategory[] | null;
+}
+
 const statusStyles: Record<string, string> = {
   active: 'bg-green-100 text-green-700',
   sold: 'bg-amber-100 text-amber-700',
@@ -41,6 +55,7 @@ export const MyAdsTab: React.FC<MyAdsTabProps> = ({ locale }) => {
   const { user } = useAuth();
   const supabase = createClient();
   const [myListings, setMyListings] = useState<DashboardListing[]>([]);
+  const [myDrafts, setMyDrafts] = useState<DashboardDraft[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteTarget, setDeleteTarget] = useState<DashboardListing | null>(null);
   const [deleteReason, setDeleteReason] = useState('');
@@ -54,6 +69,53 @@ export const MyAdsTab: React.FC<MyAdsTabProps> = ({ locale }) => {
   const [editPrice, setEditPrice] = useState('');
   const [editError, setEditError] = useState('');
   const [savingEditId, setSavingEditId] = useState<string | null>(null);
+
+  const getDraftCategoryName = (draft: DashboardDraft) => {
+    const categoryMeta = Array.isArray(draft.categories)
+      ? draft.categories[0]
+      : draft.categories;
+
+    if (categoryMeta) {
+      if (locale === 'ps') return categoryMeta.name_ps;
+      if (locale === 'fa') return categoryMeta.name_fa;
+      return categoryMeta.name_en;
+    }
+    return getCategoryName(draft.category_id, locale);
+  };
+
+  const getDraftTitle = (draft: DashboardDraft) => {
+    const data = draft.draft_data || {};
+    const formData = (data.formData || {}) as Record<string, unknown>;
+    const reData = (data.reData || {}) as Record<string, unknown>;
+    const vhData = (data.vhData || {}) as Record<string, unknown>;
+    const propertyDetails = (reData.propertyDetails || {}) as Record<string, unknown>;
+
+    return String(
+      vhData.title ||
+      propertyDetails.title ||
+      formData.title ||
+      (locale === 'en' ? 'Untitled draft' : locale === 'ps' ? 'بې سرلیکه مسوده' : 'پیش‌نویس بدون عنوان')
+    );
+  };
+
+  const getDraftPrice = (draft: DashboardDraft) => {
+    const data = draft.draft_data || {};
+    const formData = (data.formData || {}) as Record<string, unknown>;
+    const reData = (data.reData || {}) as Record<string, unknown>;
+    const vhData = (data.vhData || {}) as Record<string, unknown>;
+    const propertyDetails = (reData.propertyDetails || {}) as Record<string, unknown>;
+    const vehicleCondition = (vhData.condition || {}) as Record<string, unknown>;
+
+    const rawPrice = vehicleCondition.price || propertyDetails.price || formData.price;
+    const rawCurrency = vehicleCondition.currency || propertyDetails.currency || formData.currency || 'AFN';
+    const numericPrice = Number(rawPrice);
+
+    if (!Number.isFinite(numericPrice) || numericPrice <= 0) {
+      return locale === 'en' ? 'Price not set' : locale === 'ps' ? 'بیه نه ده ټاکل شوې' : 'قیمت تعیین نشده';
+    }
+
+    return formatCurrency(numericPrice, String(rawCurrency));
+  };
 
   const deleteReasonOptions =
     locale === 'ps'
@@ -106,14 +168,22 @@ export const MyAdsTab: React.FC<MyAdsTabProps> = ({ locale }) => {
     }
 
     const loadListings = async () => {
-      const { data } = await supabase
-        .from('listings')
-        .select('id, title, description, category_id, price, currency, status, view_count, photos(photo_url, display_order)')
-        .eq('user_id', user.id)
-        .is('deleted_at', null)
-        .order('created_at', { ascending: false });
+      const [listingsResult, draftsResult] = await Promise.all([
+        supabase
+          .from('listings')
+          .select('id, title, description, category_id, price, currency, status, view_count, photos(photo_url, display_order)')
+          .eq('user_id', user.id)
+          .is('deleted_at', null)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('listing_drafts')
+          .select('id, category_id, updated_at, draft_data, categories(name_en, name_ps, name_fa)')
+          .eq('user_id', user.id)
+          .order('updated_at', { ascending: false }),
+      ]);
 
-      setMyListings((data as DashboardListing[]) || []);
+      setMyListings((listingsResult.data as DashboardListing[]) || []);
+      setMyDrafts((draftsResult.data as DashboardDraft[]) || []);
       setLoading(false);
     };
 
@@ -284,12 +354,92 @@ export const MyAdsTab: React.FC<MyAdsTabProps> = ({ locale }) => {
     closeEditDialog();
   };
 
+  const deleteDraft = async (draftId: string) => {
+    if (!user) return;
+    const { error } = await supabase
+      .from('listing_drafts')
+      .delete()
+      .eq('id', draftId)
+      .eq('user_id', user.id);
+
+    if (error) return;
+
+    setMyDrafts((prev) => prev.filter((draft) => draft.id !== draftId));
+  };
+
   if (loading) {
     return <div className="text-center py-12 text-slate-400">{tCommon('loading')}</div>;
   }
 
   return (
     <div className="space-y-3">
+      {myDrafts.length > 0 && (
+        <div className="space-y-3 mb-6">
+          <div className={`flex items-center justify-between ${isRtl ? 'flex-row-reverse' : ''}`}>
+            <h3 className="text-sm font-semibold text-slate-900">
+              {locale === 'en' ? 'Saved drafts' : locale === 'ps' ? 'ساتل شوې مسودې' : 'پیش‌نویس‌های ذخیره‌شده'}
+            </h3>
+            <span className="text-xs text-slate-500">{myDrafts.length}</span>
+          </div>
+
+          {myDrafts.map((draft) => {
+            const title = getDraftTitle(draft);
+            const category = getDraftCategoryName(draft);
+            const price = getDraftPrice(draft);
+            const savedAt = new Date(draft.updated_at).toLocaleDateString(
+              locale === 'en' ? 'en-US' : locale === 'ps' ? 'ps-AF' : 'fa-AF',
+              { year: 'numeric', month: 'short', day: 'numeric' }
+            );
+
+            return (
+              <div
+                key={draft.id}
+                className="bg-white rounded-lg border border-slate-200 p-4 hover:shadow-sm transition-shadow"
+              >
+                <div className={`flex flex-col sm:flex-row sm:items-center gap-4 ${isRtl ? 'sm:flex-row-reverse' : ''}`}>
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-primary-50 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    <ImageIcon className="w-8 h-8 text-primary-300" />
+                  </div>
+
+                  <div className={`flex-1 min-w-0 ${isRtl ? 'text-right' : 'text-left'}`}>
+                    <p className="block text-sm font-semibold text-slate-900 truncate">{title}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">{category}</p>
+                    <p className="text-sm font-bold text-primary-600 mt-1">{price}</p>
+                    <div className={`flex items-center gap-2 mt-1.5 ${isRtl ? 'flex-row-reverse' : ''}`}>
+                      <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full ${statusStyles.draft}`}>
+                        {t('draft')}
+                      </span>
+                      <span className="text-xs text-slate-400">
+                        {locale === 'en' ? 'Saved' : locale === 'ps' ? 'ساتل شوې' : 'ذخیره شده'}: {savedAt}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className={`flex items-center gap-2 flex-shrink-0 ${isRtl ? 'flex-row-reverse' : ''}`}>
+                    <Link
+                      href={`/${locale}/post-ad?draft=${draft.id}`}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200 transition-colors"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">{locale === 'en' ? 'Resume' : locale === 'ps' ? 'دوام ورکړئ' : 'ادامه'}</span>
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => deleteDraft(draft.id)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+                      title={tCommon('delete')}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">{tCommon('delete')}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       {myListings.map((listing) => {
         const title = listing.title;
         const category = getCategoryName(listing.category_id, locale);
@@ -368,7 +518,7 @@ export const MyAdsTab: React.FC<MyAdsTabProps> = ({ locale }) => {
         );
       })}
 
-      {myListings.length === 0 && (
+      {myListings.length === 0 && myDrafts.length === 0 && (
         <div className="text-center py-12 text-slate-500">
           <ImageIcon className="w-12 h-12 mx-auto mb-3 text-slate-300" />
           <p>{t('myAds')}</p>
@@ -456,10 +606,11 @@ export const MyAdsTab: React.FC<MyAdsTabProps> = ({ locale }) => {
 
             <div className="space-y-3">
               <div>
-                <label className="block text-sm text-slate-600 mb-1">
+                <label htmlFor="edit-listing-title" className="block text-sm text-slate-600 mb-1">
                   {locale === 'en' ? 'Title' : locale === 'ps' ? 'سرلیک' : 'عنوان'}
                 </label>
                 <input
+                  id="edit-listing-title"
                   type="text"
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
@@ -468,10 +619,11 @@ export const MyAdsTab: React.FC<MyAdsTabProps> = ({ locale }) => {
               </div>
 
               <div>
-                <label className="block text-sm text-slate-600 mb-1">
+                <label htmlFor="edit-listing-description" className="block text-sm text-slate-600 mb-1">
                   {locale === 'en' ? 'Description' : locale === 'ps' ? 'تشریح' : 'توضیحات'}
                 </label>
                 <textarea
+                  id="edit-listing-description"
                   value={editDescription}
                   onChange={(e) => setEditDescription(e.target.value)}
                   rows={4}
@@ -480,10 +632,11 @@ export const MyAdsTab: React.FC<MyAdsTabProps> = ({ locale }) => {
               </div>
 
               <div>
-                <label className="block text-sm text-slate-600 mb-1">
+                <label htmlFor="edit-listing-price" className="block text-sm text-slate-600 mb-1">
                   {locale === 'en' ? 'Price' : locale === 'ps' ? 'بیه' : 'قیمت'}
                 </label>
                 <input
+                  id="edit-listing-price"
                   type="number"
                   min="1"
                   value={editPrice}

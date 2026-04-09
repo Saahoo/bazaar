@@ -258,6 +258,22 @@ CREATE TABLE saved_searches (
 CREATE INDEX idx_saved_searches_user ON saved_searches(user_id);
 
 -- ============================================
+-- LISTING DRAFTS TABLE
+-- ============================================
+CREATE TABLE listing_drafts (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE CASCADE,
+  draft_data JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, category_id)
+);
+
+CREATE INDEX idx_listing_drafts_user ON listing_drafts(user_id);
+CREATE INDEX idx_listing_drafts_updated ON listing_drafts(updated_at DESC);
+
+-- ============================================
 -- USER RELATIONSHIPS TABLE
 -- ============================================
 CREATE TABLE user_relationships (
@@ -289,6 +305,7 @@ ALTER TABLE saved_searches ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_relationships ENABLE ROW LEVEL SECURITY;
 ALTER TABLE listing_price_history ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cities ENABLE ROW LEVEL SECURITY;
+ALTER TABLE listing_drafts ENABLE ROW LEVEL SECURITY;
 
 -- ============================================
 -- RLS POLICIES
@@ -504,6 +521,11 @@ CREATE POLICY "Users can delete own user relationships"
 CREATE POLICY "Users can manage own saved searches"
   ON saved_searches FOR ALL USING (auth.uid() = user_id);
 
+-- Listing drafts: users manage own
+CREATE POLICY "Users can manage own listing drafts"
+  ON listing_drafts FOR ALL USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
 -- ============================================
 -- VIEWS
 -- ============================================
@@ -532,6 +554,10 @@ CREATE TRIGGER update_profiles_updated_at
 
 CREATE TRIGGER update_listings_updated_at
   BEFORE UPDATE ON listings
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+CREATE TRIGGER update_listing_drafts_updated_at
+  BEFORE UPDATE ON listing_drafts
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
 -- Increment view count
