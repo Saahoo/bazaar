@@ -27,9 +27,9 @@ import { StepVehicleContact, VehicleContactData } from './vehicles/StepVehicleCo
 import { DynamicWizardFields, WizardFormConfig, isWizardRequiredFieldsValid } from './DynamicWizardFields';
 import type { VehicleType as VehicleTypeEnum } from '@/lib/constants/vehicles';
 
-// Category IDs
-const REAL_ESTATE_CATEGORY = 2;
-const VEHICLES_CATEGORY = 1;
+// Category slugs (more reliable than hardcoded IDs across environments)
+const REAL_ESTATE_SLUG = 'real-estate';
+const VEHICLES_SLUG = 'vehicles';
 
 export interface PostAdFormData {
   categoryId: number | null;
@@ -147,6 +147,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
   const [savingDraft, setSavingDraft] = useState(false);
   const [draftSaved, setDraftSaved] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [selectedCategorySlug, setSelectedCategorySlug] = useState<string | null>(null);
   const supabase = createClient();
 
   const detailsRef = useRef<StepDetailsHandle>(null);
@@ -165,9 +166,10 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
   }, []);
 
   const handleCategorySelect = useCallback(
-    (categoryId: number) => {
+    (categoryId: number, categorySlug?: string) => {
       const changingCategory = formData.categoryId !== categoryId;
       updateFormData({ categoryId });
+      setSelectedCategorySlug(categorySlug || null);
       if (changingCategory) {
         setReData(INITIAL_RE_DATA);
         setVhData(INITIAL_VH_DATA);
@@ -182,14 +184,17 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
 
     const loadWizardConfig = async () => {
       if (!formData.categoryId) {
-        if (mounted) setWizardConfig({ sections: [], lists: [] });
+        if (mounted) {
+          setWizardConfig({ sections: [], lists: [] });
+          setSelectedCategorySlug(null);
+        }
         return;
       }
 
       setLoadingWizardConfig(true);
       const { data } = await supabase
         .from('categories')
-        .select('options_json')
+        .select('options_json, slug')
         .eq('id', formData.categoryId)
         .single();
 
@@ -197,6 +202,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
 
       const raw = (data?.options_json || {}) as Record<string, unknown>;
       const wf = (raw.wizard_forms || {}) as Partial<WizardFormConfig>;
+      setSelectedCategorySlug((data?.slug as string | undefined) || null);
       setWizardConfig({
         sections: Array.isArray(wf.sections) ? (wf.sections as WizardFormConfig['sections']) : [],
         lists: Array.isArray(wf.lists) ? (wf.lists as WizardFormConfig['lists']) : [],
@@ -242,8 +248,8 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
     );
   }
 
-  const isRealEstate = formData.categoryId === REAL_ESTATE_CATEGORY;
-  const isVehicles = formData.categoryId === VEHICLES_CATEGORY;
+  const isRealEstate = selectedCategorySlug === REAL_ESTATE_SLUG;
+  const isVehicles = selectedCategorySlug === VEHICLES_SLUG;
   const steps: readonly string[] = isRealEstate ? RE_STEPS : isVehicles ? VH_STEPS : DEFAULT_STEPS;
 
   const getStepLabel = (step: string): string => {
@@ -345,6 +351,28 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
     setSubmitError(null);
 
     try {
+      if (!formData.categoryId) {
+        throw new Error(locale === 'en'
+          ? 'Please select a valid category.'
+          : locale === 'ps'
+            ? 'مهرباني وکړئ یو معتبر کټګورۍ وټاکئ.'
+            : 'لطفا یک دسته‌بندی معتبر انتخاب کنید.');
+      }
+
+      const { data: selectedCategoryRow, error: selectedCategoryError } = await supabase
+        .from('categories')
+        .select('id')
+        .eq('id', formData.categoryId)
+        .single();
+
+      if (selectedCategoryError || !selectedCategoryRow) {
+        throw new Error(locale === 'en'
+          ? 'Selected category is no longer available. Please choose another category.'
+          : locale === 'ps'
+            ? 'ټاکل شوې کټګورۍ نور شتون نه لري. مهرباني وکړئ بله کټګورۍ وټاکئ.'
+            : 'دسته‌بندی انتخاب‌شده دیگر موجود نیست. لطفا دسته‌بندی دیگری انتخاب کنید.');
+      }
+
       // Build metadata based on category
       let metadata: Record<string, unknown> = {};
       let title = formData.title;

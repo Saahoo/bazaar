@@ -3,12 +3,23 @@
 import React from 'react';
 import { useTranslations } from 'next-intl';
 import { isRTL, Locale } from '@/lib/i18n/config';
-import { MAIN_CATEGORIES, getCategoryName } from '@/lib/constants/categories';
+import { createClient } from '@/lib/supabase/client';
 
 interface StepCategoryProps {
   locale: Locale;
   selectedCategory: number | null;
-  onSelect: (categoryId: number) => void;
+  onSelect: (categoryId: number, categorySlug?: string) => void;
+}
+
+interface DbCategory {
+  id: number;
+  name_en: string;
+  name_ps: string;
+  name_fa: string;
+  slug: string;
+  icon_name: string | null;
+  parent_id: number | null;
+  sort_order: number | null;
 }
 
 const ICON_MAP: Record<string, React.ReactNode> = {
@@ -201,6 +212,41 @@ export const StepCategory: React.FC<StepCategoryProps> = ({
 }) => {
   const tForm = useTranslations('form');
   const rtl = isRTL(locale);
+  const supabase = createClient();
+  const [categories, setCategories] = React.useState<DbCategory[]>([]);
+
+  React.useEffect(() => {
+    let mounted = true;
+
+    const loadCategories = async () => {
+      const { data } = await supabase
+        .from('categories')
+        .select('id, name_en, name_ps, name_fa, slug, icon_name, parent_id, sort_order')
+        .is('parent_id', null)
+        .order('sort_order', { ascending: true });
+
+      if (!mounted) return;
+      setCategories((data as DbCategory[]) || []);
+    };
+
+    loadCategories();
+
+    return () => {
+      mounted = false;
+    };
+  }, [supabase]);
+
+  const getLocalizedCategoryName = (category: DbCategory): string => {
+    switch (locale) {
+      case 'ps':
+        return category.name_ps;
+      case 'fa':
+        return category.name_fa;
+      case 'en':
+      default:
+        return category.name_en;
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -209,13 +255,13 @@ export const StepCategory: React.FC<StepCategoryProps> = ({
       </h3>
 
       <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
-        {MAIN_CATEGORIES.map((category) => {
+        {categories.map((category) => {
           const isSelected = selectedCategory === category.id;
           return (
             <button
               key={category.id}
               type="button"
-              onClick={() => onSelect(category.id)}
+              onClick={() => onSelect(category.id, category.slug)}
               className={`group p-3 md:p-4 rounded-lg border-2 transition duration-200 flex flex-col items-center text-center gap-2 cursor-pointer h-full justify-center hover:shadow-md ${
                 isSelected
                   ? 'border-primary-500 bg-primary-50'
@@ -229,7 +275,7 @@ export const StepCategory: React.FC<StepCategoryProps> = ({
                     : 'bg-white text-primary-600 group-hover:bg-primary-100 group-hover:text-primary-700'
                 }`}
               >
-                {ICON_MAP[category.icon] || ICON_MAP['home']}
+                {ICON_MAP[category.icon_name || 'home'] || ICON_MAP['home']}
               </div>
               <h4
                 className={`font-medium text-xs md:text-sm transition line-clamp-2 ${
@@ -238,7 +284,7 @@ export const StepCategory: React.FC<StepCategoryProps> = ({
                     : 'text-slate-900 group-hover:text-primary-600'
                 }`}
               >
-                {getCategoryName(category.id, locale)}
+                {getLocalizedCategoryName(category)}
               </h4>
             </button>
           );
