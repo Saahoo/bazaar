@@ -8,6 +8,7 @@ import { isRTL, Locale } from '@/lib/i18n/config';
 export interface VehicleContactData {
   phone: string;
   whatsapp: string;
+  whatsappSameAsPhone: boolean;
   email: string;
   termsAccepted: boolean;
 }
@@ -63,21 +64,44 @@ export const StepVehicleContact: React.FC<StepVehicleContactProps> = ({
       {/* WhatsApp */}
       <div>
         <label className={labelClass}>{t('whatsapp')}</label>
-        <div className="relative">
+        <div className={`flex items-center gap-3 mb-2 ${rtl ? 'flex-row-reverse' : ''}`}>
           <input
-            type="tel"
-            value={data.whatsapp}
-            onChange={(e) => onChange({ whatsapp: e.target.value })}
-            placeholder={t('enterWhatsapp')}
-            className={inputClass}
-            dir="ltr"
+            type="checkbox"
+            id="whatsapp-same"
+            checked={data.whatsappSameAsPhone}
+            onChange={(e) => {
+              const checked = e.target.checked;
+              onChange({
+                whatsappSameAsPhone: checked,
+                whatsapp: checked ? data.phone : '',
+              });
+            }}
+            className="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
           />
-          <MessageCircle
-            className={`w-4 h-4 text-slate-400 absolute top-1/2 -translate-y-1/2 pointer-events-none ${
-              rtl ? 'left-3' : 'right-3'
-            }`}
-          />
+          <label
+            htmlFor="whatsapp-same"
+            className={`text-sm text-slate-600 cursor-pointer ${rtl ? 'text-right' : 'text-left'}`}
+          >
+            {t('sameAsPhone')}
+          </label>
         </div>
+        {!data.whatsappSameAsPhone && (
+          <div className="relative">
+            <input
+              type="tel"
+              value={data.whatsapp}
+              onChange={(e) => onChange({ whatsapp: e.target.value })}
+              placeholder={t('enterWhatsapp')}
+              className={inputClass}
+              dir="ltr"
+            />
+            <MessageCircle
+              className={`w-4 h-4 text-slate-400 absolute top-1/2 -translate-y-1/2 pointer-events-none ${
+                rtl ? 'left-3' : 'right-3'
+              }`}
+            />
+          </div>
+        )}
       </div>
 
       {/* Email */}

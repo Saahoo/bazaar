@@ -58,7 +58,9 @@ export const ListingSpecsTable: React.FC<ListingSpecsTableProps> = ({
     const makeKey = metadata.make as string;
     const modelKey = metadata.model as string;
     const engineType = metadata.engineType as string;
+    const wheelDriveType = metadata.wheelDriveType as string;
     const trimLevel = metadata.trimLevel as string;
+    const customTrim = metadata.customTrim as string;
     const bodyType = metadata.bodyType as string;
     const gearType = metadata.gearType as string;
     const engineSize = metadata.engineSize as string;
@@ -90,9 +92,14 @@ export const ListingSpecsTable: React.FC<ListingSpecsTableProps> = ({
     const modelObj = makeObj?.models.find((m) => m.key === modelKey);
     const modelName = modelObj ? modelObj.name : modelKey;
 
+    const resolvedTrimLevel =
+      trimLevel === '__other__'
+        ? (customTrim || '')
+        : trimLevel;
+
     const hasSpecs =
       vtLabel || year || makeName || modelName || engineType || trimLevel || bodyType ||
-      gearType || engineSize || enginePower || mileage || color;
+      gearType || wheelDriveType || engineSize || enginePower || mileage || color;
     const hasConditionInfo =
       hasDamage !== null || exchange !== null || hasNumberPlate !== null || handDrive;
     const hasDamageList = damageDetails.length > 0;
@@ -125,10 +132,14 @@ export const ListingSpecsTable: React.FC<ListingSpecsTableProps> = ({
                 rtl={rtl}
               />
             )}
-            {trimLevel && (
+            {resolvedTrimLevel && (
               <SpecRow
                 label={tVH('trimLevel')}
-                value={tVH((`trim_${trimLevel}`) as Parameters<typeof tVH>[0])}
+                value={
+                  trimLevel !== '__other__' && tVH.has((`trim_${trimLevel}`) as Parameters<typeof tVH>[0])
+                    ? tVH((`trim_${trimLevel}`) as Parameters<typeof tVH>[0])
+                    : resolvedTrimLevel
+                }
                 rtl={rtl}
               />
             )}
@@ -146,6 +157,13 @@ export const ListingSpecsTable: React.FC<ListingSpecsTableProps> = ({
               <SpecRow
                 label={tVH('gearType')}
                 value={tVH(gearType as Parameters<typeof tVH>[0])}
+                rtl={rtl}
+              />
+            )}
+            {wheelDriveType && (
+              <SpecRow
+                label={tVH('wheelDriveType')}
+                value={tVH((`wd_${wheelDriveType}`) as Parameters<typeof tVH>[0])}
                 rtl={rtl}
               />
             )}

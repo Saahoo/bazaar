@@ -39,7 +39,7 @@ export const StepVehicleMedia: React.FC<StepVehicleMediaProps> = ({ locale, data
           locale={locale}
           photos={data.photos}
           onChange={(photos) => onChange({ photos })}
-          maxPhotos={20}
+          maxPhotos={10}
           folder="listings/vehicles"
         />
       </div>

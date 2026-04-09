@@ -1,6 +1,6 @@
 // src/lib/constants/vehicles.ts
 
-export type VehicleType = 'sedan' | 'suv' | 'van' | 'truck' | 'pickup' | 'hatchback' | 'coupe' | 'motorcycle';
+export type VehicleType = 'sedan' | 'suv' | 'van' | 'truck' | 'pickup' | 'hatchback' | 'coupe' | 'convertible' | 'wagon' | 'motorcycle' | 'other';
 
 export interface VehicleMake {
   key: string;
@@ -17,6 +17,49 @@ export interface VehicleModel {
   trimLevels?: readonly string[];
 }
 
+const ALL_CAR_MAKES = [
+  'Acura', 'Alfa Romeo', 'Aston Martin', 'Audi', 'Bentley', 'BMW', 'Bugatti',
+  'BYD', 'Cadillac', 'Chevrolet', 'Chrysler', 'Citroen', 'Dacia', 'Daihatsu',
+  'Dodge', 'Ferrari', 'Fiat', 'Ford', 'Genesis', 'GMC', 'Honda', 'Hyundai',
+  'Infiniti', 'Isuzu', 'Jaguar', 'Jeep', 'Kia', 'Lamborghini', 'Land Rover',
+  'Lexus', 'Lincoln', 'Maserati', 'Mazda', 'McLaren', 'Mercedes-Benz', 'Mini',
+  'Mitsubishi', 'Nissan', 'Opel', 'Peugeot', 'Porsche', 'Ram', 'Renault',
+  'Rolls-Royce', 'Seat', 'Skoda', 'Subaru', 'Suzuki', 'Tesla', 'Toyota',
+  'Volkswagen', 'Volvo', 'Other',
+] as const;
+
+function makeKeyFromName(name: string): string {
+  const specialKeyMap: Record<string, string> = {
+    BMW: 'bmw',
+    BYD: 'byd',
+    GMC: 'gmc',
+    'Mercedes-Benz': 'mercedesBenz',
+    Volkswagen: 'volkswagen',
+    Citroen: 'citroen',
+    'Land Rover': 'landRover',
+    'Alfa Romeo': 'alfaRomeo',
+    'Aston Martin': 'astonMartin',
+    'Rolls-Royce': 'rollsRoyce',
+    Other: 'other',
+  };
+  if (specialKeyMap[name]) return specialKeyMap[name];
+
+  return name
+    .replace(/[^a-zA-Z0-9 ]/g, '')
+    .trim()
+    .split(/\s+/)
+    .map((part, index) => (index === 0 ? part.toLowerCase() : part.charAt(0).toUpperCase() + part.slice(1)))
+    .join('');
+}
+
+const GLOBAL_MAKE_CATALOG: VehicleMake[] = ALL_CAR_MAKES.map((name) => ({
+  key: makeKeyFromName(name),
+  name_en: name,
+  name_ps: name,
+  name_fa: name,
+  models: [],
+}));
+
 // Vehicle types with translations
 export const VEHICLE_TYPES: { key: VehicleType; name_en: string; name_ps: string; name_fa: string }[] = [
   { key: 'sedan', name_en: 'Sedan', name_ps: 'سیډان', name_fa: 'سدان' },
@@ -27,6 +70,9 @@ export const VEHICLE_TYPES: { key: VehicleType; name_en: string; name_ps: string
   { key: 'hatchback', name_en: 'Hatchback', name_ps: 'هیچبیک', name_fa: 'هاچ بک' },
   { key: 'coupe', name_en: 'Coupe', name_ps: 'کوپ', name_fa: 'کوپه' },
   { key: 'motorcycle', name_en: 'Motorcycle', name_ps: 'موټرسایکل', name_fa: 'موتورسیکلت' },
+  { key: 'convertible', name_en: 'Convertible', name_ps: 'کانورټیبل', name_fa: 'کانورتیبل' },
+  { key: 'wagon', name_en: 'Wagon', name_ps: 'ویگن', name_fa: 'واگن' },
+  { key: 'other', name_en: 'Other', name_ps: 'نور', name_fa: 'سایر' },
 ];
 
 // Makes per vehicle type
@@ -473,7 +519,10 @@ export const MAKES_BY_TYPE: Record<VehicleType, VehicleMake[]> = {
   pickup: PICKUP_MAKES,
   hatchback: HATCHBACK_MAKES,
   coupe: COUPE_MAKES,
+  convertible: COUPE_MAKES,
+  wagon: HATCHBACK_MAKES,
   motorcycle: MOTORCYCLE_MAKES,
+  other: SEDAN_MAKES,
 };
 
 // Engine types
@@ -481,7 +530,7 @@ export const ENGINE_TYPES = ['diesel', 'petrol', 'hybrid', 'electric', 'petrolLp
 export type EngineType = typeof ENGINE_TYPES[number];
 
 // Body types
-export const BODY_TYPES = ['fourDoor', 'fiveDoor', 'hatchback', 'coupe', 'convertible', 'wagon'] as const;
+export const BODY_TYPES = ['fourDoor', 'fiveDoor', 'hatchback', 'coupe', 'convertible', 'wagon', 'suv', 'pickup', 'other'] as const;
 export type BodyType = typeof BODY_TYPES[number];
 
 // Gear types
@@ -494,6 +543,10 @@ export const ENGINE_SIZES = [
   '2.0', '2.2', '2.4', '2.5', '2.7', '3.0', '3.2', '3.5', '4.0',
   '4.5', '5.0', '5.5', '6.0', '6.2',
 ];
+
+// Wheel drive types
+export const WHEEL_DRIVE_TYPES = ['fwd', 'rwd', 'awd', '4wd'] as const;
+export type WheelDriveType = typeof WHEEL_DRIVE_TYPES[number]; 
 
 // Colors
 export const VEHICLE_COLORS = [
@@ -529,12 +582,22 @@ export const AFGHANISTAN_CITIES = [
   'Sheberghan', 'Charikar', 'Sar-e Pol', 'Aybak', 'Mehtarlam', 'Faizabad',
   'Zaranj', 'Farah', 'Bamyan', 'Nili', 'Chaghcharan', 'Mahmud Raqi',
   'Asadabad', 'Panjshir', 'Parwan', 'Maidan Shar', 'Tarin Kowt',
-  'Qalat', 'Pol-e Alam', 'Parun',
+  'Qalat', 'Pol-e Alam', 'Parun', 'Bazarak', 'Samangan',
 ] as const;
 
 // Helper: get makes for a vehicle type
 export function getMakesForType(type: VehicleType): VehicleMake[] {
-  return MAKES_BY_TYPE[type] || [];
+  const typeMakes = MAKES_BY_TYPE[type] || [];
+  const existingKeys = new Set(typeMakes.map((m) => m.key));
+  const additionalMakes = GLOBAL_MAKE_CATALOG.filter((m) => !existingKeys.has(m.key));
+
+  const mergedMakes = [...typeMakes, ...additionalMakes];
+  const normalMakes = mergedMakes.filter((m) => m.key !== 'other' && m.name_en.toLowerCase() !== 'other');
+  const otherMake = mergedMakes.find((m) => m.key === 'other' || m.name_en.toLowerCase() === 'other');
+
+  normalMakes.sort((a, b) => a.name_en.localeCompare(b.name_en, 'en', { sensitivity: 'base' }));
+
+  return otherMake ? [...normalMakes, otherMake] : normalMakes;
 }
 
 // Helper: get models for a make within a type
@@ -557,7 +620,7 @@ export function getMakeName(make: VehicleMake, locale: 'en' | 'ps' | 'fa'): stri
 export function getYearRange(): number[] {
   const currentYear = new Date().getFullYear();
   const years: number[] = [];
-  for (let y = currentYear + 1; y >= 1970; y--) {
+  for (let y = currentYear + 1; y >= 1980; y--) {
     years.push(y);
   }
   return years;
@@ -568,7 +631,7 @@ export const TRIM_LEVELS = [
   'base', 'standard', 'comfort', 'gl', 'xl', 'limited', 'premium',
   'sport', 'titanium', 'platinum', 'executive',
 ] as const;
-export type TrimLevel = typeof TRIM_LEVELS[number];
+export type TrimLevel = string;
 
 const TRIMS_BY_VEHICLE_TYPE: Record<VehicleType, TrimLevel[]> = {
   sedan: ['base', 'standard', 'comfort', 'gl', 'xl', 'limited', 'premium', 'sport', 'executive'],
@@ -578,13 +641,23 @@ const TRIMS_BY_VEHICLE_TYPE: Record<VehicleType, TrimLevel[]> = {
   pickup: ['base', 'standard', 'gl', 'xl', 'limited', 'sport', 'titanium', 'platinum'],
   hatchback: ['base', 'standard', 'comfort', 'gl', 'xl', 'sport'],
   coupe: ['standard', 'comfort', 'limited', 'premium', 'sport', 'executive'],
+  convertible: ['standard', 'comfort', 'limited', 'premium', 'sport', 'executive'],
+  wagon: ['base', 'standard', 'comfort', 'gl', 'xl', 'sport'],
   motorcycle: ['base', 'standard', 'sport', 'premium'],
+  other: ['base', 'standard', 'comfort', 'gl', 'xl', 'limited', 'premium', 'sport'],
 };
 
 const PREMIUM_TRIMS: TrimLevel[] = ['limited', 'premium', 'sport', 'titanium', 'platinum', 'executive'];
 const BUDGET_TRIMS: TrimLevel[] = ['base', 'standard', 'comfort', 'gl', 'xl'];
 
 const MODEL_TRIM_OVERRIDES: Record<string, TrimLevel[]> = {
+  a3: ['30 TFSI', '35 TFSI', '40 TFSI', 'S line'],
+  a4: ['35 TFSI', '40 TFSI', '45 TFSI', 'S line'],
+  a5: ['35 TFSI', '40 TFSI', '45 TFSI', 'S line', 'Cabriolet'],
+  a6: ['40 TFSI', '45 TFSI', '55 TFSI', 'S line'],
+  a7: ['45 TFSI', '55 TFSI', 'S line'],
+  a8: ['50 TDI', '55 TFSI', '60 TFSI', 'S line'],
+  a5Coupe: ['40 TFSI', '45 TFSI', 'S line', 'quattro'],
   landCruiser: ['limited', 'premium', 'sport', 'titanium', 'platinum', 'executive'],
   prado: ['limited', 'premium', 'sport', 'titanium', 'executive'],
   hilux: ['base', 'standard', 'gl', 'xl', 'limited', 'sport'],
@@ -602,6 +675,19 @@ const MODEL_TRIM_OVERRIDES: Record<string, TrimLevel[]> = {
   gs150: ['base', 'standard', 'sport'],
   ninja: ['standard', 'sport', 'premium'],
   cbr: ['standard', 'sport', 'premium'],
+};
+
+const MODEL_YEAR_TRIM_OVERRIDES: Record<string, Partial<Record<number, TrimLevel[]>>> = {
+  a5: {
+    2020: ['35 TFSI', '40 TFSI', '45 TFSI', 'S line', 'quattro', 'Cabriolet'],
+    2021: ['35 TFSI', '40 TFSI', '45 TFSI', 'S line', 'quattro', 'Cabriolet'],
+    2022: ['40 TFSI', '45 TFSI', 'S line', 'quattro', 'Black Edition'],
+  },
+  a4: {
+    2020: ['35 TFSI', '40 TFSI', '45 TFSI', 'S line'],
+    2021: ['35 TFSI', '40 TFSI', '45 TFSI', 'S line'],
+    2022: ['40 TFSI', '45 TFSI', 'S line', 'Black Edition'],
+  },
 };
 
 // ── Options available by vehicle type ──────────────────────────
@@ -627,7 +713,10 @@ const OPTIONS_BY_VEHICLE_TYPE: Record<VehicleType, VehicleOption[]> = {
   pickup: [...BASE_CAR_OPTIONS, 'rearCamera', 'parkingSensors', 'touchScreen', 'cruiseControl', 'roofRack'],
   hatchback: [...BASE_CAR_OPTIONS, 'touchScreen', 'rearCamera', 'keylessEntry', 'parkingSensors'],
   coupe: [...PREMIUM_OPTIONS],
+  convertible: [...PREMIUM_OPTIONS],
+  wagon: [...BASE_CAR_OPTIONS, 'touchScreen', 'rearCamera', 'cruiseControl', 'keylessEntry', 'roofRack'],
   motorcycle: ['abs'],
+  other: [...BASE_CAR_OPTIONS],
 };
 
 // Premium makes that unlock all options for their vehicle type
@@ -692,6 +781,7 @@ export function getTrimLevelsForVehicle(
   vehicleType: VehicleType,
   makeKey?: string,
   modelKey?: string,
+  year?: string | number,
 ): TrimLevel[] {
   if (makeKey && modelKey) {
     const makes = getMakesForType(vehicleType);
@@ -700,6 +790,15 @@ export function getTrimLevelsForVehicle(
     if (model?.trimLevels && model.trimLevels.length > 0) {
       return model.trimLevels as TrimLevel[];
     }
+
+    const yearNum = typeof year === 'string' ? Number(year) : year;
+    if (yearNum) {
+      const yearOverride = MODEL_YEAR_TRIM_OVERRIDES[modelKey]?.[yearNum];
+      if (yearOverride && yearOverride.length > 0) {
+        return yearOverride;
+      }
+    }
+
     const modelOverride = MODEL_TRIM_OVERRIDES[modelKey];
     if (modelOverride && modelOverride.length > 0) {
       return modelOverride;
@@ -721,3 +820,87 @@ export function getTrimLevelsForVehicle(
 
   return typeTrims;
 }
+
+export interface VehicleDataEntry {
+  makeKey: string;
+  models: string[];
+  modelKeyMap: Record<string, string>;
+  trims: Record<string, string[]>;
+  trimsByYear: Record<string, Record<number, string[]>>;
+}
+
+export type VehicleDataMap = Record<string, VehicleDataEntry>;
+
+function buildVehicleDataMap(): VehicleDataMap {
+  const map: VehicleDataMap = {};
+
+  // Seed all requested brands so dropdown data shape is complete even if models are unknown.
+  for (const makeName of ALL_CAR_MAKES) {
+    map[makeName] = {
+      makeKey: makeKeyFromName(makeName),
+      models: [],
+      modelKeyMap: {},
+      trims: {},
+      trimsByYear: {},
+    };
+  }
+
+  const typedMakes = Object.values(MAKES_BY_TYPE).flat();
+
+  for (const make of typedMakes) {
+    if (!map[make.name_en]) {
+      map[make.name_en] = {
+        makeKey: make.key,
+        models: [],
+        modelKeyMap: {},
+        trims: {},
+        trimsByYear: {},
+      };
+    }
+
+    const makeEntry = map[make.name_en];
+
+    for (const model of make.models) {
+      if (!makeEntry.models.includes(model.name)) {
+        makeEntry.models.push(model.name);
+      }
+      makeEntry.modelKeyMap[model.name] = model.key;
+
+      const trimSet = new Set<string>();
+      if (Array.isArray(model.trimLevels)) {
+        for (const trim of model.trimLevels) trimSet.add(trim);
+      }
+
+      const modelOverrideTrims = MODEL_TRIM_OVERRIDES[model.key] || [];
+      for (const trim of modelOverrideTrims) trimSet.add(trim);
+
+      if (trimSet.size > 0) {
+        makeEntry.trims[model.name] = Array.from(trimSet);
+      }
+
+      const yearOverrides = MODEL_YEAR_TRIM_OVERRIDES[model.key];
+      if (yearOverrides) {
+        const yearMap: Record<number, string[]> = {};
+        for (const [yearKey, trims] of Object.entries(yearOverrides)) {
+          const year = Number(yearKey);
+          if (!Number.isNaN(year) && Array.isArray(trims)) {
+            yearMap[year] = [...trims];
+          }
+        }
+
+        if (Object.keys(yearMap).length > 0) {
+          makeEntry.trimsByYear[model.name] = yearMap;
+        }
+      }
+    }
+  }
+
+  for (const makeName of Object.keys(map)) {
+    map[makeName].models.sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' }));
+  }
+
+  return map;
+}
+
+// Canonical Make -> Model -> Trim structure for dynamic field UIs.
+export const VEHICLE_DATA: VehicleDataMap = buildVehicleDataMap();

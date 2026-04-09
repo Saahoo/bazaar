@@ -39,7 +39,7 @@ export const MAIN_CATEGORIES: Category[] = [
   {
     id: 5,
     name_en: 'Spare Parts',
-    name_ps: 'سپیئر پارټونه',
+    name_ps: 'پرزې',
     name_fa: 'قطعات یدکی',
     icon: 'puzzle',
   },

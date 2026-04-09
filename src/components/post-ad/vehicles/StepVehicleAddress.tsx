@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { MapPin } from 'lucide-react';
 import { isRTL, Locale } from '@/lib/i18n/config';
@@ -10,6 +10,8 @@ export interface VehicleAddressData {
   city: string;
   street: string;
   area: string;
+  lat: number | null;
+  lng: number | null;
 }
 
 interface StepVehicleAddressProps {
@@ -17,6 +19,102 @@ interface StepVehicleAddressProps {
   data: VehicleAddressData;
   onChange: (data: Partial<VehicleAddressData>) => void;
 }
+
+// Leaflet map component loaded dynamically to avoid SSR issues
+const LocationMap: React.FC<{
+  lat: number | null;
+  lng: number | null;
+  onLocationChange: (lat: number, lng: number) => void;
+}> = ({ lat, lng, onLocationChange }) => {
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<L.Map | null>(null);
+  const markerRef = useRef<L.Marker | null>(null);
+  const [mapReady, setMapReady] = useState(false);
+
+  useEffect(() => {
+    let L: typeof import('leaflet');
+    let mounted = true;
+
+    const initMap = async () => {
+      L = await import('leaflet');
+
+      // Fix default icon paths for webpack/next
+      delete (L.Icon.Default.prototype as Record<string, unknown>)._getIconUrl;
+      L.Icon.Default.mergeOptions({
+        iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+        iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+      });
+
+      if (!mounted || !mapRef.current || mapInstanceRef.current) return;
+
+      const defaultLat = lat ?? 34.5553;
+      const defaultLng = lng ?? 69.2075;
+
+      const map = L.map(mapRef.current).setView([defaultLat, defaultLng], 13);
+      mapInstanceRef.current = map;
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        maxZoom: 19,
+      }).addTo(map);
+
+      if (lat !== null && lng !== null) {
+        markerRef.current = L.marker([lat, lng]).addTo(map);
+      }
+
+      map.on('click', (e: L.LeafletMouseEvent) => {
+        const { lat: clickLat, lng: clickLng } = e.latlng;
+        if (markerRef.current) {
+          markerRef.current.setLatLng([clickLat, clickLng]);
+        } else {
+          markerRef.current = L.marker([clickLat, clickLng]).addTo(map);
+        }
+        onLocationChange(clickLat, clickLng);
+      });
+
+      setMapReady(true);
+    };
+
+    initMap();
+
+    return () => {
+      mounted = false;
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Update marker if lat/lng change externally
+  useEffect(() => {
+    if (!mapReady || !mapInstanceRef.current) return;
+    const loadLeaflet = async () => {
+      const L = await import('leaflet');
+      if (lat !== null && lng !== null) {
+        if (markerRef.current) {
+          markerRef.current.setLatLng([lat, lng]);
+        } else {
+          markerRef.current = L.marker([lat, lng]).addTo(mapInstanceRef.current!);
+        }
+        mapInstanceRef.current!.setView([lat, lng], 13);
+      }
+    };
+    loadLeaflet();
+  }, [lat, lng, mapReady]);
+
+  return (
+    <>
+      <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"
+      />
+      <div ref={mapRef} className="w-full h-64 rounded-xl border border-slate-300 z-0" />
+    </>
+  );
+};
 
 export const StepVehicleAddress: React.FC<StepVehicleAddressProps> = ({
   locale,
@@ -90,17 +188,24 @@ export const StepVehicleAddress: React.FC<StepVehicleAddressProps> = ({
         />
       </div>
 
-      {/* Map Location (placeholder) */}
+      {/* Map Location */}
       <div>
         <label className={labelClass}>
           {t('mapLocation')} <span className="text-red-500">*</span>
         </label>
-        <div className="w-full h-48 bg-slate-100 rounded-xl border-2 border-dashed border-slate-300 flex items-center justify-center">
-          <div className="text-center">
-            <MapPin className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-            <p className="text-sm text-slate-500">{t('clickMapToPin')}</p>
-          </div>
-        </div>
+        <p className={`text-sm text-slate-500 mb-3 ${rtl ? 'text-right' : 'text-left'}`}>
+          {t('clickMapToPin')}
+        </p>
+        <LocationMap
+          lat={data.lat}
+          lng={data.lng}
+          onLocationChange={(lat, lng) => onChange({ lat, lng })}
+        />
+        {data.lat !== null && data.lng !== null && (
+          <p className={`mt-2 text-xs text-green-600 ${rtl ? 'text-right' : 'text-left'}`}>
+            📍 {data.lat.toFixed(6)}, {data.lng.toFixed(6)}
+          </p>
+        )}
       </div>
     </div>
   );

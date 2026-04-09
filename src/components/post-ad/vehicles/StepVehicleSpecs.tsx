@@ -4,18 +4,22 @@ import React from 'react';
 import { useTranslations } from 'next-intl';
 import { isRTL, Locale } from '@/lib/i18n/config';
 import {
-  VehicleType, EngineType, GearType, BodyType,
-  getMakesForType, getModelsForMake, getMakeName,
-  ENGINE_TYPES, GEAR_TYPES, BODY_TYPES, ENGINE_SIZES,
-  getTrimLevelsForVehicle, getYearRange,
+  VehicleType, EngineType, GearType, BodyType, WheelDriveType,
+  VEHICLE_DATA,
+  ENGINE_TYPES, GEAR_TYPES, BODY_TYPES, WHEEL_DRIVE_TYPES,
+  getYearRange,
 } from '@/lib/constants/vehicles';
 
 export interface VehicleSpecsData {
   year: string;
   make: string;
+  customMake: string;
   model: string;
+  customModel: string;
   engineType: EngineType | '';
+  wheelDriveType: WheelDriveType | '';
   trimLevel: string;
+  customTrim: string;
   bodyType: BodyType | '';
   gearType: GearType | '';
   engineSize: string;
@@ -31,7 +35,7 @@ interface StepVehicleSpecsProps {
 
 export const StepVehicleSpecs: React.FC<StepVehicleSpecsProps> = ({
   locale,
-  vehicleType,
+  vehicleType: _vehicleType,
   data,
   onChange,
 }) => {
@@ -42,13 +46,51 @@ export const StepVehicleSpecs: React.FC<StepVehicleSpecsProps> = ({
     `w-full px-4 py-2.5 border border-slate-300 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-500 ${rtl ? 'text-right' : 'text-left'}`;
   const labelClass = `block text-sm font-medium text-slate-700 mb-1.5 ${rtl ? 'text-right' : 'text-left'}`;
 
-  const makes = getMakesForType(vehicleType);
-  const models = data.make ? getModelsForMake(vehicleType, data.make) : [];
-  const trimLevels = getTrimLevelsForVehicle(vehicleType, data.make, data.model);
+  const makeOptions = Object.entries(VEHICLE_DATA)
+    .map(([makeName, entry]) => ({ makeName, makeKey: entry.makeKey }))
+    .sort((a, b) => {
+      const aOther = a.makeName.toLowerCase() === 'other';
+      const bOther = b.makeName.toLowerCase() === 'other';
+      if (aOther && !bOther) return 1;
+      if (!aOther && bOther) return -1;
+      return a.makeName.localeCompare(b.makeName, 'en', { sensitivity: 'base' });
+    });
+
+  const selectedMakeName = makeOptions.find((m) => m.makeKey === data.make)?.makeName;
+  const selectedMakeEntry = selectedMakeName ? VEHICLE_DATA[selectedMakeName] : null;
+
+  const modelOptions = selectedMakeEntry
+    ? selectedMakeEntry.models.map((modelName) => ({
+      modelName,
+      modelKey: selectedMakeEntry.modelKeyMap[modelName] || modelName,
+    }))
+    : [];
+
+  const selectedModelName = modelOptions.find((m) => m.modelKey === data.model)?.modelName;
+  const selectedYear = Number(data.year);
+
+  const trimLevels = (() => {
+    if (!selectedMakeEntry || !selectedModelName) return [] as string[];
+
+    const yearSpecific = Number.isFinite(selectedYear)
+      ? selectedMakeEntry.trimsByYear[selectedModelName]?.[selectedYear]
+      : undefined;
+
+    if (Array.isArray(yearSpecific) && yearSpecific.length > 0) {
+      return yearSpecific;
+    }
+
+    return selectedMakeEntry.trims[selectedModelName] || [];
+  })();
+
   const years = getYearRange();
 
   const handleMakeChange = (makeKey: string) => {
-    onChange({ make: makeKey, model: '' });
+    onChange({ make: makeKey, model: '', customMake: '', customModel: '', customTrim: '' });
+  };
+
+  const handleModelChange = (modelKey: string) => {
+    onChange({ model: modelKey, customModel: '' });
   };
 
   return (
@@ -87,10 +129,21 @@ export const StepVehicleSpecs: React.FC<StepVehicleSpecsProps> = ({
           dir={rtl ? 'rtl' : 'ltr'}
         >
           <option value="">{t('selectMake')}</option>
-          {makes.map((m) => (
-            <option key={m.key} value={m.key}>{getMakeName(m, locale)}</option>
+          {makeOptions.map((m) => (
+            <option key={m.makeKey} value={m.makeKey}>{m.makeName}</option>
           ))}
+          <option value="__other__">{t('other')}</option>
         </select>
+        {data.make === '__other__' && (
+          <input
+            type="text"
+            value={data.customMake}
+            onChange={(e) => onChange({ customMake: e.target.value })}
+            placeholder={t('enterMake')}
+            className={`${inputClass} mt-2`}
+            dir={rtl ? 'rtl' : 'ltr'}
+          />
+        )}
       </div>
 
       {/* Model */}
@@ -98,59 +151,70 @@ export const StepVehicleSpecs: React.FC<StepVehicleSpecsProps> = ({
         <label className={labelClass}>
           {t('model')} <span className="text-red-500">*</span>
         </label>
-        <select
-          value={data.model}
-          onChange={(e) => onChange({ model: e.target.value })}
-          className={`${inputClass} bg-white`}
-          disabled={!data.make}
-          dir={rtl ? 'rtl' : 'ltr'}
-        >
-          <option value="">{data.make ? t('selectModel') : t('selectMakeFirst')}</option>
-          {models.map((m) => (
-            <option key={m.key} value={m.key}>{m.name}</option>
-          ))}
-        </select>
+        {data.make === '__other__' ? (
+          <input
+            type="text"
+            value={data.customModel}
+            onChange={(e) => onChange({ customModel: e.target.value })}
+            placeholder={t('enterModel')}
+            className={inputClass}
+            dir={rtl ? 'rtl' : 'ltr'}
+          />
+        ) : (
+          <>
+            <select
+              value={data.model}
+              onChange={(e) => handleModelChange(e.target.value)}
+              className={`${inputClass} bg-white`}
+              disabled={!data.make}
+              dir={rtl ? 'rtl' : 'ltr'}
+            >
+              <option value="">{data.make ? t('selectModel') : t('selectMakeFirst')}</option>
+              {modelOptions.map((m) => (
+                <option key={m.modelKey} value={m.modelKey}>{m.modelName}</option>
+              ))}
+              {data.make && <option value="__other__">{t('other')}</option>}
+            </select>
+            {data.model === '__other__' && (
+              <input
+                type="text"
+                value={data.customModel}
+                onChange={(e) => onChange({ customModel: e.target.value })}
+                placeholder={t('enterModel')}
+                className={`${inputClass} mt-2`}
+                dir={rtl ? 'rtl' : 'ltr'}
+              />
+            )}
+          </>
+        )}
       </div>
 
-      {/* Engine Type */}
-      <div>
-        <label className={labelClass}>{t('engineType')}</label>
-        <div className={`flex flex-wrap gap-2 ${rtl ? 'flex-row-reverse' : ''}`}>
-          {ENGINE_TYPES.map((et) => {
-            const isSelected = data.engineType === et;
-            return (
-              <button
-                key={et}
-                type="button"
-                onClick={() => onChange({ engineType: et })}
-                className={`px-4 py-2 rounded-lg text-sm font-medium border-2 transition ${
-                  isSelected
-                    ? 'border-primary-500 bg-primary-50 text-primary-700'
-                    : 'border-slate-200 bg-white text-slate-600 hover:border-primary-300 hover:bg-primary-50'
-                }`}
-              >
-                {t(et)}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Trim / Options Level */}
+      {/* Trim / Option */}
       <div>
         <label className={labelClass}>{t('trimLevel')}</label>
         <select
           value={data.trimLevel}
-          onChange={(e) => onChange({ trimLevel: e.target.value })}
+          onChange={(e) => onChange({ trimLevel: e.target.value, customTrim: '' })}
           className={`${inputClass} bg-white`}
           disabled={!data.make}
           dir={rtl ? 'rtl' : 'ltr'}
         >
           <option value="">{data.make ? t('selectTrim') : t('selectMakeFirst')}</option>
           {trimLevels.map((tl) => (
-            <option key={tl} value={tl}>{t(`trim_${tl}`)}</option>
+            <option key={tl} value={tl}>{t.has(`trim_${tl}`) ? t(`trim_${tl}`) : tl}</option>
           ))}
+          <option value="__other__">{t('other')}</option>
         </select>
+        {data.trimLevel === '__other__' && (
+          <input
+            type="text"
+            value={data.customTrim}
+            onChange={(e) => onChange({ customTrim: e.target.value })}
+            placeholder={t('enterTrim')}
+            className={`${inputClass} mt-2`}
+            dir={rtl ? 'rtl' : 'ltr'}
+          />
+        )}
       </div>
 
       {/* Body Type */}
@@ -201,20 +265,69 @@ export const StepVehicleSpecs: React.FC<StepVehicleSpecsProps> = ({
         </div>
       </div>
 
+      {/* Engine Type */}
+      <div>
+        <label className={labelClass}>{t('engineType')}</label>
+        <div className={`flex flex-wrap gap-2 ${rtl ? 'flex-row-reverse' : ''}`}>
+          {ENGINE_TYPES.map((et) => {
+            const isSelected = data.engineType === et;
+            return (
+              <button
+                key={et}
+                type="button"
+                onClick={() => onChange({ engineType: et })}
+                className={`px-4 py-2 rounded-lg text-sm font-medium border-2 transition ${
+                  isSelected
+                    ? 'border-primary-500 bg-primary-50 text-primary-700'
+                    : 'border-slate-200 bg-white text-slate-600 hover:border-primary-300 hover:bg-primary-50'
+                }`}
+              >
+                {t(et)}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Wheel Drive Type */}
+      <div>
+        <label className={labelClass}>{t('wheelDriveType')}</label>
+        <div className={`flex flex-wrap gap-2 ${rtl ? 'flex-row-reverse' : ''}`}>
+          {WHEEL_DRIVE_TYPES.map((wd) => {
+            const isSelected = data.wheelDriveType === wd;
+            return (
+              <button
+                key={wd}
+                type="button"
+                onClick={() => onChange({ wheelDriveType: wd })}
+                className={`px-4 py-2 rounded-lg text-sm font-medium border-2 transition ${
+                  isSelected
+                    ? 'border-primary-500 bg-primary-50 text-primary-700'
+                    : 'border-slate-200 bg-white text-slate-600 hover:border-primary-300 hover:bg-primary-50'
+                }`}
+              >
+                {t((`wd_${wd}`) as Parameters<typeof t>[0])}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Engine Size + Power */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className={labelClass}>{t('engineSize')}</label>
-          <select
+          <input
+            type="text"
             value={data.engineSize}
             onChange={(e) => onChange({ engineSize: e.target.value })}
-            className={`${inputClass} bg-white`}
-          >
-            <option value="">{t('selectEngineSize')}</option>
-            {ENGINE_SIZES.map((s) => (
-              <option key={s} value={s}>{s} L</option>
-            ))}
-          </select>
+            placeholder={t('enterEngineSize')}
+            className={inputClass}
+            dir="ltr"
+          />
+          <p className={`mt-1 text-xs text-slate-400 ${rtl ? 'text-right' : 'text-left'}`}>
+            {t('engineSizeHint')}
+          </p>
         </div>
         <div>
           <label className={labelClass}>{t('enginePower')}</label>
@@ -226,6 +339,9 @@ export const StepVehicleSpecs: React.FC<StepVehicleSpecsProps> = ({
             className={inputClass}
             dir="ltr"
           />
+          <p className={`mt-1 text-xs text-slate-400 ${rtl ? 'text-right' : 'text-left'}`}>
+            {t('enginePowerHint')}
+          </p>
         </div>
       </div>
     </div>

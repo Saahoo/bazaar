@@ -12,8 +12,8 @@ export const LOCALE_NAMES: Record<Locale, string> = {
 
 export const LOCALE_FLAGS: Record<Locale, string> = {
   en: 'EN',
-  ps: 'پښتو',
-  fa: 'دری',
+  ps: 'PS',
+  fa: 'FA',
 };
 
 export const isRTL = (locale: Locale): boolean => {

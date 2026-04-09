@@ -6,20 +6,21 @@ import { useTranslations } from 'next-intl';
 import { SlidersHorizontal, X, Loader2 } from 'lucide-react';
 import { Locale, isRTL } from '@/lib/i18n/config';
 import { useListings } from '@/lib/hooks/useListings';
-import { FilterSidebar } from './FilterSidebar';
+import { FilterSidebar, VehicleFilterState, EMPTY_VEHICLE_FILTERS } from './FilterSidebar';
 import { ListingCard } from './ListingCard';
 import { SortDropdown } from './SortDropdown';
 
 interface SearchPageProps {
   locale: Locale;
   initialCategory?: string;
+  initialQuery?: string;
 }
 
-export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory }) => {
+export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory, initialQuery }) => {
   const t = useTranslations('search');
   const isRtl = isRTL(locale);
 
-  // Filter state
+  // Base filter state
   const [selectedCategory, setSelectedCategory] = useState<number | null>(
     initialCategory ? Number(initialCategory) : null
   );
@@ -27,20 +28,53 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory 
   const [priceMax, setPriceMax] = useState('');
   const [selectedConditions, setSelectedConditions] = useState<string[]>([]);
   const [selectedCity, setSelectedCity] = useState('');
+  const [selectedWheelDriveType, setSelectedWheelDriveType] = useState('');
   const [sortBy, setSortBy] = useState('newest');
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+
+  // Vehicle-specific filter group
+  const [vehicleFilters, setVehicleFilters] = useState<VehicleFilterState>(EMPTY_VEHICLE_FILTERS);
+
+  // Reset vehicle filters when category changes away from vehicles
+  const handleCategoryChange = (categoryId: number | null) => {
+    setSelectedCategory(categoryId);
+    if (categoryId !== 1) setVehicleFilters(EMPTY_VEHICLE_FILTERS);
+  };
+
+  const isVehicles = selectedCategory === 1;
 
   // Build filters for the hook
   const filters = useMemo(() => ({
     category: selectedCategory,
+    query: (isVehicles ? vehicleFilters.keywords : initialQuery)?.trim() || undefined,
     city: selectedCity || undefined,
     priceMin: priceMin ? Number(priceMin) : undefined,
     priceMax: priceMax ? Number(priceMax) : undefined,
     conditions: selectedConditions.length > 0 ? selectedConditions : undefined,
+    wheelDriveType: (!isVehicles && selectedWheelDriveType) ? selectedWheelDriveType as 'fwd' | 'rwd' | 'awd' | '4wd' : undefined,
     sortBy: sortBy as 'newest' | 'oldest' | 'priceLow' | 'priceHigh',
-  }), [selectedCategory, selectedCity, priceMin, priceMax, selectedConditions, sortBy]);
+    vehicleFilters: isVehicles ? {
+      vehicleMake: vehicleFilters.make || undefined,
+      vehicleModel: vehicleFilters.model || undefined,
+      yearMin: vehicleFilters.yearMin ? Number(vehicleFilters.yearMin) : undefined,
+      yearMax: vehicleFilters.yearMax ? Number(vehicleFilters.yearMax) : undefined,
+      fuelTypes: vehicleFilters.fuelTypes.length > 0 ? vehicleFilters.fuelTypes : undefined,
+      gearTypes: vehicleFilters.gearTypes.length > 0 ? vehicleFilters.gearTypes : undefined,
+      bodyTypes: vehicleFilters.bodyTypes.length > 0 ? vehicleFilters.bodyTypes : undefined,
+      kmMin: vehicleFilters.kmMin ? Number(vehicleFilters.kmMin) : undefined,
+      kmMax: vehicleFilters.kmMax ? Number(vehicleFilters.kmMax) : undefined,
+      enginePowerRange: vehicleFilters.enginePowerRange || undefined,
+      engineCapacityRange: vehicleFilters.engineCapacityRange || undefined,
+      vehicleWheelDrive: vehicleFilters.wheelDrive || undefined,
+      vehicleColor: vehicleFilters.color || undefined,
+      numberPlateCity: vehicleFilters.numberPlateCity || undefined,
+      fromOwner: vehicleFilters.fromOwner === 'true' ? true : vehicleFilters.fromOwner === 'false' ? false : null,
+    } : undefined,
+  }), [
+    selectedCategory, initialQuery, selectedCity, priceMin, priceMax,
+    selectedConditions, selectedWheelDriveType, sortBy, isVehicles, vehicleFilters,
+  ]);
 
-  // Fetch real-time listings from Supabase
   const { listings, loading, error } = useListings(filters);
 
   return (
@@ -71,7 +105,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory 
             <FilterSidebar
               locale={locale}
               selectedCategory={selectedCategory}
-              onCategoryChange={setSelectedCategory}
+              onCategoryChange={handleCategoryChange}
               priceMin={priceMin}
               onPriceMinChange={setPriceMin}
               priceMax={priceMax}
@@ -80,6 +114,10 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory 
               onConditionsChange={setSelectedConditions}
               selectedCity={selectedCity}
               onCityChange={setSelectedCity}
+              selectedWheelDriveType={selectedWheelDriveType}
+              onWheelDriveTypeChange={setSelectedWheelDriveType}
+              vehicleFilters={vehicleFilters}
+              onVehicleFiltersChange={setVehicleFilters}
             />
           </aside>
 

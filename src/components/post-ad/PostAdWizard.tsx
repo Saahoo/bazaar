@@ -3,7 +3,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { ChevronLeft, ChevronRight, Check, LogIn } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Check, LogIn, Save, Eye } from 'lucide-react';
 import { isRTL, Locale } from '@/lib/i18n/config';
 import { useAuth } from '@/lib/context/AuthContext';
 import { createClient } from '@/lib/supabase/client';
@@ -98,17 +98,18 @@ const INITIAL_VH_DATA: VehiclesFormData = {
   description: '',
   vehicleType: '',
   specs: {
-    year: '', make: '', model: '', engineType: '', trimLevel: '',
+    year: '', make: '', customMake: '', model: '', customModel: '',
+    engineType: '', wheelDriveType: '', trimLevel: '', customTrim: '',
     bodyType: '', gearType: '', engineSize: '', enginePower: '',
   },
   condition: {
     price: '', currency: 'AFN', mileage: '', color: '',
     hasDamage: null, exchange: null, hasNumberPlate: null,
-    numberPlateCity: '', handDrive: '', damageDetails: [], otherOptions: [],
+    numberPlateCity: '', handDrive: '', damageDetails: '', otherOptions: [],
   },
-  address: { city: '', street: '', area: '' },
+  address: { city: '', street: '', area: '', lat: null, lng: null },
   media: { photos: [], videoUrl: '' },
-  contact: { phone: '', whatsapp: '', email: '', termsAccepted: false },
+  contact: { phone: '', whatsapp: '', whatsappSameAsPhone: false, email: '', termsAccepted: false },
 };
 
 // Default steps for non-specialized categories
@@ -143,6 +144,9 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
   const [wizardConfig, setWizardConfig] = useState<WizardFormConfig>({ sections: [], lists: [] });
   const [wizardValues, setWizardValues] = useState<Record<string, unknown>>({});
   const [loadingWizardConfig, setLoadingWizardConfig] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
+  const [draftSaved, setDraftSaved] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
   const supabase = createClient();
 
   const detailsRef = useRef<StepDetailsHandle>(null);
@@ -295,13 +299,13 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         return reData.contact.phone !== '' && reData.contact.termsAccepted;
       // Vehicle steps
       case 'vhStepType':
-        return vhData.title !== '' && vhData.description !== '' && vhData.vehicleType !== '';
+        return vhData.title !== '' && vhData.title.length <= 100 && vhData.description.length >= 50 && vhData.vehicleType !== '';
       case 'vhStepSpecs':
-        return vhData.specs.year !== '' && vhData.specs.make !== '' && vhData.specs.model !== '' && requiredDynamicValid;
+        return vhData.specs.year !== '' && (vhData.specs.make !== '' || vhData.specs.customMake !== '') && (vhData.specs.model !== '' || vhData.specs.customModel !== '') && requiredDynamicValid;
       case 'vhStepCondition':
-        return vhData.condition.price !== '';
+        return vhData.condition.price !== '' && vhData.condition.mileage !== '';
       case 'vhStepAddress':
-        return vhData.address.city !== '';
+        return vhData.address.city !== '' && vhData.address.lat !== null && vhData.address.lng !== null;
       case 'vhStepMedia':
         return vhData.media.photos.length >= 1;
       case 'vhStepContact':
@@ -448,6 +452,29 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
     setCurrentStep(0);
     setSubmitted(false);
     setWizardValues({});
+    setShowPreview(false);
+  };
+
+  const handleSaveDraft = async () => {
+    if (!user) return;
+    setSavingDraft(true);
+    try {
+      let draftData: Record<string, unknown> = { formData, wizardValues };
+      if (isRealEstate) draftData = { ...draftData, reData };
+      else if (isVehicles) draftData = { ...draftData, vhData };
+      await supabase.from('listing_drafts').upsert({
+        user_id: user.id,
+        category_id: formData.categoryId,
+        draft_data: draftData,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'user_id,category_id' });
+      setDraftSaved(true);
+      setTimeout(() => setDraftSaved(false), 3000);
+    } catch {
+      // silently fail for draft save
+    } finally {
+      setSavingDraft(false);
+    }
   };
 
   if (submitted) {
@@ -744,7 +771,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       </div>
 
       {/* Navigation Buttons */}
-      <div className={`flex items-center justify-between ${rtl ? 'flex-row-reverse' : ''}`}>
+      <div className={`flex items-center justify-between gap-2 flex-wrap ${rtl ? 'flex-row-reverse' : ''}`}>
         <button
           onClick={handleBack}
           disabled={currentStep === 0}
@@ -758,34 +785,126 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
           {tCommon('previous')}
         </button>
 
-        {currentStep < steps.length - 1 ? (
-          <button
-            onClick={handleNext}
-            disabled={!canProceed()}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition ${
-              canProceed()
-                ? 'bg-primary-600 text-white hover:bg-primary-700'
-                : 'bg-primary-300 text-white cursor-not-allowed'
-            } ${rtl ? 'flex-row-reverse' : ''}`}
-          >
-            {tCommon('next')}
-            {rtl ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-          </button>
-        ) : (
-          <button
-            onClick={handleSubmit}
-            disabled={!canProceed() || submitting}
-            className={`flex items-center gap-2 px-6 py-2.5 rounded-lg font-medium transition ${
-              canProceed() && !submitting
-                ? 'bg-primary-600 text-white hover:bg-primary-700'
-                : 'bg-primary-300 text-white cursor-not-allowed'
-            } ${rtl ? 'flex-row-reverse' : ''}`}
-          >
-            {submitting ? tCommon('loading') : t('submitListing')}
-            <Check className="w-4 h-4" />
-          </button>
-        )}
+        <div className={`flex items-center gap-2 ${rtl ? 'flex-row-reverse' : ''}`}>
+          {/* Save Draft */}
+          {formData.categoryId !== null && (
+            <button
+              onClick={handleSaveDraft}
+              disabled={savingDraft}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition border-2 ${
+                draftSaved
+                  ? 'border-green-400 bg-green-50 text-green-700'
+                  : 'border-slate-300 bg-white text-slate-600 hover:border-primary-300 hover:bg-primary-50'
+              } ${rtl ? 'flex-row-reverse' : ''}`}
+            >
+              <Save className="w-4 h-4" />
+              {draftSaved ? tCommon('saved') : savingDraft ? tCommon('loading') : t('saveDraft')}
+            </button>
+          )}
+
+          {currentStep < steps.length - 1 ? (
+            <button
+              onClick={handleNext}
+              disabled={!canProceed()}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition ${
+                canProceed()
+                  ? 'bg-primary-600 text-white hover:bg-primary-700'
+                  : 'bg-primary-300 text-white cursor-not-allowed'
+              } ${rtl ? 'flex-row-reverse' : ''}`}
+            >
+              {tCommon('next')}
+              {rtl ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+            </button>
+          ) : (
+            <div className={`flex items-center gap-2 ${rtl ? 'flex-row-reverse' : ''}`}>
+              {/* Preview Ad */}
+              <button
+                onClick={() => setShowPreview(true)}
+                disabled={!canProceed()}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition border-2 ${
+                  canProceed()
+                    ? 'border-orange-400 bg-orange-50 text-orange-700 hover:bg-orange-100'
+                    : 'border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed'
+                } ${rtl ? 'flex-row-reverse' : ''}`}
+              >
+                <Eye className="w-4 h-4" />
+                {t('previewAd')}
+              </button>
+              {/* Submit */}
+              <button
+                onClick={handleSubmit}
+                disabled={!canProceed() || submitting}
+                className={`flex items-center gap-2 px-6 py-2.5 rounded-lg font-medium transition ${
+                  canProceed() && !submitting
+                    ? 'bg-primary-600 text-white hover:bg-primary-700'
+                    : 'bg-primary-300 text-white cursor-not-allowed'
+                } ${rtl ? 'flex-row-reverse' : ''}`}
+              >
+                {submitting ? tCommon('loading') : t('submitListing')}
+                <Check className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* Preview Modal */}
+      {showPreview && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6">
+            <div className={`flex items-center justify-between mb-6 ${rtl ? 'flex-row-reverse' : ''}`}>
+              <h2 className="text-xl font-bold text-slate-900">{t('previewAd')}</h2>
+              <button
+                onClick={() => setShowPreview(false)}
+                className="text-slate-400 hover:text-slate-600 text-2xl font-bold"
+              >
+                &times;
+              </button>
+            </div>
+            <div className="space-y-4 text-sm">
+              {isVehicles && (
+                <>
+                  <div><span className="font-semibold text-slate-700">{t('stepDetails')}:</span> {vhData.title}</div>
+                  <div><span className="font-semibold text-slate-700">{tVH('vehicleType')}:</span> {vhData.vehicleType}</div>
+                  <div><span className="font-semibold text-slate-700">{tVH('year')}:</span> {vhData.specs.year}</div>
+                  <div><span className="font-semibold text-slate-700">{tVH('make')}:</span> {vhData.specs.make === '__other__' ? vhData.specs.customMake : vhData.specs.make}</div>
+                  <div><span className="font-semibold text-slate-700">{tVH('model')}:</span> {vhData.specs.model === '__other__' ? vhData.specs.customModel : vhData.specs.model}</div>
+                  <div><span className="font-semibold text-slate-700">{tCommon('price')}:</span> {vhData.condition.price} {vhData.condition.currency}</div>
+                  <div><span className="font-semibold text-slate-700">{tVH('mileage')}:</span> {vhData.condition.mileage} km</div>
+                  <div><span className="font-semibold text-slate-700">{tVH('city')}:</span> {vhData.address.city}</div>
+                  {vhData.media.photos.length > 0 && (
+                    <div>
+                      <span className="font-semibold text-slate-700">{tVH('photos')}:</span> {vhData.media.photos.length} photo(s)
+                    </div>
+                  )}
+                </>
+              )}
+              {!isVehicles && !isRealEstate && (
+                <>
+                  <div><span className="font-semibold text-slate-700">{t('stepDetails')}:</span> {formData.title}</div>
+                  <div><span className="font-semibold text-slate-700">{tCommon('price')}:</span> {formData.price} {formData.currency}</div>
+                </>
+              )}
+            </div>
+            <div className={`flex items-center justify-end gap-3 mt-6 ${rtl ? 'flex-row-reverse' : ''}`}>
+              <button
+                onClick={() => setShowPreview(false)}
+                className="px-5 py-2.5 rounded-lg font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition"
+              >
+                {tCommon('close')}
+              </button>
+              <button
+                onClick={() => { setShowPreview(false); handleSubmit(); }}
+                disabled={submitting}
+                className="flex items-center gap-2 px-6 py-2.5 rounded-lg font-medium bg-primary-600 text-white hover:bg-primary-700 transition"
+              >
+                {submitting ? tCommon('loading') : t('submitListing')}
+                <Check className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

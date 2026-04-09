@@ -5,17 +5,17 @@ import { Locale } from '@/lib/i18n/config';
 
 interface PageProps {
   params: Promise<{ lang: string }>;
-  searchParams: Promise<{ category?: string }>;
+  searchParams: Promise<{ category?: string; q?: string }>;
 }
 
 export default async function SearchRoute({ params, searchParams }: PageProps) {
   const { lang: locale } = await params;
-  const { category } = await searchParams;
+  const { category, q } = await searchParams;
 
   return (
     <>
       <Header locale={locale as Locale} />
-      <SearchPage locale={locale as Locale} initialCategory={category} />
+      <SearchPage locale={locale as Locale} initialCategory={category} initialQuery={q} />
     </>
   );
 }

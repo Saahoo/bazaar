@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useTranslations } from 'next-intl';
-import { Car, Truck, Bike } from 'lucide-react';
+import { Car, Truck, Bike, HelpCircle } from 'lucide-react';
 import { isRTL, Locale } from '@/lib/i18n/config';
 import { VEHICLE_TYPES, VehicleType } from '@/lib/constants/vehicles';
 
@@ -22,7 +22,10 @@ const TYPE_ICONS: Partial<Record<VehicleType, React.ReactNode>> = {
   pickup: <Truck className="w-6 h-6" />,
   hatchback: <Car className="w-6 h-6" />,
   coupe: <Car className="w-6 h-6" />,
+  convertible: <Car className="w-6 h-6" />,
+  wagon: <Car className="w-6 h-6" />,
   motorcycle: <Bike className="w-6 h-6" />,
+  other: <HelpCircle className="w-6 h-6" />,
 };
 
 export const StepVehicleType: React.FC<StepVehicleTypeProps> = ({
@@ -50,11 +53,15 @@ export const StepVehicleType: React.FC<StepVehicleTypeProps> = ({
         <input
           type="text"
           value={title}
+          maxLength={100}
           onChange={(e) => onChange({ title: e.target.value })}
           placeholder={tPostAd('enterTitle')}
           className={inputClass}
           dir={rtl ? 'rtl' : 'ltr'}
         />
+        <p className={`mt-1 text-xs text-slate-400 ${rtl ? 'text-right' : 'text-left'}`}>
+          {title.length}/100
+        </p>
       </div>
 
       {/* Ad Description */}
@@ -70,6 +77,11 @@ export const StepVehicleType: React.FC<StepVehicleTypeProps> = ({
           className={`${inputClass} resize-none`}
           dir={rtl ? 'rtl' : 'ltr'}
         />
+        <p className={`mt-1 text-xs ${description.length < 50 ? 'text-orange-500' : 'text-slate-400'} ${rtl ? 'text-right' : 'text-left'}`}>
+          {description.length < 50
+            ? `${t('minChars')}: ${50 - description.length} ${t('charsRemaining')}`
+            : `${description.length} ${t('chars')}`}
+        </p>
       </div>
 
       {/* Vehicle Type */}

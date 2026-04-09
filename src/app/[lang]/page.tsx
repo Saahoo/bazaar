@@ -2,6 +2,9 @@
 import { HeroSection } from '@/components/homepage/HeroSection';
 import { CategorySidebar } from '@/components/homepage/CategorySidebar';
 import { FeaturedListings } from '@/components/homepage/FeaturedListings';
+import { TrendingItems } from '@/components/homepage/TrendingItems';
+import { MostWatched } from '@/components/homepage/MostWatched';
+import { PopularInYourArea } from '@/components/homepage/PopularInYourArea';
 import { Header } from '@/components/layout/Header';
 import { Locale } from '@/lib/i18n/config';
 import { getMessages } from '@/lib/i18n/request';
@@ -27,50 +30,48 @@ export default async function HomePage({ params }: PageProps) {
       <Header locale={locale as Locale} />
       <main className="flex-1 bg-slate-50">
         <div className="container mx-auto px-4 py-6">
-          {/* Top row: Sidebar + Hero banner */}
-          <div className="flex gap-5">
-            {/* Category Sidebar - hidden on mobile */}
-            <aside className="hidden lg:block w-60 flex-shrink-0">
+          {/* Top banner */}
+          <div className="mb-6">
+            <HeroSection locale={locale as Locale} />
+          </div>
+
+          {/* Marketplace body */}
+          <div className="flex flex-col lg:flex-row gap-5">
+            <aside className="w-full lg:w-60 flex-shrink-0">
               <CategorySidebar locale={locale as Locale} />
             </aside>
 
-            {/* Hero banner */}
-            <div className="flex-1 min-w-0">
-              <HeroSection locale={locale as Locale} />
-            </div>
+            <section className="flex-1 min-w-0 bg-white border border-slate-200 rounded-lg p-3 md:p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-base md:text-lg font-semibold text-slate-900">
+                  {locale === 'en' ? 'Homepage Showcase' : locale === 'ps' ? 'د کورپاڼې نندارتون' : 'ویترین صفحه اصلی'}
+                </h2>
+                <a
+                  href={`/${locale}/search`}
+                  className="text-xs md:text-sm text-primary-600 hover:text-primary-700"
+                >
+                  {locale === 'en' ? 'Show all showcase ads' : locale === 'ps' ? 'ټول اعلانونه وګورئ' : 'نمایش همه آگهی‌ها'}
+                </a>
+              </div>
+              <FeaturedListings locale={locale as Locale} />
+            </section>
           </div>
 
-          {/* Listings section */}
-          <div className="flex gap-5 mt-6">
-            {/* Spacer for sidebar alignment on desktop */}
-            <div className="hidden lg:block w-60 flex-shrink-0" />
+          {/* Trending Items */}
+          <div className="mt-6">
+            <TrendingItems locale={locale as Locale} />
+          </div>
 
-            {/* Listings area */}
-            <div className="flex-1 min-w-0">
-              {/* Toolbar */}
-              <div className="flex items-center justify-between mb-5 pb-3 border-b border-slate-200">
-                <h2 className="text-lg font-bold text-slate-800">
-                  {t('homepage.featured')}
-                </h2>
-                <span className="text-xs text-slate-500">
-                  {t('search.sortNewest')}
-                </span>
-              </div>
+          {/* Most Watched */}
+          <div className="mt-6">
+            <MostWatched locale={locale as Locale} />
+          </div>
 
-              <FeaturedListings locale={locale as Locale} />
-            </div>
+          {/* Popular in Your Area */}
+          <div className="mt-6">
+            <PopularInYourArea locale={locale as Locale} />
           </div>
         </div>
-
-        {/* Popular Cities Section */}
-        <section className="py-10 md:py-14 bg-white border-t border-slate-200 mt-8">
-          <div className="container mx-auto px-4">
-            <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-8">
-              {t('homepage.cities')}
-            </h2>
-            <p className="text-slate-600 text-center">{t('homepage.popular')}</p>
-          </div>
-        </section>
       </main>
 
       {/* Footer */}

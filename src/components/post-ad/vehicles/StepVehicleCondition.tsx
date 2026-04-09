@@ -6,7 +6,7 @@ import { isRTL, Locale } from '@/lib/i18n/config';
 import { CURRENCIES } from '@/lib/constants/currencies';
 import {
   VEHICLE_COLORS, VehicleColor, HandDrive, HAND_DRIVES,
-  DAMAGE_TYPES, DamageType, VehicleOption,
+  VehicleOption,
   AFGHANISTAN_CITIES, VehicleType, getOptionsForVehicle,
 } from '@/lib/constants/vehicles';
 
@@ -20,7 +20,7 @@ export interface VehicleConditionData {
   hasNumberPlate: boolean | null;
   numberPlateCity: string;
   handDrive: HandDrive | '';
-  damageDetails: DamageType[];
+  damageDetails: string;
   otherOptions: VehicleOption[];
 }
 
@@ -51,15 +51,6 @@ export const StepVehicleCondition: React.FC<StepVehicleConditionProps> = ({
   const inputClass =
     `w-full px-4 py-2.5 border border-slate-300 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-500 ${rtl ? 'text-right' : 'text-left'}`;
   const labelClass = `block text-sm font-medium text-slate-700 mb-1.5 ${rtl ? 'text-right' : 'text-left'}`;
-
-  const toggleDamageType = (dt: DamageType) => {
-    const current = data.damageDetails || [];
-    if (current.includes(dt)) {
-      onChange({ damageDetails: current.filter((d) => d !== dt) });
-    } else {
-      onChange({ damageDetails: [...current, dt] });
-    }
-  };
 
   const toggleOption = (opt: VehicleOption) => {
     const current = data.otherOptions || [];
@@ -107,15 +98,21 @@ export const StepVehicleCondition: React.FC<StepVehicleConditionProps> = ({
 
       {/* Mileage */}
       <div>
-        <label className={labelClass}>{t('mileage')}</label>
+        <label className={labelClass}>
+          {t('mileage')} <span className="text-red-500">*</span>
+        </label>
         <input
-          type="text"
+          type="number"
+          min="0"
           value={data.mileage}
           onChange={(e) => onChange({ mileage: e.target.value })}
           placeholder={t('enterMileage')}
           className={inputClass}
           dir="ltr"
         />
+        <p className={`mt-1 text-xs text-slate-400 ${rtl ? 'text-right' : 'text-left'}`}>
+          {t('mileageHint')}
+        </p>
       </div>
 
       {/* Color */}
@@ -142,7 +139,7 @@ export const StepVehicleCondition: React.FC<StepVehicleConditionProps> = ({
             <button
               key={String(val)}
               type="button"
-              onClick={() => onChange({ hasDamage: val, damageDetails: val ? data.damageDetails : [] })}
+              onClick={() => onChange({ hasDamage: val, damageDetails: val ? data.damageDetails : '' })}
               className={`px-6 py-2.5 rounded-lg text-sm font-semibold border-2 transition ${
                 data.hasDamage === val
                   ? 'border-primary-500 bg-primary-50 text-primary-700'
@@ -159,25 +156,14 @@ export const StepVehicleCondition: React.FC<StepVehicleConditionProps> = ({
       {data.hasDamage && (
         <div>
           <label className={labelClass}>{t('damageDetails')}</label>
-          <div className={`flex flex-wrap gap-2 ${rtl ? 'flex-row-reverse' : ''}`}>
-            {DAMAGE_TYPES.map((dt) => {
-              const isSelected = (data.damageDetails || []).includes(dt);
-              return (
-                <button
-                  key={dt}
-                  type="button"
-                  onClick={() => toggleDamageType(dt)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium border-2 transition ${
-                    isSelected
-                      ? 'border-red-400 bg-red-50 text-red-700'
-                      : 'border-slate-200 bg-white text-slate-600 hover:border-red-300 hover:bg-red-50'
-                  }`}
-                >
-                  {t(`damage_${dt}`)}
-                </button>
-              );
-            })}
-          </div>
+          <textarea
+            rows={3}
+            value={data.damageDetails || ''}
+            onChange={(e) => onChange({ damageDetails: e.target.value })}
+            placeholder={t('damageDetailsPlaceholder')}
+            className={`${inputClass} resize-none`}
+            dir={rtl ? 'rtl' : 'ltr'}
+          />
         </div>
       )}
 
