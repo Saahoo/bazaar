@@ -8,6 +8,7 @@ import { getCategoryName } from '@/lib/constants/categories';
 import { CURRENCIES } from '@/lib/constants/currencies';
 import { useCities, getManagedCityName } from '@/lib/hooks/useCities';
 import type { PostAdFormData } from './PostAdWizard';
+import { LegalReadNotice } from '@/components/common/LegalReadNotice';
 
 interface StepContactData {
   city: string;
@@ -33,6 +34,7 @@ export const StepContact: React.FC<StepContactProps> = ({
   const tPostAd = useTranslations('postAd');
   const rtl = isRTL(locale);
   const { cities } = useCities();
+  const [hasReadLegal, setHasReadLegal] = React.useState(data.termsAccepted);
 
   const inputClass =
     `w-full px-4 py-2.5 border border-slate-300 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-500 ${rtl ? 'text-right' : 'text-left'}`;
@@ -58,6 +60,8 @@ export const StepContact: React.FC<StepContactProps> = ({
             onChange={(e) => onChange({ city: e.target.value })}
             className={`${inputClass} appearance-none bg-white pr-10`}
             dir={rtl ? 'rtl' : 'ltr'}
+            aria-label={tForm('location')}
+            title={tForm('location')}
           >
             <option value="">{tPostAd('selectCity')}</option>
             {cities.map((city) => (
@@ -122,6 +126,12 @@ export const StepContact: React.FC<StepContactProps> = ({
         </div>
       </div>
 
+      <LegalReadNotice
+        locale={locale}
+        initialRead={hasReadLegal}
+        onReadChange={setHasReadLegal}
+      />
+
       {/* Terms */}
       <div className={`flex items-start gap-3 ${rtl ? 'flex-row-reverse' : ''}`}>
         <input
@@ -130,6 +140,7 @@ export const StepContact: React.FC<StepContactProps> = ({
           checked={data.termsAccepted}
           onChange={(e) => onChange({ termsAccepted: e.target.checked })}
           className="mt-0.5 w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
+          disabled={!hasReadLegal}
         />
         <label
           htmlFor="terms"

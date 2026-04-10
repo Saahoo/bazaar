@@ -4,6 +4,7 @@ import React from 'react';
 import { useTranslations } from 'next-intl';
 import { Phone, MessageCircle, Mail } from 'lucide-react';
 import { isRTL, Locale } from '@/lib/i18n/config';
+import { LegalReadNotice } from '@/components/common/LegalReadNotice';
 
 export interface VehicleContactData {
   phone: string;
@@ -28,6 +29,7 @@ export const StepVehicleContact: React.FC<StepVehicleContactProps> = ({
   const tForm = useTranslations('form');
   const tPostAd = useTranslations('postAd');
   const rtl = isRTL(locale);
+  const [hasReadLegal, setHasReadLegal] = React.useState(data.termsAccepted);
 
   const inputClass =
     `w-full px-4 py-2.5 border border-slate-300 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-500 ${rtl ? 'text-right' : 'text-left'}`;
@@ -124,6 +126,12 @@ export const StepVehicleContact: React.FC<StepVehicleContactProps> = ({
         </div>
       </div>
 
+      <LegalReadNotice
+        locale={locale}
+        initialRead={hasReadLegal}
+        onReadChange={setHasReadLegal}
+      />
+
       {/* Terms */}
       <div className={`flex items-start gap-3 ${rtl ? 'flex-row-reverse' : ''}`}>
         <input
@@ -132,6 +140,7 @@ export const StepVehicleContact: React.FC<StepVehicleContactProps> = ({
           checked={data.termsAccepted}
           onChange={(e) => onChange({ termsAccepted: e.target.checked })}
           className="mt-0.5 w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
+          disabled={!hasReadLegal}
         />
         <label
           htmlFor="vehicle-terms"

@@ -22,6 +22,8 @@ interface DbCategory {
   sort_order: number | null;
 }
 
+const EXCLUDED_TOP_LEVEL_CATEGORY_SLUGS = new Set(['mobile-phones', 'phones']);
+
 const ICON_MAP: Record<string, React.ReactNode> = {
   home: (
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -226,7 +228,10 @@ export const StepCategory: React.FC<StepCategoryProps> = ({
         .order('sort_order', { ascending: true });
 
       if (!mounted) return;
-      setCategories((data as DbCategory[]) || []);
+      const normalized = ((data as DbCategory[]) || []).filter(
+        (category) => !EXCLUDED_TOP_LEVEL_CATEGORY_SLUGS.has((category.slug || '').toLowerCase())
+      );
+      setCategories(normalized);
     };
 
     loadCategories();

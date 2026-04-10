@@ -51,13 +51,6 @@ export const MAIN_CATEGORIES: Category[] = [
     icon: 'sofa',
   },
   {
-    id: 7,
-    name_en: 'Mobile Phones',
-    name_ps: 'ګرځنده تلیفون',
-    name_fa: 'گوشی موبایل',
-    icon: 'phone',
-  },
-  {
     id: 8,
     name_en: 'Jobs',
     name_ps: 'دندې',

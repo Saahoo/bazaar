@@ -25,12 +25,21 @@ import { StepVehicleCondition, VehicleConditionData } from './vehicles/StepVehic
 import { StepVehicleAddress, VehicleAddressData } from './vehicles/StepVehicleAddress';
 import { StepVehicleMedia, VehicleMediaData } from './vehicles/StepVehicleMedia';
 import { StepVehicleContact, VehicleContactData } from './vehicles/StepVehicleContact';
+import { StepElectronicsCategory } from './electronics/StepElectronicsCategory';
+import { StepElectronicsBasicInfo } from './electronics/StepElectronicsBasicInfo';
+import { StepElectronicsSpecs } from './electronics/StepElectronicsSpecs';
+import { StepElectronicsPrice } from './electronics/StepElectronicsPrice';
+import { StepElectronicsLocation, ElectronicsLocationData } from './electronics/StepElectronicsLocation';
+import { StepElectronicsMedia, ElectronicsMediaData } from './electronics/StepElectronicsMedia';
+import { StepElectronicsContact, ElectronicsContactData } from './electronics/StepElectronicsContact';
 import { DynamicWizardFields, WizardFormConfig, isWizardRequiredFieldsValid } from './DynamicWizardFields';
+import { ElectronicsSubcategory, getElectronicsSpecsConfig, hasConditionInSpecs } from '@/lib/constants/electronics-wizard';
 import type { VehicleType as VehicleTypeEnum } from '@/lib/constants/vehicles';
 
 // Category slugs (more reliable than hardcoded IDs across environments)
 const REAL_ESTATE_SLUG = 'real-estate';
 const VEHICLES_SLUG = 'vehicles';
+const ELECTRONICS_SLUG = 'electronics';
 
 export interface PostAdFormData {
   categoryId: number | null;
@@ -64,6 +73,19 @@ export interface VehiclesFormData {
   address: VehicleAddressData;
   media: VehicleMediaData;
   contact: VehicleContactData;
+}
+
+export interface ElectronicsFormData {
+  subcategory: ElectronicsSubcategory | '';
+  title: string;
+  details: string;
+  specs: Record<string, string>;
+  price: number | '';
+  negotiable: boolean;
+  condition: string;
+  location: ElectronicsLocationData;
+  media: ElectronicsMediaData;
+  contact: ElectronicsContactData;
 }
 
 const INITIAL_FORM_DATA: PostAdFormData = {
@@ -113,20 +135,54 @@ const INITIAL_VH_DATA: VehiclesFormData = {
   contact: { phone: '', whatsapp: '', whatsappSameAsPhone: false, email: '', termsAccepted: false },
 };
 
+const INITIAL_EL_DATA: ElectronicsFormData = {
+  subcategory: '',
+  title: '',
+  details: '',
+  specs: {},
+  price: '',
+  negotiable: false,
+  condition: '',
+  location: {
+    city: '',
+    area: '',
+    street: '',
+    lat: null,
+    lng: null,
+  },
+  media: {
+    photos: [],
+    videoUrl: '',
+  },
+  contact: {
+    phone: '',
+    whatsapp: '',
+    email: '',
+    termsAccepted: false,
+  },
+};
+
 // Default steps for non-specialized categories
 const DEFAULT_STEPS = ['stepCategory', 'stepDetails', 'stepPhotos', 'stepContact'] as const;
 // Real estate steps
 const RE_STEPS = ['stepCategory', 'reStepType', 'reStepDetails', 'reStepAddress', 'reStepMedia', 'reStepContact'] as const;
 // Vehicle steps
 const VH_STEPS = ['stepCategory', 'vhStepType', 'vhStepSpecs', 'vhStepCondition', 'vhStepAddress', 'vhStepMedia', 'vhStepContact'] as const;
+// Electronics steps
+const EL_STEPS = ['stepCategory', 'elStepCategory', 'elStepBasic', 'elStepSpecs', 'elStepPrice', 'elStepLocation', 'elStepMedia', 'elStepContact'] as const;
 
 const getStepsForCategorySlug = (categorySlug: string | null): readonly string[] => {
   if (categorySlug === REAL_ESTATE_SLUG) return RE_STEPS;
   if (categorySlug === VEHICLES_SLUG) return VH_STEPS;
+  if (categorySlug === ELECTRONICS_SLUG) return EL_STEPS;
   return DEFAULT_STEPS;
 };
 
-type StepKey = typeof DEFAULT_STEPS[number] | typeof RE_STEPS[number] | typeof VH_STEPS[number];
+type StepKey =
+  | typeof DEFAULT_STEPS[number]
+  | typeof RE_STEPS[number]
+  | typeof VH_STEPS[number]
+  | typeof EL_STEPS[number];
 
 interface PostAdWizardProps {
   locale: Locale;
@@ -136,6 +192,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
   const t = useTranslations('postAd');
   const tRE = useTranslations('postAd.realEstate');
   const tVH = useTranslations('postAd.vehicles');
+  const tEL = useTranslations('postAd.electronics');
   const tCommon = useTranslations('common');
   const tAuth = useTranslations('auth');
   const rtl = isRTL(locale);
@@ -146,6 +203,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
   const [formData, setFormData] = useState<PostAdFormData>(INITIAL_FORM_DATA);
   const [reData, setReData] = useState<RealEstateFormData>(INITIAL_RE_DATA);
   const [vhData, setVhData] = useState<VehiclesFormData>(INITIAL_VH_DATA);
+  const [elData, setElData] = useState<ElectronicsFormData>(INITIAL_EL_DATA);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -175,6 +233,10 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
     setVhData((prev) => ({ ...prev, ...updates }));
   }, []);
 
+  const updateELData = useCallback((updates: Partial<ElectronicsFormData>) => {
+    setElData((prev) => ({ ...prev, ...updates }));
+  }, []);
+
   const handleCategorySelect = useCallback(
     (categoryId: number, categorySlug?: string) => {
       const changingCategory = formData.categoryId !== categoryId;
@@ -184,6 +246,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       if (changingCategory) {
         setReData(INITIAL_RE_DATA);
         setVhData(INITIAL_VH_DATA);
+        setElData(INITIAL_EL_DATA);
         setWizardValues({});
       }
     },
@@ -263,6 +326,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       const draftFormData = (draftData.formData || {}) as Partial<PostAdFormData>;
       const draftReData = (draftData.reData || {}) as Partial<RealEstateFormData>;
       const draftVhData = (draftData.vhData || {}) as Partial<VehiclesFormData>;
+      const draftElData = (draftData.elData || {}) as Partial<ElectronicsFormData>;
       const categoryId = draftRow.category_id ?? draftFormData.categoryId ?? null;
 
       let categorySlug: string | null = null;
@@ -330,6 +394,27 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
           ...((draftVhData.contact as Partial<VehicleContactData> | undefined) || {}),
         },
       });
+      setElData({
+        ...INITIAL_EL_DATA,
+        ...draftElData,
+        subcategory: draftElData.subcategory ?? INITIAL_EL_DATA.subcategory,
+        specs: {
+          ...INITIAL_EL_DATA.specs,
+          ...((draftElData.specs as Record<string, string> | undefined) || {}),
+        },
+        location: {
+          ...INITIAL_EL_DATA.location,
+          ...((draftElData.location as Partial<ElectronicsLocationData> | undefined) || {}),
+        },
+        media: {
+          ...INITIAL_EL_DATA.media,
+          ...((draftElData.media as Partial<ElectronicsMediaData> | undefined) || {}),
+        },
+        contact: {
+          ...INITIAL_EL_DATA.contact,
+          ...((draftElData.contact as Partial<ElectronicsContactData> | undefined) || {}),
+        },
+      });
       setWizardValues(((draftData.wizardValues as Record<string, unknown> | undefined) || {}));
 
       const savedStep = typeof draftData.currentStep === 'number' ? draftData.currentStep : (categoryId ? 1 : 0);
@@ -386,11 +471,13 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
 
   const isRealEstate = selectedCategorySlug === REAL_ESTATE_SLUG;
   const isVehicles = selectedCategorySlug === VEHICLES_SLUG;
+  const isElectronics = selectedCategorySlug === ELECTRONICS_SLUG;
   const steps: readonly string[] = getStepsForCategorySlug(selectedCategorySlug);
 
   const getStepLabel = (step: string): string => {
     switch (step) {
       case 'stepCategory': return t('stepCategory');
+      case 'elStepCategory': return tEL('stepBasic');
       case 'stepDetails': return t('stepDetails');
       case 'stepPhotos': return t('stepPhotos');
       case 'stepContact': return t('stepContact');
@@ -405,6 +492,13 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       case 'vhStepAddress': return tVH('stepAddress');
       case 'vhStepMedia': return tVH('stepMedia');
       case 'vhStepContact': return tVH('stepContact');
+      case 'elStepBasic': return tEL('stepBasic');
+      case 'elStepCategory': return tEL('stepBasic');
+      case 'elStepSpecs': return tEL('stepSpecs');
+      case 'elStepPrice': return tEL('stepPrice');
+      case 'elStepLocation': return tEL('stepLocation');
+      case 'elStepMedia': return tEL('stepMedia');
+      case 'elStepContact': return tEL('stepContact');
       default: return '';
     }
   };
@@ -422,6 +516,8 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
     switch (currentStepKey) {
       case 'stepCategory':
         return formData.categoryId !== null;
+      case 'elStepCategory':
+        return elData.subcategory !== '';
       case 'stepDetails':
         return requiredDynamicValid;
       case 'stepPhotos':
@@ -452,6 +548,32 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         return vhData.media.photos.length >= 1;
       case 'vhStepContact':
         return vhData.contact.phone !== '' && vhData.contact.termsAccepted;
+      // Electronics steps
+      case 'elStepCategory':
+        return elData.subcategory !== '';
+      case 'elStepBasic':
+        return elData.title.trim().length >= 3 && elData.details.trim().length >= 10;
+      case 'elStepSpecs': {
+        const fields = getElectronicsSpecsConfig(elData.subcategory);
+        const selectedMake = (elData.specs.make || elData.specs.brand || '').trim();
+        const isOtherMake = selectedMake === 'Other';
+        if (isOtherMake && !(elData.specs.customMake || '').trim()) return false;
+
+        return fields.every((field) => {
+          if (!field.required) return true;
+          if (field.id === 'model' && isOtherMake) return true;
+          const value = elData.specs[field.id];
+          return !!value && value.trim() !== '';
+        });
+      }
+      case 'elStepPrice':
+        return elData.price !== '' && (!hasConditionInSpecs(elData.subcategory) ? elData.condition.trim() !== '' : true);
+      case 'elStepLocation':
+        return elData.location.city !== '' && elData.location.lat !== null && elData.location.lng !== null;
+      case 'elStepMedia':
+        return elData.media.photos.length >= 1;
+      case 'elStepContact':
+        return elData.contact.phone.trim() !== '' && elData.contact.termsAccepted;
       default:
         return false;
     }
@@ -551,6 +673,36 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         _phone = vhData.contact.phone || _phone;
         condition = 'good';
         photosList = vhData.media.photos;
+      } else if (isElectronics) {
+        const specsWithCondition = { ...elData.specs };
+        metadata = {
+          subcategory: elData.subcategory,
+          specs: specsWithCondition,
+          negotiable: elData.negotiable,
+          location: {
+            city: elData.location.city,
+            area: elData.location.area,
+            street: elData.location.street,
+            lat: elData.location.lat,
+            lng: elData.location.lng,
+          },
+          media: {
+            video: elData.media.videoUrl,
+          },
+          contact: {
+            phone: elData.contact.phone,
+            whatsapp: elData.contact.whatsapp,
+            email: elData.contact.email,
+          },
+          wizard_forms: wizardValues,
+        };
+        title = elData.title || title;
+        description = elData.details || description;
+        price = Number(elData.price) || price;
+        city = elData.location.city || city;
+        _phone = elData.contact.phone || _phone;
+        condition = (elData.specs.condition || elData.condition || condition || 'good') as string;
+        photosList = elData.media.photos;
       } else {
         metadata = {
           ...metadata,
@@ -621,6 +773,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
     setFormData(INITIAL_FORM_DATA);
     setReData(INITIAL_RE_DATA);
     setVhData(INITIAL_VH_DATA);
+    setElData(INITIAL_EL_DATA);
     setCurrentStep(0);
     setSubmitted(false);
     setWizardValues({});
@@ -644,6 +797,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       let draftData: Record<string, unknown> = { formData, wizardValues, currentStep };
       if (isRealEstate) draftData = { ...draftData, reData };
       else if (isVehicles) draftData = { ...draftData, vhData };
+      else if (isElectronics) draftData = { ...draftData, elData };
 
       const { data: savedDraft, error: draftError } = await supabase.from('listing_drafts').upsert({
         user_id: user.id,
@@ -707,6 +861,14 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
             locale={locale}
             selectedCategory={formData.categoryId}
             onSelect={handleCategorySelect}
+          />
+        );
+      case 'elStepCategory':
+        return (
+          <StepElectronicsCategory
+            locale={locale}
+            subcategory={elData.subcategory}
+            onChange={(subcategory) => updateELData({ subcategory, specs: {}, condition: '' })}
           />
         );
       case 'stepDetails':
@@ -900,6 +1062,84 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
             }
           />
         );
+      // Electronics steps
+      case 'elStepCategory':
+        return (
+          <StepElectronicsCategory
+            locale={locale}
+            subcategory={elData.subcategory}
+            onChange={(subcategory) => updateELData({ subcategory, specs: {}, condition: '' })}
+          />
+        );
+      case 'elStepBasic':
+        return (
+          <StepElectronicsBasicInfo
+            locale={locale}
+            data={{ title: elData.title, details: elData.details }}
+            onChange={(data) => updateELData(data)}
+          />
+        );
+      case 'elStepSpecs':
+        return (
+          <StepElectronicsSpecs
+            locale={locale}
+            subcategory={elData.subcategory}
+            specs={elData.specs}
+            onChange={(specs) => updateELData({ specs })}
+          />
+        );
+      case 'elStepPrice':
+        return (
+          <StepElectronicsPrice
+            locale={locale}
+            data={{
+              price: elData.price,
+              negotiable: elData.negotiable,
+              condition: elData.condition,
+            }}
+            requireCondition={!hasConditionInSpecs(elData.subcategory)}
+            onChange={(data) => updateELData(data)}
+          />
+        );
+      case 'elStepLocation':
+        return (
+          <StepElectronicsLocation
+            locale={locale}
+            data={elData.location}
+            onChange={(locationUpdate) =>
+              setElData((prev) => ({
+                ...prev,
+                location: { ...prev.location, ...locationUpdate },
+              }))
+            }
+          />
+        );
+      case 'elStepMedia':
+        return (
+          <StepElectronicsMedia
+            locale={locale}
+            data={elData.media}
+            onChange={(mediaUpdate) =>
+              setElData((prev) => ({
+                ...prev,
+                media: { ...prev.media, ...mediaUpdate },
+              }))
+            }
+          />
+        );
+      case 'elStepContact':
+        return (
+          <StepElectronicsContact
+            locale={locale}
+            data={elData.contact}
+            onChange={(contactUpdate) =>
+              setElData((prev) => ({
+                ...prev,
+                contact: { ...prev.contact, ...contactUpdate },
+              }))
+            }
+          />
+        );
       default:
         return null;
     }
@@ -1075,7 +1315,15 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
                   )}
                 </>
               )}
-              {!isVehicles && !isRealEstate && (
+              {isElectronics && (
+                <>
+                  <div><span className="font-semibold text-slate-700">Subcategory:</span> {elData.subcategory}</div>
+                  <div><span className="font-semibold text-slate-700">{t('stepDetails')}:</span> {elData.title}</div>
+                  <div><span className="font-semibold text-slate-700">{tCommon('price')}:</span> {elData.price}</div>
+                  <div><span className="font-semibold text-slate-700">City:</span> {elData.location.city}</div>
+                </>
+              )}
+              {!isVehicles && !isRealEstate && !isElectronics && (
                 <>
                   <div><span className="font-semibold text-slate-700">{t('stepDetails')}:</span> {formData.title}</div>
                   <div><span className="font-semibold text-slate-700">{tCommon('price')}:</span> {formData.price} {formData.currency}</div>

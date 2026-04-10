@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { Eye, EyeOff, Mail, Lock, Phone, User } from 'lucide-react';
 import { isRTL, Locale } from '@/lib/i18n/config';
 import { createClient } from '@/lib/supabase/client';
+import { LegalReadNotice } from '@/components/common/LegalReadNotice';
 
 interface SignUpFormProps {
   locale: Locale;
@@ -15,6 +16,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ locale }) => {
   const t = useTranslations('auth');
   const tForm = useTranslations('form');
   const tCommon = useTranslations('common');
+  const tLegal = useTranslations('legal');
   const rtl = isRTL(locale);
   const supabase = createClient();
 
@@ -25,6 +27,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ locale }) => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [agreeTerms, setAgreeTerms] = useState(false);
+  const [hasReadLegal, setHasReadLegal] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -39,7 +42,10 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ locale }) => {
       setError(tForm('passwordMismatch'));
       return;
     }
-    if (!agreeTerms) return;
+    if (!hasReadLegal || !agreeTerms) {
+      setError(tLegal('readRequired'));
+      return;
+    }
 
     setLoading(true);
 
@@ -131,6 +137,8 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ locale }) => {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              placeholder={tForm('name')}
+              title={tForm('name')}
               className={inputClass}
               dir={rtl ? 'rtl' : 'ltr'}
               required
@@ -220,6 +228,12 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ locale }) => {
           </div>
         </div>
 
+        <LegalReadNotice
+          locale={locale}
+          initialRead={hasReadLegal}
+          onReadChange={setHasReadLegal}
+        />
+
         {/* Terms */}
         <div className={`flex items-start gap-3 ${rtl ? 'flex-row-reverse' : ''}`}>
           <input
@@ -228,6 +242,7 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ locale }) => {
             checked={agreeTerms}
             onChange={(e) => setAgreeTerms(e.target.checked)}
             className="mt-0.5 w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
+            disabled={!hasReadLegal}
             required
           />
           <label
@@ -241,9 +256,9 @@ export const SignUpForm: React.FC<SignUpFormProps> = ({ locale }) => {
         {/* Submit */}
         <button
           type="submit"
-          disabled={loading || !agreeTerms}
+          disabled={loading || !agreeTerms || !hasReadLegal}
           className={`w-full py-3 rounded-lg font-semibold text-white transition ${
-            loading || !agreeTerms
+            loading || !agreeTerms || !hasReadLegal
               ? 'bg-primary-400 cursor-not-allowed'
               : 'bg-primary-600 hover:bg-primary-700'
           }`}

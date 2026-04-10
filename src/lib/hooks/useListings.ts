@@ -54,6 +54,18 @@ export interface VehicleFilters {
   vehicleWheelDrive?: string;    // metadata.wheelDriveType
 }
 
+export interface RealEstateFilters {
+  purpose?: string;
+  propertyType?: string;
+  areaGrossMin?: number;
+  areaGrossMax?: number;
+  areaNetMin?: number;
+  areaNetMax?: number;
+  rooms?: number;
+  balcony?: number;
+  buildingAge?: string;
+}
+
 export interface ListingFilters {
   category?: number | null;
   query?: string;
@@ -65,6 +77,7 @@ export interface ListingFilters {
   sortBy?: 'newest' | 'oldest' | 'priceLow' | 'priceHigh' | 'mostViewed' | 'mostFavorited';
   limit?: number;
   vehicleFilters?: VehicleFilters;
+  realEstateFilters?: RealEstateFilters;
 }
 
 // ─── Engine Power / Capacity helpers ────────────────────────────────────────
@@ -138,6 +151,40 @@ function applyVehicleFilters(listings: Listing[], vf?: VehicleFilters): Listing[
 
     if (vf.enginePowerRange    && !matchEnginePower(m.enginePower, vf.enginePowerRange))       return false;
     if (vf.engineCapacityRange && !matchEngineCapacity(m.engineSize, vf.engineCapacityRange))  return false;
+
+    return true;
+  });
+}
+
+function toNumberOrNaN(value: unknown): number {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : NaN;
+}
+
+function applyRealEstateFilters(listings: Listing[], rf?: RealEstateFilters): Listing[] {
+  if (!rf) return listings;
+
+  return listings.filter((l) => {
+    const m = l.metadata as Record<string, unknown>;
+
+    if (rf.purpose && String(m.purpose ?? '') !== rf.purpose) return false;
+    if (rf.propertyType && String(m.propertyType ?? '') !== rf.propertyType) return false;
+
+    const areaGross = toNumberOrNaN(m.areaGross);
+    if (rf.areaGrossMin !== undefined && !isNaN(areaGross) && areaGross < rf.areaGrossMin) return false;
+    if (rf.areaGrossMax !== undefined && !isNaN(areaGross) && areaGross > rf.areaGrossMax) return false;
+
+    const areaNet = toNumberOrNaN(m.areaNet);
+    if (rf.areaNetMin !== undefined && !isNaN(areaNet) && areaNet < rf.areaNetMin) return false;
+    if (rf.areaNetMax !== undefined && !isNaN(areaNet) && areaNet > rf.areaNetMax) return false;
+
+    const rooms = toNumberOrNaN(m.rooms);
+    if (rf.rooms !== undefined && !isNaN(rooms) && rooms !== rf.rooms) return false;
+
+    const balcony = toNumberOrNaN(m.balcony);
+    if (rf.balcony !== undefined && !isNaN(balcony) && balcony !== rf.balcony) return false;
+
+    if (rf.buildingAge && String(m.buildingAge ?? '') !== rf.buildingAge) return false;
 
     return true;
   });
@@ -245,7 +292,9 @@ export function useListings(filters: ListingFilters = {}) {
         } as Listing;
       });
 
-      setListings(applyVehicleFilters(transformed, filters.vehicleFilters));
+      const vehicleFiltered = applyVehicleFilters(transformed, filters.vehicleFilters);
+      const realEstateFiltered = applyRealEstateFilters(vehicleFiltered, filters.realEstateFilters);
+      setListings(realEstateFiltered);
     } catch (err: unknown) {      const message = err instanceof Error ? err.message : 'Failed to load listings.';
       setError(message);
       console.error('Fetch listings error:', err);
@@ -265,6 +314,8 @@ export function useListings(filters: ListingFilters = {}) {
     filters.limit,
     // eslint-disable-next-line react-hooks/exhaustive-deps
     JSON.stringify(filters.vehicleFilters),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    JSON.stringify(filters.realEstateFilters),
   ]);
 
   // Initial fetch

@@ -46,7 +46,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ locale }) => {
       return;
     }
 
-    window.location.href = `/${locale}/profile`;
+    window.location.href = `/${locale}`;
   };
 
   return (

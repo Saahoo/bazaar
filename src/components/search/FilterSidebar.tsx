@@ -55,6 +55,35 @@ export const EMPTY_VEHICLE_FILTERS: VehicleFilterState = {
   keywords: '',
 };
 
+// ─── Real Estate Filter State ───────────────────────────────────────────────
+export interface RealEstateFilterState {
+  purpose: string;
+  propertyType: string;
+  areaGrossMin: string;
+  areaGrossMax: string;
+  areaNetMin: string;
+  areaNetMax: string;
+  rooms: string;
+  roomsManual: string;
+  balcony: string;
+  buildingAge: string;
+  buildingAgeManual: string;
+}
+
+export const EMPTY_REAL_ESTATE_FILTERS: RealEstateFilterState = {
+  purpose: '',
+  propertyType: '',
+  areaGrossMin: '',
+  areaGrossMax: '',
+  areaNetMin: '',
+  areaNetMax: '',
+  rooms: '',
+  roomsManual: '',
+  balcony: '',
+  buildingAge: '',
+  buildingAgeManual: '',
+};
+
 // ─── Engine power / capacity bucket definitions ──────────────────────────────
 const ENGINE_POWER_BUCKETS = [
   { key: 'up_50',    label: '≤ 50 hp' },
@@ -92,6 +121,8 @@ interface FilterSidebarProps {
   onWheelDriveTypeChange: (value: string) => void;
   vehicleFilters: VehicleFilterState;
   onVehicleFiltersChange: (filters: VehicleFilterState) => void;
+  realEstateFilters: RealEstateFilterState;
+  onRealEstateFiltersChange: (filters: RealEstateFilterState) => void;
 }
 
 const CONDITIONS = [
@@ -152,6 +183,10 @@ const MultiCheck: React.FC<{
   </div>
 );
 
+const RE_PURPOSE_OPTIONS = ['forRent', 'forSale', 'forLease'] as const;
+const RE_PROPERTY_TYPES = ['apartment', 'residence', 'villa', 'farmHouse', 'land'] as const;
+const RE_BUILDING_AGES = ['new', 'age1_5', 'age5_10', 'age10_20', 'age20plus'] as const;
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 export const FilterSidebar: React.FC<FilterSidebarProps> = ({
   locale,
@@ -169,17 +204,24 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
   onWheelDriveTypeChange,
   vehicleFilters,
   onVehicleFiltersChange,
+  realEstateFilters,
+  onRealEstateFiltersChange,
 }) => {
   const t = useTranslations('search');
   const tCommon = useTranslations('common');
   const tVH = useTranslations('postAd.vehicles');
+  const tRE = useTranslations('postAd.realEstate');
   const isRtl = isRTL(locale);
   const { cities } = useCities();
 
   const isVehicles = selectedCategory === 1;
+  const isRealEstate = selectedCategory === 2;
 
   const setVF = (patch: Partial<VehicleFilterState>) =>
     onVehicleFiltersChange({ ...vehicleFilters, ...patch });
+
+  const setREF = (patch: Partial<RealEstateFilterState>) =>
+    onRealEstateFiltersChange({ ...realEstateFilters, ...patch });
 
   const toggleMulti = (field: 'fuelTypes' | 'gearTypes' | 'bodyTypes', value: string) => {
     const current = vehicleFilters[field] as string[];
@@ -233,9 +275,13 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
       <Section label={t('location')} isRtl={isRtl}>
         <Sel id="city-filter" value={selectedCity} onChange={onCityChange} isRtl={isRtl}>
           <option value="">{tCommon('all')}</option>
-          {cities.map((city) => (
-            <option key={city.name_en} value={city.name_en}>{getManagedCityName(city, locale)}</option>
-          ))}
+          {isRealEstate
+            ? AFGHANISTAN_CITIES.map((city) => (
+              <option key={city} value={city}>{city}</option>
+            ))
+            : cities.map((city) => (
+              <option key={city.name_en} value={city.name_en}>{getManagedCityName(city, locale)}</option>
+            ))}
         </Sel>
       </Section>
 
@@ -249,8 +295,8 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
         </div>
       </Section>
 
-      {/* Condition (non-vehicle) */}
-      {!isVehicles && (
+      {/* Condition (non-vehicle/non-real-estate) */}
+      {!isVehicles && !isRealEstate && (
         <Section label={t('condition')} isRtl={isRtl}>
           <div className="space-y-2">
             {CONDITIONS.map(({ value, translationKey }) => (
@@ -264,8 +310,8 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
         </Section>
       )}
 
-      {/* Wheel drive (non-vehicle) */}
-      {!isVehicles && (
+      {/* Wheel drive (non-vehicle/non-real-estate) */}
+      {!isVehicles && !isRealEstate && (
         <Section label={t('wheelDrive')} isRtl={isRtl}>
           <Sel id="wheel-drive-filter" value={selectedWheelDriveType} onChange={onWheelDriveTypeChange} isRtl={isRtl}>
             <option value="">{t('anyWheelDrive')}</option>
@@ -274,6 +320,129 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
             ))}
           </Sel>
         </Section>
+      )}
+
+      {/* ═══════════════════════════════════════════════════
+          REAL ESTATE-ONLY FILTERS
+         ═══════════════════════════════════════════════════ */}
+      {isRealEstate && (
+        <>
+          <Section label={tRE('purpose')} isRtl={isRtl}>
+            <Sel value={realEstateFilters.purpose} onChange={(v) => setREF({ purpose: v })} isRtl={isRtl}>
+              <option value="">{tCommon('all')}</option>
+              {RE_PURPOSE_OPTIONS.map((option) => (
+                <option key={option} value={option}>{tRE(option as Parameters<typeof tRE>[0])}</option>
+              ))}
+            </Sel>
+          </Section>
+
+          <Section label={tRE('propertyType')} isRtl={isRtl}>
+            <Sel value={realEstateFilters.propertyType} onChange={(v) => setREF({ propertyType: v })} isRtl={isRtl}>
+              <option value="">{tCommon('all')}</option>
+              {RE_PROPERTY_TYPES.map((option) => (
+                <option key={option} value={option}>{tRE(option as Parameters<typeof tRE>[0])}</option>
+              ))}
+            </Sel>
+          </Section>
+
+          <Section label={tRE('areaGross')} isRtl={isRtl}>
+            <div className={`flex gap-2 ${isRtl ? 'flex-row-reverse' : ''}`}>
+              <input
+                type="number"
+                min="0"
+                placeholder="Min"
+                value={realEstateFilters.areaGrossMin}
+                onChange={(e) => setREF({ areaGrossMin: e.target.value })}
+                className={`w-1/2 px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+              />
+              <input
+                type="number"
+                min="0"
+                placeholder="Max"
+                value={realEstateFilters.areaGrossMax}
+                onChange={(e) => setREF({ areaGrossMax: e.target.value })}
+                className={`w-1/2 px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+              />
+            </div>
+          </Section>
+
+          <Section label={tRE('areaNet')} isRtl={isRtl}>
+            <div className={`flex gap-2 ${isRtl ? 'flex-row-reverse' : ''}`}>
+              <input
+                type="number"
+                min="0"
+                placeholder="Min"
+                value={realEstateFilters.areaNetMin}
+                onChange={(e) => setREF({ areaNetMin: e.target.value })}
+                className={`w-1/2 px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+              />
+              <input
+                type="number"
+                min="0"
+                placeholder="Max"
+                value={realEstateFilters.areaNetMax}
+                onChange={(e) => setREF({ areaNetMax: e.target.value })}
+                className={`w-1/2 px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+              />
+            </div>
+          </Section>
+
+          <Section label={tRE('rooms')} isRtl={isRtl}>
+            <Sel
+              value={realEstateFilters.rooms}
+              onChange={(v) => setREF({ rooms: v, roomsManual: v === '__manual__' ? realEstateFilters.roomsManual : '' })}
+              isRtl={isRtl}
+            >
+              <option value="">{tCommon('all')}</option>
+              {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
+                <option key={n} value={String(n)}>{n}</option>
+              ))}
+              <option value="__manual__">Manual</option>
+            </Sel>
+            {realEstateFilters.rooms === '__manual__' && (
+              <input
+                type="number"
+                min="0"
+                value={realEstateFilters.roomsManual}
+                onChange={(e) => setREF({ roomsManual: e.target.value })}
+                placeholder="Enter rooms"
+                className={`mt-2 w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+              />
+            )}
+          </Section>
+
+          <Section label={tRE('balcony')} isRtl={isRtl}>
+            <Sel value={realEstateFilters.balcony} onChange={(v) => setREF({ balcony: v })} isRtl={isRtl}>
+              <option value="">{tCommon('all')}</option>
+              {[0, 1, 2, 3].map((n) => (
+                <option key={n} value={String(n)}>{n}</option>
+              ))}
+            </Sel>
+          </Section>
+
+          <Section label={tRE('buildingAge')} isRtl={isRtl}>
+            <Sel
+              value={realEstateFilters.buildingAge}
+              onChange={(v) => setREF({ buildingAge: v, buildingAgeManual: v === '__manual__' ? realEstateFilters.buildingAgeManual : '' })}
+              isRtl={isRtl}
+            >
+              <option value="">{tCommon('all')}</option>
+              {RE_BUILDING_AGES.map((option) => (
+                <option key={option} value={option}>{tRE(option as Parameters<typeof tRE>[0])}</option>
+              ))}
+              <option value="__manual__">Manual</option>
+            </Sel>
+            {realEstateFilters.buildingAge === '__manual__' && (
+              <input
+                type="text"
+                value={realEstateFilters.buildingAgeManual}
+                onChange={(e) => setREF({ buildingAgeManual: e.target.value })}
+                placeholder="Enter building age"
+                className={`mt-2 w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+              />
+            )}
+          </Section>
+        </>
       )}
 
       {/* ═══════════════════════════════════════════════════

@@ -19,6 +19,7 @@ interface ImageUploaderProps {
   onChange: (photos: UploadedPhoto[]) => void;
   maxPhotos?: number;
   folder?: string; // Storage folder prefix e.g. "listings/draft-123"
+  showSourceButtons?: boolean;
 }
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -30,11 +31,14 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
   onChange,
   maxPhotos = 20,
   folder = 'listings/temp',
+  showSourceButtons = false,
 }) => {
   const t = useTranslations('form');
   const isRtl = isRTL(locale);
   const supabase = createClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState('');
@@ -153,8 +157,51 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
     onChange(updated);
   };
 
+  const cameraLabel = locale === 'en' ? 'Use Camera' : locale === 'ps' ? 'کامره وکاروئ' : 'استفاده از دوربین';
+  const galleryLabel = locale === 'en' ? 'Choose from Gallery' : locale === 'ps' ? 'له ګالري وټاکئ' : 'انتخاب از گالری';
+
   return (
     <div className="space-y-4">
+      {showSourceButtons && (
+        <div className={`flex flex-col sm:flex-row gap-3 ${isRtl ? 'sm:flex-row-reverse' : ''}`}>
+          <button
+            type="button"
+            onClick={() => !uploading && cameraInputRef.current?.click()}
+            className="px-4 py-2.5 rounded-lg border border-primary-300 bg-primary-50 text-primary-700 hover:bg-primary-100 transition text-sm font-medium"
+          >
+            {cameraLabel}
+          </button>
+          <button
+            type="button"
+            onClick={() => !uploading && galleryInputRef.current?.click()}
+            className="px-4 py-2.5 rounded-lg border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 transition text-sm font-medium"
+          >
+            {galleryLabel}
+          </button>
+
+          <input
+            ref={cameraInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={handleFileSelect}
+            className="hidden"
+            aria-label={cameraLabel}
+            title={cameraLabel}
+          />
+          <input
+            ref={galleryInputRef}
+            type="file"
+            accept={ACCEPTED_TYPES.join(',')}
+            multiple
+            onChange={handleFileSelect}
+            className="hidden"
+            aria-label={galleryLabel}
+            title={galleryLabel}
+          />
+        </div>
+      )}
+
       {/* Drop Zone */}
       <div
         onDrop={handleDrop}
@@ -174,6 +221,8 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
           multiple
           onChange={handleFileSelect}
           className="hidden"
+          aria-label={galleryLabel}
+          title={galleryLabel}
         />
         {uploading ? (
           <div className="flex flex-col items-center gap-2">
@@ -230,6 +279,8 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
                     type="button"
                     onClick={(e) => { e.stopPropagation(); movePhoto(index, -1); }}
                     className="w-7 h-7 bg-white/90 rounded-full flex items-center justify-center text-slate-700 hover:bg-white"
+                    aria-label={locale === 'en' ? 'Move photo' : locale === 'ps' ? 'عکس خوځول' : 'جابجایی عکس'}
+                    title={locale === 'en' ? 'Move photo' : locale === 'ps' ? 'عکس خوځول' : 'جابجایی عکس'}
                   >
                     <GripVertical className="w-3.5 h-3.5" />
                   </button>
@@ -239,6 +290,8 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
                   type="button"
                   onClick={(e) => { e.stopPropagation(); removePhoto(photo); }}
                   className="w-7 h-7 bg-red-500 rounded-full flex items-center justify-center text-white hover:bg-red-600"
+                  aria-label={locale === 'en' ? 'Remove photo' : locale === 'ps' ? 'عکس لرې کول' : 'حذف عکس'}
+                  title={locale === 'en' ? 'Remove photo' : locale === 'ps' ? 'عکس لرې کول' : 'حذف عکس'}
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>

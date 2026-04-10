@@ -6,7 +6,13 @@ import { useTranslations } from 'next-intl';
 import { SlidersHorizontal, X, Loader2 } from 'lucide-react';
 import { Locale, isRTL } from '@/lib/i18n/config';
 import { useListings } from '@/lib/hooks/useListings';
-import { FilterSidebar, VehicleFilterState, EMPTY_VEHICLE_FILTERS } from './FilterSidebar';
+import {
+  FilterSidebar,
+  VehicleFilterState,
+  EMPTY_VEHICLE_FILTERS,
+  RealEstateFilterState,
+  EMPTY_REAL_ESTATE_FILTERS,
+} from './FilterSidebar';
 import { ListingCard } from './ListingCard';
 import { SortDropdown } from './SortDropdown';
 
@@ -34,14 +40,18 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory,
 
   // Vehicle-specific filter group
   const [vehicleFilters, setVehicleFilters] = useState<VehicleFilterState>(EMPTY_VEHICLE_FILTERS);
+  // Real estate-specific filter group
+  const [realEstateFilters, setRealEstateFilters] = useState<RealEstateFilterState>(EMPTY_REAL_ESTATE_FILTERS);
 
-  // Reset vehicle filters when category changes away from vehicles
+  // Reset category-specific filters when leaving their category
   const handleCategoryChange = (categoryId: number | null) => {
     setSelectedCategory(categoryId);
     if (categoryId !== 1) setVehicleFilters(EMPTY_VEHICLE_FILTERS);
+    if (categoryId !== 2) setRealEstateFilters(EMPTY_REAL_ESTATE_FILTERS);
   };
 
   const isVehicles = selectedCategory === 1;
+  const isRealEstate = selectedCategory === 2;
 
   // Build filters for the hook
   const filters = useMemo(() => ({
@@ -70,9 +80,24 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory,
       numberPlateCity: vehicleFilters.numberPlateCity || undefined,
       fromOwner: vehicleFilters.fromOwner === 'true' ? true : vehicleFilters.fromOwner === 'false' ? false : null,
     } : undefined,
+    realEstateFilters: isRealEstate ? {
+      purpose: realEstateFilters.purpose || undefined,
+      propertyType: realEstateFilters.propertyType || undefined,
+      areaGrossMin: realEstateFilters.areaGrossMin ? Number(realEstateFilters.areaGrossMin) : undefined,
+      areaGrossMax: realEstateFilters.areaGrossMax ? Number(realEstateFilters.areaGrossMax) : undefined,
+      areaNetMin: realEstateFilters.areaNetMin ? Number(realEstateFilters.areaNetMin) : undefined,
+      areaNetMax: realEstateFilters.areaNetMax ? Number(realEstateFilters.areaNetMax) : undefined,
+      rooms: realEstateFilters.rooms === '__manual__'
+        ? (realEstateFilters.roomsManual ? Number(realEstateFilters.roomsManual) : undefined)
+        : (realEstateFilters.rooms ? Number(realEstateFilters.rooms) : undefined),
+      balcony: realEstateFilters.balcony ? Number(realEstateFilters.balcony) : undefined,
+      buildingAge: realEstateFilters.buildingAge === '__manual__'
+        ? (realEstateFilters.buildingAgeManual || undefined)
+        : (realEstateFilters.buildingAge || undefined),
+    } : undefined,
   }), [
     selectedCategory, initialQuery, selectedCity, priceMin, priceMax,
-    selectedConditions, selectedWheelDriveType, sortBy, isVehicles, vehicleFilters,
+    selectedConditions, selectedWheelDriveType, sortBy, isVehicles, isRealEstate, vehicleFilters, realEstateFilters,
   ]);
 
   const { listings, loading, error } = useListings(filters);
@@ -118,6 +143,8 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory,
               onWheelDriveTypeChange={setSelectedWheelDriveType}
               vehicleFilters={vehicleFilters}
               onVehicleFiltersChange={setVehicleFilters}
+              realEstateFilters={realEstateFilters}
+              onRealEstateFiltersChange={setRealEstateFilters}
             />
           </aside>
 

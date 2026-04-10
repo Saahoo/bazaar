@@ -51,7 +51,12 @@ export const Header: React.FC<HeaderProps> = ({ locale }) => {
 
   const handleSignOut = async () => {
     await signOut();
-    window.location.href = `/${locale}`;
+    router.replace(`/${locale}`);
+    router.refresh();
+  };
+
+  const handleLogin = () => {
+    router.push(`/${locale}/login`);
   };
 
   return (
@@ -110,13 +115,15 @@ export const Header: React.FC<HeaderProps> = ({ locale }) => {
                   </button>
                 </>
               ) : !loading ? (
-                <Link
-                  href={`/${locale}/login`}
+                <button
+                  type="button"
+                  onClick={handleLogin}
                   className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-600 hover:text-primary-600 transition rounded-lg hover:bg-slate-50 ${isRtl ? 'flex-row-reverse' : ''}`}
+                  title={tCommon('login')}
                 >
                   <LogIn className="w-4 h-4" />
                   <span className="hidden md:inline">{tCommon('login')}</span>
-                </Link>
+                </button>
               ) : null}
 
               <LanguageSwitcher currentLocale={locale} compact />
