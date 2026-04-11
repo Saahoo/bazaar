@@ -17,6 +17,9 @@ const nextConfig = {
     ],
     formats: ['image/avif' as const, 'image/webp' as const],
   },
+  experimental: {
+    // optimizePackageImports: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', 'lucide-react', '@supabase/supabase-js'],
+  },
   async redirects() {
     return [
       {

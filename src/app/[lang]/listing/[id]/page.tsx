@@ -63,6 +63,7 @@ export default async function ListingPage({ params }: PageProps) {
       favorite_count: mockListing.favorite_count,
       status: mockListing.status,
       phone_visible: true,
+      from_owner: Boolean(mockListing.from_owner),
       created_at: mockListing.created_at,
       photos: mockListing.photos,
       metadata: {},
@@ -129,6 +130,7 @@ export default async function ListingPage({ params }: PageProps) {
 
   const listingData = {
     ...listing,
+    from_owner: Boolean((listing as { from_owner?: boolean | null }).from_owner),
     photos: (photos || []).map((p) => p.photo_url),
     price_history: priceHistory || [],
   };
