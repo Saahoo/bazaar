@@ -141,7 +141,8 @@
     "soldOut": "فروخت شو",
     "callSeller": "فروش کونکي ته کال کئ",
     "messageSeller": "فروش کونکي ته پیغام کئ",
-    "viewPhone": "د فون شمیره وګورئ"
+    "viewPhone": "د فون شمیره وګورئ",
+    "from": "څخه"
   },
   "form": {
     "title": "سرنوم",
@@ -434,6 +435,11 @@
       "mileageHint": "د کیلومترو په اندازه مایلیج دننه کئ",
       "color": "رنګ",
       "selectColor": "رنګ انتخاب کئ",
+      "sellerSource": "د موټر سرچینه",
+      "selectSource": "سرچینه وټاکئ",
+      "fromOwner": "د مالک څخه",
+      "fromGallery": "د ګالري څخه",
+      "fromAuthorizedDealer": "د مجاز ډیلر څخه",
       "color_white": "سپین",
       "color_black": "تور",
       "color_silver": "سپوږمیني",

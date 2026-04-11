@@ -13,9 +13,10 @@ interface StepPhotosProps {
   locale: Locale;
   data: StepPhotosData;
   onChange: (data: Partial<StepPhotosData>) => void;
+  folder?: string;
 }
 
-export const StepPhotos: React.FC<StepPhotosProps> = ({ locale, data, onChange }) => {
+export const StepPhotos: React.FC<StepPhotosProps> = ({ locale, data, onChange, folder = 'listings/general' }) => {
   const tPostAd = useTranslations('postAd');
   const rtl = isRTL(locale);
 
@@ -30,7 +31,7 @@ export const StepPhotos: React.FC<StepPhotosProps> = ({ locale, data, onChange }
         photos={data.photos}
         onChange={(photos) => onChange({ photos })}
         maxPhotos={20}
-        folder="listings/general"
+        folder={folder}
       />
     </div>
   );

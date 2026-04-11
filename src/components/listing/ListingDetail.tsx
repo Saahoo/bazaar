@@ -26,6 +26,7 @@ export interface ListingData {
   favorite_count: number;
   status: string;
   phone_visible?: boolean;
+  from_owner: boolean;
   created_at: string;
   photos: string[];
   metadata?: Record<string, unknown>;
@@ -225,6 +226,12 @@ export const ListingDetail: React.FC<ListingDetailProps> = ({ listing, seller, l
                   {conditionLabel}
                 </span>
               </div>
+              {listing.category_id === 1 && (
+                <div className={`mt-2 text-sm text-slate-600 ${isRtl ? 'text-right' : 'text-left'}`}>
+                  <span className="font-medium">{t('from')}:</span>{' '}
+                  {listing.from_owner ? tCommon('fromOwner') : tCommon('dealerOnly')}
+                </div>
+              )}
             </div>
 
             {listing.metadata && Object.keys(listing.metadata).length > 0 && (

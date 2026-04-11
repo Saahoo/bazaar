@@ -22,6 +22,7 @@ interface StepContactProps {
   data: StepContactData;
   onChange: (data: Partial<StepContactData>) => void;
   formData: PostAdFormData;
+  selectedCategoryName?: string | null;
 }
 
 export const StepContact: React.FC<StepContactProps> = ({
@@ -29,6 +30,7 @@ export const StepContact: React.FC<StepContactProps> = ({
   data,
   onChange,
   formData,
+  selectedCategoryName,
 }) => {
   const tForm = useTranslations('form');
   const tPostAd = useTranslations('postAd');
@@ -177,7 +179,7 @@ export const StepContact: React.FC<StepContactProps> = ({
                     {tForm('category')}
                   </p>
                   <p className="text-sm font-medium text-slate-900">
-                    {getCategoryName(formData.categoryId, locale)}
+                    {selectedCategoryName ?? getCategoryName(formData.categoryId, locale)}
                   </p>
                 </div>
               </div>

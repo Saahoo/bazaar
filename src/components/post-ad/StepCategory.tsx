@@ -8,7 +8,7 @@ import { createClient } from '@/lib/supabase/client';
 interface StepCategoryProps {
   locale: Locale;
   selectedCategory: number | null;
-  onSelect: (categoryId: number, categorySlug?: string) => void;
+  onSelect: (categoryId: number, categorySlug?: string, categoryName?: string) => void;
 }
 
 interface DbCategory {
@@ -228,9 +228,17 @@ export const StepCategory: React.FC<StepCategoryProps> = ({
         .order('sort_order', { ascending: true });
 
       if (!mounted) return;
-      const normalized = ((data as DbCategory[]) || []).filter(
-        (category) => !EXCLUDED_TOP_LEVEL_CATEGORY_SLUGS.has((category.slug || '').toLowerCase())
-      );
+      const seenCategoryNames = new Set<string>();
+      const normalized = ((data as DbCategory[]) || [])
+        .filter((category) => !EXCLUDED_TOP_LEVEL_CATEGORY_SLUGS.has((category.slug || '').toLowerCase()))
+        .filter((category) => {
+          const localizedName = getLocalizedCategoryName(category).trim().toLowerCase();
+          if (seenCategoryNames.has(localizedName)) {
+            return false;
+          }
+          seenCategoryNames.add(localizedName);
+          return true;
+        });
       setCategories(normalized);
     };
 
@@ -266,7 +274,11 @@ export const StepCategory: React.FC<StepCategoryProps> = ({
             <button
               key={category.id}
               type="button"
-              onClick={() => onSelect(category.id, category.slug)}
+              onClick={() => onSelect(
+                category.id,
+                category.slug,
+                getLocalizedCategoryName(category)
+              )}
               className={`group p-3 md:p-4 rounded-lg border-2 transition duration-200 flex flex-col items-center text-center gap-2 cursor-pointer h-full justify-center hover:shadow-md ${
                 isSelected
                   ? 'border-primary-500 bg-primary-50'

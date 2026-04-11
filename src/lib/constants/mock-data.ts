@@ -16,6 +16,7 @@ export interface MockListing {
   view_count: number;
   favorite_count: number;
   phone: string;
+  from_owner: boolean;
   created_at: string;
 }
 
@@ -110,6 +111,7 @@ export const MOCK_LISTINGS: MockListing[] = [
     view_count: 234,
     favorite_count: 18,
     phone: '+93 700 123 456',
+    from_owner: true,
     created_at: '2026-03-28',
   },
   {
@@ -127,6 +129,7 @@ export const MOCK_LISTINGS: MockListing[] = [
     view_count: 567,
     favorite_count: 42,
     phone: '+92 321 999 8877',
+    from_owner: true,
     created_at: '2026-04-01',
   },
   {
@@ -144,6 +147,7 @@ export const MOCK_LISTINGS: MockListing[] = [
     view_count: 892,
     favorite_count: 65,
     phone: '+93 700 123 456',
+    from_owner: false,
     created_at: '2026-04-03',
   },
   {
@@ -161,6 +165,7 @@ export const MOCK_LISTINGS: MockListing[] = [
     view_count: 156,
     favorite_count: 12,
     phone: '+93 799 555 123',
+    from_owner: true,
     created_at: '2026-03-25',
   },
   {
@@ -178,6 +183,7 @@ export const MOCK_LISTINGS: MockListing[] = [
     view_count: 312,
     favorite_count: 22,
     phone: '+93 799 555 123',
+    from_owner: true,
     created_at: '2026-03-30',
   },
   {
@@ -195,6 +201,7 @@ export const MOCK_LISTINGS: MockListing[] = [
     view_count: 445,
     favorite_count: 33,
     phone: '+92 321 999 8877',
+    from_owner: false,
     created_at: '2026-03-15',
   },
   {
@@ -212,6 +219,7 @@ export const MOCK_LISTINGS: MockListing[] = [
     view_count: 189,
     favorite_count: 8,
     phone: '+93 700 123 456',
+    from_owner: false,
     created_at: '2026-04-02',
   },
   {
@@ -229,6 +237,7 @@ export const MOCK_LISTINGS: MockListing[] = [
     view_count: 98,
     favorite_count: 5,
     phone: '+93 788 432 100',
+    from_owner: true,
     created_at: '2026-03-20',
   },
   {
@@ -246,6 +255,7 @@ export const MOCK_LISTINGS: MockListing[] = [
     view_count: 678,
     favorite_count: 35,
     phone: '+92 321 999 8877',
+    from_owner: false,
     created_at: '2026-04-05',
   },
   {
@@ -263,6 +273,7 @@ export const MOCK_LISTINGS: MockListing[] = [
     view_count: 134,
     favorite_count: 11,
     phone: '+93 788 432 100',
+    from_owner: false,
     created_at: '2026-04-06',
   },
   {
@@ -280,6 +291,7 @@ export const MOCK_LISTINGS: MockListing[] = [
     view_count: 890,
     favorite_count: 47,
     phone: '+93 700 123 456',
+    from_owner: true,
     created_at: '2026-02-15',
   },
   {
@@ -297,6 +309,7 @@ export const MOCK_LISTINGS: MockListing[] = [
     view_count: 567,
     favorite_count: 38,
     phone: '+93 799 555 123',
+    from_owner: false,
     created_at: '2026-04-04',
   },
 ];

@@ -126,7 +126,7 @@ const INITIAL_VH_DATA: VehiclesFormData = {
     bodyType: '', gearType: '', engineSize: '', enginePower: '',
   },
   condition: {
-    price: '', currency: 'AFN', mileage: '', color: '',
+    price: '', currency: 'AFN', mileage: '', color: '', sellerSource: '',
     hasDamage: null, exchange: null, hasNumberPlate: null,
     numberPlateCity: '', handDrive: '', damageDetails: '', otherOptions: [],
   },
@@ -214,6 +214,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
   const [draftSaved, setDraftSaved] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [selectedCategorySlug, setSelectedCategorySlug] = useState<string | null>(null);
+  const [selectedCategoryName, setSelectedCategoryName] = useState<string | null>(null);
   const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
   const [loadingDraft, setLoadingDraft] = useState(false);
   const supabase = createClient();
@@ -238,10 +239,11 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
   }, []);
 
   const handleCategorySelect = useCallback(
-    (categoryId: number, categorySlug?: string) => {
+    (categoryId: number, categorySlug?: string, categoryName?: string) => {
       const changingCategory = formData.categoryId !== categoryId;
       updateFormData({ categoryId });
       setSelectedCategorySlug(categorySlug || null);
+      setSelectedCategoryName(categoryName || null);
       setCurrentStep((prev) => (prev === 0 ? 1 : prev));
       if (changingCategory) {
         setReData(INITIAL_RE_DATA);
@@ -261,6 +263,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         if (mounted) {
           setWizardConfig({ sections: [], lists: [] });
           setSelectedCategorySlug(null);
+          setSelectedCategoryName(null);
         }
         return;
       }
@@ -268,7 +271,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       setLoadingWizardConfig(true);
       const { data } = await supabase
         .from('categories')
-        .select('options_json, slug')
+        .select('options_json, slug, name_en, name_ps, name_fa')
         .eq('id', formData.categoryId)
         .single();
 
@@ -277,6 +280,15 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       const raw = (data?.options_json || {}) as Record<string, unknown>;
       const wf = (raw.wizard_forms || {}) as Partial<WizardFormConfig>;
       setSelectedCategorySlug((data?.slug as string | undefined) || null);
+      setSelectedCategoryName(
+        data
+          ? locale === 'ps'
+            ? (data.name_ps as string)
+            : locale === 'fa'
+              ? (data.name_fa as string)
+              : (data.name_en as string)
+          : null
+      );
       setWizardConfig({
         sections: Array.isArray(wf.sections) ? (wf.sections as WizardFormConfig['sections']) : [],
         lists: Array.isArray(wf.lists) ? (wf.lists as WizardFormConfig['lists']) : [],
@@ -333,10 +345,19 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       if (categoryId) {
         const { data: categoryRow } = await supabase
           .from('categories')
-          .select('slug')
+          .select('slug, name_en, name_ps, name_fa')
           .eq('id', categoryId)
           .single();
         categorySlug = (categoryRow?.slug as string | undefined) || null;
+        if (categoryRow) {
+          setSelectedCategoryName(
+            locale === 'ps'
+              ? (categoryRow.name_ps as string)
+              : locale === 'fa'
+                ? (categoryRow.name_fa as string)
+                : (categoryRow.name_en as string)
+          );
+        }
       }
 
       if (!mounted) return;
@@ -541,7 +562,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       case 'vhStepSpecs':
         return vhData.specs.year !== '' && (vhData.specs.make !== '' || vhData.specs.customMake !== '') && (vhData.specs.model !== '' || vhData.specs.customModel !== '') && requiredDynamicValid;
       case 'vhStepCondition':
-        return vhData.condition.price !== '' && vhData.condition.mileage !== '';
+        return vhData.condition.price !== '' && vhData.condition.mileage !== '' && vhData.condition.sellerSource !== '';
       case 'vhStepAddress':
         return vhData.address.city !== '' && vhData.address.lat !== null && vhData.address.lng !== null;
       case 'vhStepMedia':
@@ -641,6 +662,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       let _phone = formData.phone;
       let condition = formData.condition;
       let photosList = formData.photos.photos;
+      let fromOwner = true;
 
       if (isRealEstate) {
         metadata = {
@@ -659,12 +681,14 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         condition = 'good';
         photosList = reData.media.photos;
       } else if (isVehicles) {
+        const isSourceOwner = vhData.condition.sellerSource === 'owner';
         metadata = {
           vehicleType: vhData.vehicleType,
           ...vhData.specs,
           ...vhData.condition,
           wizard_forms: wizardValues,
         };
+        fromOwner = isSourceOwner;
         title = vhData.title || title;
         description = vhData.description || description;
         price = Number(vhData.condition.price) || price;
@@ -723,6 +747,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
           condition: condition || 'good',
           city,
           phone_visible: true,
+          from_owner: fromOwner,
           metadata,
           status: 'active',
         })
@@ -892,6 +917,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
             locale={locale}
             data={formData.photos}
             onChange={(data) => updateFormData({ photos: { ...formData.photos, ...data } })}
+            folder={`listings/${selectedCategorySlug || 'general'}`}
           />
         );
       case 'stepContact':
@@ -906,6 +932,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
             }}
             onChange={(data) => updateFormData(data)}
             formData={formData}
+            selectedCategoryName={selectedCategoryName}
           />
         );
       // Real Estate steps

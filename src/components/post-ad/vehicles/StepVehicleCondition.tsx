@@ -15,6 +15,7 @@ export interface VehicleConditionData {
   currency: string;
   mileage: string;
   color: VehicleColor | '';
+  sellerSource: 'owner' | 'gallery' | 'authorizedDealer' | '';
   hasDamage: boolean | null;
   exchange: boolean | null;
   hasNumberPlate: boolean | null;
@@ -83,6 +84,7 @@ export const StepVehicleCondition: React.FC<StepVehicleConditionProps> = ({
             dir="ltr"
           />
           <select
+            aria-label={tForm('currency')}
             value={data.currency}
             onChange={(e) => onChange({ currency: e.target.value })}
             className={`px-3 py-2.5 border border-slate-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary-200 w-28 ${rtl ? 'text-right' : ''}`}
@@ -117,8 +119,9 @@ export const StepVehicleCondition: React.FC<StepVehicleConditionProps> = ({
 
       {/* Color */}
       <div>
-        <label className={labelClass}>{t('color')}</label>
+        <label htmlFor="vehicle-color" className={labelClass}>{t('color')}</label>
         <select
+          id="vehicle-color"
           value={data.color}
           onChange={(e) => onChange({ color: e.target.value as VehicleColor })}
           className={`${inputClass} bg-white`}
@@ -128,6 +131,23 @@ export const StepVehicleCondition: React.FC<StepVehicleConditionProps> = ({
           {VEHICLE_COLORS.map((c) => (
             <option key={c} value={c}>{t(`color_${c}`)}</option>
           ))}
+        </select>
+      </div>
+
+      {/* Seller Source */}
+      <div>
+        <label htmlFor="vehicle-source" className={labelClass}>{t('sellerSource')}</label>
+        <select
+          id="vehicle-source"
+          value={data.sellerSource}
+          onChange={(e) => onChange({ sellerSource: e.target.value as VehicleConditionData['sellerSource'] })}
+          className={`${inputClass} bg-white`}
+          dir={rtl ? 'rtl' : 'ltr'}
+        >
+          <option value="">{t('selectSource')}</option>
+          <option value="owner">{t('fromOwner')}</option>
+          <option value="gallery">{t('fromGallery')}</option>
+          <option value="authorizedDealer">{t('fromAuthorizedDealer')}</option>
         </select>
       </div>
 
@@ -212,8 +232,9 @@ export const StepVehicleCondition: React.FC<StepVehicleConditionProps> = ({
       {/* Number Plate City (if yes) */}
       {data.hasNumberPlate && (
         <div>
-          <label className={labelClass}>{t('numberPlateCity')}</label>
+          <label htmlFor="vehicle-numberPlateCity" className={labelClass}>{t('numberPlateCity')}</label>
           <select
+            id="vehicle-numberPlateCity"
             value={data.numberPlateCity}
             onChange={(e) => onChange({ numberPlateCity: e.target.value })}
             className={`${inputClass} bg-white`}

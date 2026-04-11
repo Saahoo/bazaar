@@ -141,7 +141,8 @@
     "soldOut": "فروخته شد",
     "callSeller": "تماس با فروشنده",
     "messageSeller": "پیام به فروشنده",
-    "viewPhone": "مشاهده شماره تلفن"
+    "viewPhone": "مشاهده شماره تلفن",
+    "from": "از"
   },
   "form": {
     "title": "عنوان",
@@ -433,6 +434,11 @@
       "mileageHint": "کارکرد را به کیلومتر وارد کنید",
       "color": "رنگ",
       "selectColor": "رنگ را انتخاب کنید",
+      "sellerSource": "منبع خودرو",
+      "selectSource": "منبع را انتخاب کنید",
+      "fromOwner": "از مالک",
+      "fromGallery": "از گالری",
+      "fromAuthorizedDealer": "از نمایندگی مجاز",
       "color_white": "سفید",
       "color_black": "مشکی",
       "color_silver": "نقره ای",

@@ -141,7 +141,8 @@
     "soldOut": "Sold Out",
     "callSeller": "Call Seller",
     "messageSeller": "Message Seller",
-    "viewPhone": "View Phone Number"
+    "viewPhone": "View Phone Number",
+    "from": "From"
   },
   "form": {
     "title": "Title",
@@ -439,6 +440,11 @@
       "mileageHint": "Enter mileage in kilometers",
       "color": "Color",
       "selectColor": "Select color",
+      "sellerSource": "Source of Vehicle",
+      "selectSource": "Select source",
+      "fromOwner": "From Owner",
+      "fromGallery": "From Gallery",
+      "fromAuthorizedDealer": "From Authorized Dealer",
       "color_white": "White",
       "color_black": "Black",
       "color_silver": "Silver",
