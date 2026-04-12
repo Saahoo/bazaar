@@ -4,7 +4,7 @@ import React from 'react';
 import { useTranslations } from 'next-intl';
 import { Edit2 } from 'lucide-react';
 import { Locale, isRTL } from '@/lib/i18n/config';
-import { FashionSubcategory, FASHION_SUBCATEGORIES, FASHION_SUBCATEGORY_LABEL_KEYS, getFashionFieldTranslationKey, getFashionOptionTranslationKey } from '@/lib/constants/fashion-wizard';
+import { FashionSubcategory, FASHION_SUBCATEGORY_LABEL_KEYS, getFashionFieldTranslationKey, getFashionOptionTranslationKey } from '@/lib/constants/fashion-wizard';
 import { FashionMediaData } from './StepFashionMedia';
 
 interface StepFashionReviewProps {
@@ -51,7 +51,7 @@ export const StepFashionReview: React.FC<StepFashionReviewProps> = ({
 
   const subcategoryLabel = subcategory
     ? t(FASHION_SUBCATEGORY_LABEL_KEYS[subcategory] as Parameters<typeof t>[0])
-    : FASHION_SUBCATEGORIES.find((option) => option.value === subcategory)?.label || subcategory || '-';
+    : '-';
 
   const getFieldLabel = (key: string) => {
     const translationKey = getFashionFieldTranslationKey(key);
