@@ -16,6 +16,7 @@ export interface WizardField {
 export interface WizardSection {
   id: string;
   title: string;
+  step?: string;
   fields: WizardField[];
 }
 
@@ -28,6 +29,7 @@ export interface WizardSubList {
 export interface WizardListGroup {
   id: string;
   title: string;
+  step?: string;
   values: string[];
   sub_lists: WizardSubList[];
 }
@@ -54,11 +56,27 @@ const toBooleanValue = (value: unknown): boolean => value === true;
 
 const toArrayValue = (value: unknown): string[] => (Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : []);
 
+const isOtherChoice = (value: unknown): boolean => {
+  if (typeof value !== 'string') return false;
+  const normalized = value.trim().toLowerCase();
+  return normalized === 'other' || normalized === '__other__';
+};
+
 const toggleArrayValue = (arr: string[], val: string): string[] =>
   arr.includes(val) ? arr.filter((v) => v !== val) : [...arr, val];
 
 export const DynamicWizardFields: React.FC<DynamicWizardFieldsProps> = ({ locale, config, values, onChange }) => {
   const rtl = isRTL(locale);
+  const text = {
+    extraDetails: locale === 'ps' ? 'اضافي جزييات' : locale === 'fa' ? 'جزئیات اضافی' : 'Extra Details',
+    section: locale === 'ps' ? 'برخه' : locale === 'fa' ? 'بخش' : 'Section',
+    field: locale === 'ps' ? 'فيلډ' : locale === 'fa' ? 'فیلد' : 'Field',
+    list: locale === 'ps' ? 'ليست' : locale === 'fa' ? 'لیست' : 'List',
+    subList: locale === 'ps' ? 'فرعي لست' : locale === 'fa' ? 'زیرلیست' : 'Sub-list',
+    selectOption: locale === 'ps' ? 'يو انتخاب وکړئ' : locale === 'fa' ? 'یک گزینه انتخاب کنید' : 'Select an option',
+    yes: locale === 'ps' ? 'هو' : locale === 'fa' ? 'بله' : 'Yes',
+    enterOther: locale === 'ps' ? 'نور وليکئ' : locale === 'fa' ? 'سایر را وارد کنید' : 'Enter other value',
+  };
 
   const inputClass =
     `w-full px-4 py-2.5 border border-slate-300 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-500 ${rtl ? 'text-right' : 'text-left'}`;
@@ -68,43 +86,59 @@ export const DynamicWizardFields: React.FC<DynamicWizardFieldsProps> = ({ locale
   return (
     <div className="space-y-6 mt-6 pt-6 border-t border-slate-200">
       <h3 className={`text-lg font-semibold text-slate-900 ${rtl ? 'text-right' : 'text-left'}`}>
-        Extra Details
+        {text.extraDetails}
       </h3>
 
       {config.sections.map((section) => (
         <div key={section.id} className="space-y-3">
           <h4 className={`text-sm font-semibold text-slate-800 ${rtl ? 'text-right' : 'text-left'}`}>
-            {section.title || 'Section'}
+            {section.title || text.section}
           </h4>
 
           {section.fields.map((field) => {
             const key = fieldKey(section.id, field.id);
             const raw = values[key];
+            const customOtherKey = `${key}.other`;
+            const showOtherInput = field.type === 'select' && isOtherChoice(raw);
 
             return (
               <div key={field.id}>
                 <label className={labelClass}>
-                  {field.label || 'Field'} {field.required && <span className="text-red-500">*</span>}
+                  {field.label || text.field} {field.required && <span className="text-red-500">*</span>}
                 </label>
 
                 {field.type === 'textarea' ? (
                   <textarea
+                    aria-label={field.label || text.field}
                     value={toStringValue(raw)}
                     onChange={(e) => onChange(key, e.target.value)}
                     rows={4}
                     className={inputClass}
                   />
                 ) : field.type === 'select' ? (
-                  <select
-                    value={toStringValue(raw)}
-                    onChange={(e) => onChange(key, e.target.value)}
-                    className={`${inputClass} bg-white`}
-                  >
-                    <option value="">Select an option</option>
-                    {field.options.map((option) => (
-                      <option key={option} value={option}>{option}</option>
-                    ))}
-                  </select>
+                  <>
+                    <select
+                      aria-label={field.label || text.field}
+                      value={toStringValue(raw)}
+                      onChange={(e) => onChange(key, e.target.value)}
+                      className={`${inputClass} bg-white`}
+                    >
+                      <option value="">{text.selectOption}</option>
+                      {field.options.map((option) => (
+                        <option key={option} value={option}>{option}</option>
+                      ))}
+                    </select>
+                    {showOtherInput && (
+                      <input
+                        aria-label={`${field.label || text.field} ${text.enterOther}`}
+                        type="text"
+                        value={toStringValue(values[customOtherKey])}
+                        onChange={(e) => onChange(customOtherKey, e.target.value)}
+                        placeholder={text.enterOther}
+                        className={`${inputClass} mt-2`}
+                      />
+                    )}
+                  </>
                 ) : field.type === 'checkbox' ? (
                   <label className={`inline-flex items-center gap-2 text-sm text-slate-700 ${rtl ? 'flex-row-reverse' : ''}`}>
                     <input
@@ -113,10 +147,11 @@ export const DynamicWizardFields: React.FC<DynamicWizardFieldsProps> = ({ locale
                       onChange={(e) => onChange(key, e.target.checked)}
                       className="rounded border-slate-300"
                     />
-                    Yes
+                    {text.yes}
                   </label>
                 ) : (
                   <input
+                    aria-label={field.label || text.field}
                     type={field.type === 'number' ? 'number' : 'text'}
                     value={toStringValue(raw)}
                     onChange={(e) => onChange(key, field.type === 'number' ? e.target.value : e.target.value)}
@@ -134,7 +169,7 @@ export const DynamicWizardFields: React.FC<DynamicWizardFieldsProps> = ({ locale
         return (
           <div key={list.id} className="space-y-3 border border-slate-200 rounded-lg p-4">
             <h4 className={`text-sm font-semibold text-slate-800 ${rtl ? 'text-right' : 'text-left'}`}>
-              {list.title || 'List'}
+              {list.title || text.list}
             </h4>
             <div className="flex flex-wrap gap-2">
               {list.values.map((value) => {
@@ -156,7 +191,7 @@ export const DynamicWizardFields: React.FC<DynamicWizardFieldsProps> = ({ locale
               const subValues = toArrayValue(values[subListKey(list.id, sub.id)]);
               return (
                 <div key={sub.id} className="space-y-2 pl-2 border-l-2 border-slate-200">
-                  <p className="text-xs font-semibold text-slate-600">{sub.title || 'Sub-list'}</p>
+                  <p className="text-xs font-semibold text-slate-600">{sub.title || text.subList}</p>
                   <div className="flex flex-wrap gap-2">
                     {sub.values.map((value) => {
                       const selected = subValues.includes(value);
@@ -194,6 +229,11 @@ export const isWizardRequiredFieldsValid = (config: WizardFormConfig, values: Re
         continue;
       }
 
+      if (field.type === 'select' && isOtherChoice(val)) {
+        const customOtherValue = values[`${key}.other`];
+        if (typeof customOtherValue === 'string' && customOtherValue.trim() !== '') continue;
+        return false;
+      }
       if (typeof val === 'string' && val.trim() !== '') continue;
       if (typeof val === 'number' && !Number.isNaN(val)) continue;
       return false;

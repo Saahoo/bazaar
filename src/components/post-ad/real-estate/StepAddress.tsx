@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { MapPin } from 'lucide-react';
 import { isRTL, Locale } from '@/lib/i18n/config';
@@ -12,6 +12,8 @@ export interface AddressData {
   street: string;
   unit: string;
   neighborhood: string[];
+  lat: number | null;
+  lng: number | null;
 }
 
 const NEIGHBORHOOD_OPTIONS = [
@@ -24,6 +26,97 @@ interface StepAddressProps {
   data: AddressData;
   onChange: (data: Partial<AddressData>) => void;
 }
+
+const LocationMap: React.FC<{
+  lat: number | null;
+  lng: number | null;
+  onLocationChange: (lat: number, lng: number) => void;
+}> = ({ lat, lng, onLocationChange }) => {
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<L.Map | null>(null);
+  const markerRef = useRef<L.Marker | null>(null);
+  const [mapReady, setMapReady] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const initMap = async () => {
+      const L = await import('leaflet');
+
+      const defaultIconPrototype = L.Icon.Default.prototype as unknown as {
+        _getIconUrl?: string;
+      };
+      delete defaultIconPrototype._getIconUrl;
+      L.Icon.Default.mergeOptions({
+        iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+        iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+      });
+
+      if (!mounted || !mapRef.current || mapInstanceRef.current) return;
+
+      const defaultLat = lat ?? 34.5553;
+      const defaultLng = lng ?? 69.2075;
+      const map = L.map(mapRef.current).setView([defaultLat, defaultLng], 13);
+      mapInstanceRef.current = map;
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        maxZoom: 19,
+      }).addTo(map);
+
+      if (lat !== null && lng !== null) {
+        markerRef.current = L.marker([lat, lng]).addTo(map);
+      }
+
+      map.on('click', (e: L.LeafletMouseEvent) => {
+        const clickLat = e.latlng.lat;
+        const clickLng = e.latlng.lng;
+        if (markerRef.current) {
+          markerRef.current.setLatLng([clickLat, clickLng]);
+        } else {
+          markerRef.current = L.marker([clickLat, clickLng]).addTo(map);
+        }
+        onLocationChange(clickLat, clickLng);
+      });
+
+      setMapReady(true);
+    };
+
+    initMap();
+
+    return () => {
+      mounted = false;
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!mapReady || !mapInstanceRef.current) return;
+    const load = async () => {
+      const L = await import('leaflet');
+      if (lat !== null && lng !== null) {
+        if (markerRef.current) {
+          markerRef.current.setLatLng([lat, lng]);
+        } else {
+          markerRef.current = L.marker([lat, lng]).addTo(mapInstanceRef.current!);
+        }
+      }
+    };
+    load();
+  }, [lat, lng, mapReady]);
+
+  return (
+    <>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+      <div ref={mapRef} className="w-full h-64 rounded-xl border border-slate-300 z-0" />
+    </>
+  );
+};
 
 export const StepAddress: React.FC<StepAddressProps> = ({
   locale,
@@ -61,6 +154,8 @@ export const StepAddress: React.FC<StepAddressProps> = ({
         </label>
         <div className="relative">
           <select
+            aria-label={t('city')}
+            title={t('city')}
             value={data.city}
             onChange={(e) => onChange({ city: e.target.value })}
             className={`${inputClass} appearance-none bg-white pr-10`}
@@ -119,15 +214,22 @@ export const StepAddress: React.FC<StepAddressProps> = ({
         />
       </div>
 
-      {/* Map Location (placeholder) */}
+      {/* Map Location */}
       <div>
         <label className={labelClass}>{t('mapLocation')}</label>
-        <div className="w-full h-48 bg-slate-100 rounded-xl border-2 border-dashed border-slate-300 flex items-center justify-center">
-          <div className="text-center">
-            <MapPin className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-            <p className="text-sm text-slate-500">{t('clickMapToPin')}</p>
-          </div>
-        </div>
+        <p className={`text-sm text-slate-500 mb-3 ${rtl ? 'text-right' : 'text-left'}`}>
+          {t('clickMapToPin')}
+        </p>
+        <LocationMap
+          lat={data.lat}
+          lng={data.lng}
+          onLocationChange={(lat, lng) => onChange({ lat, lng })}
+        />
+        {data.lat !== null && data.lng !== null && (
+          <p className={`mt-2 text-xs text-green-600 ${rtl ? 'text-right' : 'text-left'}`}>
+            {data.lat.toFixed(6)}, {data.lng.toFixed(6)}
+          </p>
+        )}
       </div>
 
       {/* Neighborhood Multi-select */}

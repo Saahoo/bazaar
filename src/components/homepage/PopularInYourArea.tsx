@@ -9,9 +9,10 @@ import { useListings } from '@/lib/hooks/useListings';
 
 interface PopularInYourAreaProps {
   locale: Locale;
+  titleOverride?: string;
 }
 
-export const PopularInYourArea: React.FC<PopularInYourAreaProps> = ({ locale }) => {
+export const PopularInYourArea: React.FC<PopularInYourAreaProps> = ({ locale, titleOverride }) => {
   const t = useTranslations('homepage');
   const isRtl = isRTL(locale);
 
@@ -45,7 +46,7 @@ export const PopularInYourArea: React.FC<PopularInYourAreaProps> = ({ locale }) 
           <div className="w-7 h-7 bg-sky-100 rounded-full flex items-center justify-center flex-shrink-0">
             <MapPin className="w-4 h-4 text-sky-500" />
           </div>
-          <h2 className="text-base md:text-lg font-semibold text-slate-900">{t('popular')}</h2>
+          <h2 className="text-base md:text-lg font-semibold text-slate-900">{titleOverride || t('popular')}</h2>
         </div>
         <Link
           href={`/${locale}/search`}
@@ -60,7 +61,7 @@ export const PopularInYourArea: React.FC<PopularInYourAreaProps> = ({ locale }) 
           <Loader2 className="w-6 h-6 text-primary-600 animate-spin" />
         </div>
       ) : cityListings.length === 0 ? (
-        <p className="text-slate-400 text-sm text-center py-8">{t('popular')}</p>
+        <p className="text-slate-400 text-sm text-center py-8">{titleOverride || t('popular')}</p>
       ) : (
         <div className="space-y-4">
           {cityListings.map(([city, items]) => (

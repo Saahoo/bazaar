@@ -1,229 +1,262 @@
-Build a dynamic, multi-step (wizard-style) listing form for a marketplace web app.
+Update my existing **Listing Wizard Form (React + Tailwind)** for the **Electronics category** so that it includes **ALL fields used in the search filters**, ensuring perfect match between listing data and filtering.
 
-Tech Stack:
-- React (Next.js) with TypeScript
-- Tailwind CSS (modern UI)
-- React Hook Form + Zod validation
-- State management: Zustand or Context API
-- Multi-language support: English, Pashto, Dari (i18n ready)
-- Fully mobile responsive
+---
 
--------------------------------------
+# 🎯 Goal
 
-CORE IDEA:
+* Every filter field MUST exist in the listing form
+* Ensure consistent naming between frontend + backend
+* Use dynamic steps based on selected subcategory
 
-The form must support MULTIPLE CATEGORIES (excluding Vehicles & Real Estate), with dynamic fields based on selected category and subcategory.
+---
 
-Main Category Example:
-- Electronics
+# 🧭 Wizard Structure (Step-by-Step)
 
-Subcategories:
-- Phones
-- Tablets
-- Laptops
-- Desktops
-- Home Appliances
-- Music Instruments
-- Other Electronics
+## ✅ Step 1: Basic Information
 
--------------------------------------
+* Title
+* Description
+* Subcategory (Dropdown):
 
-FORM STRUCTURE (MULTI-STEP WIZARD)
+  * Phones
+  * Tablets
+  * TV
+  * Laptops
+  * Desktops
+  * Home Appliances
+  * Music Instruments
+  * Other Electronics
 
-Step 1: Category Selection
-- Category (dropdown)
-- Subcategory (dropdown, depends on category)
+---
 
--------------------------------------
+## ✅ Step 2: General Details (Common Fields)
 
-Step 2: Basic Info
-- Ad Title (text, required)
-- Ad Details (textarea, required)
+* Price
+* Condition (New / Used / Refurbished)
+* Location ( City)
+* Seller Type (Individual / Dealer)
 
--------------------------------------
+---
 
-Step 3: Product Specifications (DYNAMIC)
+## ✅ Step 3: Dynamic Specifications (IMPORTANT)
 
-IMPORTANT:
-Fields must change dynamically based on selected subcategory.
+Show fields based on selected subcategory:
 
-Example: If Subcategory = "Phones"
+---
 
-- Make (dropdown, required)
-  Example: Apple, Samsung, Xiaomi, Huawei, Oppo, etc.
+### 📱 Phones & Tablets
 
-- Model (dropdown, required)
-  Depends on Make
-  Example:
-    Apple → iPhone 11, 12, 13, 14, 15
-    Samsung → S21, S22, A51, etc.
+* Make
+* Model (dependent dropdown)
+* RAM
+* Internal Storage
+* Battery Capacity
+* Screen Size
+* Refresh Rate
+* Rear Camera (MP)
+* Front Camera (MP)
+* 5G Supported (Yes/No)
+* Dual SIM (Yes/No)
+* Operating System
+* Color
+* Warranty (Yes/No)
+* Accessories Included (Yes/No)
+* Box Available (Yes/No)
 
-- Storage (dropdown)
-  Example: 64GB, 128GB, 256GB, 512GB
+---
 
-- RAM (dropdown)
-  Example: 4GB, 6GB, 8GB, 12GB
+### 📺 TV
 
-- Condition (dropdown)
-  New, Like New, Used, Refurbished
+* Brand
+* Model
+* Screen Size
+* Resolution
+* Smart TV (Yes/No)
+* Panel Type
+* Refresh Rate
+* HDMI Ports
+* Operating System
+* Wall Mount Included
+* Warranty
 
-- Color (dropdown)
+---
 
--------------------------------------
+### 💻 Laptops
 
-If Subcategory = "Laptops":
+* Make
+* Model
+* Processor
+* RAM
+* Storage Type
+* Storage Size
+* GPU
+* Screen Size
+* Resolution
+* Touchscreen
+* Battery Life
+* Operating System
+* Usage Type
+* Keyboard Backlight
+* Fingerprint Sensor
+* Warranty
 
-- Brand (dropdown)
-- Model (dropdown)
-- Processor (text or dropdown)
-- RAM
-- Storage
-- GPU (optional)
-- Condition
+---
 
--------------------------------------
+### 🖥️ Desktops
 
-If Subcategory = "Home Appliances":
+* Make
+* Model
+* Processor
+* RAM
+* Storage Type
+* Storage Size
+* GPU
+* Form Factor
+* Operating System
+* Monitor Included
+* Keyboard/Mouse Included
+* Usage Type
+* Warranty
 
-- Type (e.g., Refrigerator, Washing Machine, AC)
-- Brand
-- Model
-- Condition
+---
 
--------------------------------------
+### 🏠 Home Appliances
 
-If Subcategory = "Music Instruments":
+## First select:
 
-- Type (Guitar, Piano, etc.)
-- Brand
-- Condition
+* Appliance Type
 
--------------------------------------
+Then show:
 
-REQUIREMENT:
-- Use a flexible schema-driven system so new categories/subcategories can be added easily
-- Use config JSON to define fields per subcategory
+#### Refrigerator
 
--------------------------------------
+* Capacity
+* Type
+* Defrost Type
+* Inverter Technology
 
-Step 4: Price & Condition
-- Price (required)
-- Negotiable (Yes/No toggle)
-- Condition (if not already included)
+#### Washing Machine
 
--------------------------------------
+* Type
+* Capacity
+* Spin Speed
+* Automatic/Semi
 
-Step 5: Location
-- City
-- Area
-- Street
-- Map Picker ()
-  - User must pin location (Google Maps or Mapbox)
-  - Save latitude & longitude
+#### Air Conditioner
 
--------------------------------------
+* Type
+* Capacity
+* Inverter
+* Cooling Area
 
-Step 6: Media Upload
+---
 
-IMPORTANT (MOBILE-FIRST UX):
-Provide TWO upload options:
+### 🎸 Music Instruments
 
-1. Camera (capture photo directly)
-2. Gallery (choose from device)
+* Instrument Type
+* Brand
+* Model
+* Acoustic/Electric
+* Skill Level
+* Accessories Included
+* Warranty
 
-- Photos (required, minimum 1)
-- Video (optional)
+---
 
--------------------------------------
+### 🔌 Other Electronics
 
-Step 7: Contact Details
-- Phone / Mobile (required)
-- WhatsApp (optional)
-- Email (optional)
+* Device Type
+* Brand
+* Model
+* Features (multi-select)
+* Warranty
 
--------------------------------------
+---
 
-FUNCTIONAL REQUIREMENTS:
+## ✅ Step 4: Media Upload
 
-- Dynamic dependent dropdowns:
-  Subcategory → Make → Model
+* Images (multiple upload)
+* Video (optional)
 
-- Conditional rendering:
-  Fields change based on subcategory
+---
 
-- Validation:
-  Required fields enforced
-  Inline error messages
+## ✅ Step 5: Review & Submit
 
-- UX:
-  Stepper with progress bar
-  Back / Next buttons
-  Smooth transitions
+* Show all entered data
+* Edit option per section
+* Submit button
 
-- Mobile UX:
-  Large buttons
-  Sticky "Next" button
-  Optimized image upload (camera/gallery support)
+---
 
--------------------------------------
+# ⚙️ Functional Requirements
 
-DATA STRUCTURE (FLEXIBLE)
+* Use React hooks (useState)
+* Use dynamic rendering:
+  IF subcategory === "Phones" → show phone fields
+* Model dropdown depends on Make
+* Validate required fields
+* Maintain consistent field names with filters
+* Use reusable components:
 
-Provide schema like:
+  * Input
+  * Select
+  * Checkbox
+  * MultiSelect
+  * Toggle (Yes/No)
 
-{
-  "category": "Electronics",
-  "subcategory": "Phones",
-  "title": "string",
-  "details": "string",
-  "specs": {
-    "make": "string",
-    "model": "string",
-    "storage": "string",
-    "ram": "string",
-    "condition": "string",
-    "color": "string"
-  },
-  "price": "number",
-  "negotiable": "boolean",
-  "location": {
-    "city": "string",
-    "area": "string",
-    "street": "string",
-    "lat": "number",
-    "lng": "number"
-  },
-  "media": {
-    "photos": ["url"],
-    "video": "url"
-  },
-  "contact": {
-    "phone": "string",
-    "whatsapp": "string",
-    "email": "string"
+---
+
+# 🧱 Technical Requirements
+
+* Keep form modular (separate components per step)
+* Store all form data in a single state object
+* Example structure:
+
+```js
+formData = {
+  title: "",
+  category: "electronics",
+  subcategory: "phones",
+  price: "",
+  condition: "",
+  specs: {
+    brand: "",
+    model: "",
+    ram: "",
+    storage: "",
+    battery: "",
+    ...
   }
 }
+```
 
--------------------------------------
+---
 
-OUTPUT EXPECTED:
+# 🧠 Important Rule (CRITICAL)
 
-1. Full React multi-step form
-2. Dynamic field rendering system (config-based)
-3. Reusable components:
-   - Dropdown
-   - Input
-   - Stepper
-   - Upload (Camera + Gallery support)
-4. Validation schema (Zod)
-5. Sample dataset for:
-   - Electronics brands & models
-6. Clean, modular, scalable code
+Field names in listing form MUST MATCH search filters EXACTLY.
 
--------------------------------------
+Example:
 
-FOCUS ON:
-- Reusability (important)
-- Clean architecture
-- Mobile-first UX
-- Easy future expansion for new categories
+* Filter: "ram" → Listing field: "ram"
+* Filter: "screen_size" → Listing field: "screen_size"
+
+This ensures backend filtering works perfectly.
+
+---
+
+# 🎯 Output Required
+
+* Updated React Wizard Form code
+* Dynamic conditional rendering
+* Clean UI with Tailwind
+* Example dummy data (Make → Model)
+
+---
+
+Make the UI modern:
+
+* Step indicator (progress bar)
+* Smooth transitions
+* Clean spacing
+* Mobile responsive

@@ -7,23 +7,32 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { isRTL, Locale } from '@/lib/i18n/config';
 import { CURRENCIES } from '@/lib/constants/currencies';
-import type { PropertyPurpose } from './StepPropertyType';
+import type { PropertyPurpose, PropertyType } from './StepPropertyType';
+
+const emptyToUndefined = (value: unknown) => {
+  if (value === '' || value === null || typeof value === 'undefined') return undefined;
+  return value;
+};
+
+const optionalPositiveNumber = z.preprocess(emptyToUndefined, z.coerce.number().positive().optional());
+const optionalNonNegativeInt = z.preprocess(emptyToUndefined, z.coerce.number().int().min(0).optional());
+const optionalMinOneInt = z.preprocess(emptyToUndefined, z.coerce.number().int().min(1).optional());
 
 const propertyDetailsSchema = z.object({
   title: z.string().min(3).max(100),
   description: z.string().min(10).max(1000),
   price: z.coerce.number().positive(),
   currency: z.string().min(1),
-  deposit: z.coerce.number().min(0).optional(),
-  areaGross: z.coerce.number().positive().optional(),
-  areaNet: z.coerce.number().positive().optional(),
-  rooms: z.coerce.number().int().min(0).optional(),
-  bathrooms: z.coerce.number().int().min(0).optional(),
+  deposit: z.preprocess(emptyToUndefined, z.coerce.number().min(0).optional()),
+  areaGross: optionalPositiveNumber,
+  areaNet: optionalPositiveNumber,
+  rooms: optionalNonNegativeInt,
+  bathrooms: optionalNonNegativeInt,
   kitchenType: z.string().optional(),
-  balcony: z.coerce.number().int().min(0).optional(),
+  balcony: optionalNonNegativeInt,
   buildingAge: z.string().optional(),
-  floor: z.coerce.number().int().min(0).optional(),
-  totalFloors: z.coerce.number().int().min(1).optional(),
+  floor: optionalNonNegativeInt,
+  totalFloors: optionalMinOneInt,
   lift: z.boolean().optional(),
   carParking: z.boolean().optional(),
   fromWho: z.string().optional(),
@@ -58,6 +67,7 @@ export interface PropertyDetailsData {
 interface StepPropertyDetailsProps {
   locale: Locale;
   purpose: PropertyPurpose;
+  propertyType: PropertyType;
   data: PropertyDetailsData;
   onChange: (data: Partial<PropertyDetailsData>) => void;
 }
@@ -67,16 +77,20 @@ const BUILDING_AGES = ['new', 'age1_5', 'age5_10', 'age10_20', 'age20plus'] as c
 const FROM_WHO = ['owner', 'agent', 'developer'] as const;
 
 export const StepPropertyDetails = forwardRef<StepPropertyDetailsHandle, StepPropertyDetailsProps>(
-  ({ locale, purpose, data, onChange }, ref) => {
+  ({ locale, purpose, propertyType, data, onChange }, ref) => {
     const t = useTranslations('postAd.realEstate');
     const tForm = useTranslations('form');
     const tPostAd = useTranslations('postAd');
     const rtl = isRTL(locale);
     const isRent = purpose === 'forRent';
+    const isLand = propertyType === 'land';
 
     const {
       register,
       trigger,
+      getValues,
+      setError,
+      clearErrors,
       formState: { errors },
       watch,
       setValue,
@@ -135,7 +149,34 @@ export const StepPropertyDetails = forwardRef<StepPropertyDetailsHandle, StepPro
     ]);
 
     useImperativeHandle(ref, () => ({
-      validate: () => trigger(),
+      validate: async () => {
+        const valid = await trigger();
+
+        if (!isLand) {
+          return valid;
+        }
+
+        let landRequiredValid = true;
+        const areaGrossRaw = getValues('areaGross');
+        const areaGross = Number(areaGrossRaw);
+        const fromWho = getValues('fromWho');
+
+        if (!Number.isFinite(areaGross) || areaGross <= 0) {
+          setError('areaGross', { type: 'manual', message: tForm('required') });
+          landRequiredValid = false;
+        } else {
+          clearErrors('areaGross');
+        }
+
+        if (!fromWho || !fromWho.trim()) {
+          setError('fromWho', { type: 'manual', message: tForm('required') });
+          landRequiredValid = false;
+        } else {
+          clearErrors('fromWho');
+        }
+
+        return valid && landRequiredValid;
+      },
     }));
 
     const inputClass = (hasError: boolean) =>
@@ -239,15 +280,20 @@ export const StepPropertyDetails = forwardRef<StepPropertyDetailsHandle, StepPro
         {/* Area Gross / Net */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label className={labelClass}>{t('areaGross')}</label>
+            <label className={labelClass}>
+              {t('areaGross')} {isLand && <span className="text-red-500">*</span>}
+            </label>
             <input
               type="number"
               min="0"
               placeholder={t('enterArea')}
-              className={inputClass(false)}
+              className={inputClass(!!errors.areaGross)}
               dir="ltr"
               {...register('areaGross')}
             />
+            {errors.areaGross && (
+              <p className={`mt-1 text-sm text-red-500 ${rtl ? 'text-right' : 'text-left'}`}>{tForm('required')}</p>
+            )}
           </div>
           <div>
             <label className={labelClass}>{t('areaNet')}</label>
@@ -402,7 +448,9 @@ export const StepPropertyDetails = forwardRef<StepPropertyDetailsHandle, StepPro
 
         {/* From Who */}
         <div>
-          <label className={labelClass}>{t('fromWho')}</label>
+          <label className={labelClass}>
+            {t('fromWho')} {isLand && <span className="text-red-500">*</span>}
+          </label>
           <div className={`flex flex-wrap gap-3 ${rtl ? 'flex-row-reverse' : ''}`}>
             {FROM_WHO.map((fw) => {
               const isFromSelected = w.fromWho === fw;
@@ -422,6 +470,9 @@ export const StepPropertyDetails = forwardRef<StepPropertyDetailsHandle, StepPro
               );
             })}
           </div>
+          {errors.fromWho && (
+            <p className={`mt-1 text-sm text-red-500 ${rtl ? 'text-right' : 'text-left'}`}>{tForm('required')}</p>
+          )}
         </div>
       </div>
     );

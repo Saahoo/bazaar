@@ -1,7 +1,7 @@
 // src/components/search/SearchPage.tsx
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { SlidersHorizontal, X, Loader2 } from 'lucide-react';
 import { Locale, isRTL } from '@/lib/i18n/config';
@@ -12,6 +12,10 @@ import {
   EMPTY_VEHICLE_FILTERS,
   RealEstateFilterState,
   EMPTY_REAL_ESTATE_FILTERS,
+  ElectronicsFilterState,
+  EMPTY_ELECTRONICS_FILTERS,
+  FashionFilterState,
+  EMPTY_FASHION_FILTERS,
 } from './FilterSidebar';
 import { ListingCard } from './ListingCard';
 import { SortDropdown } from './SortDropdown';
@@ -24,7 +28,9 @@ interface SearchPageProps {
 
 export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory, initialQuery }) => {
   const t = useTranslations('search');
+  const tCommon = useTranslations('common');
   const isRtl = isRTL(locale);
+  const resultsRef = useRef<HTMLDivElement | null>(null);
 
   // Base filter state
   const [selectedCategory, setSelectedCategory] = useState<number | null>(
@@ -37,32 +43,49 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory,
   const [selectedWheelDriveType, setSelectedWheelDriveType] = useState('');
   const [sortBy, setSortBy] = useState('newest');
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  const [electronicsSearchTick, setElectronicsSearchTick] = useState(0);
+  const [fashionSearchTick, setFashionSearchTick] = useState(0);
 
   // Vehicle-specific filter group
   const [vehicleFilters, setVehicleFilters] = useState<VehicleFilterState>(EMPTY_VEHICLE_FILTERS);
   // Real estate-specific filter group
   const [realEstateFilters, setRealEstateFilters] = useState<RealEstateFilterState>(EMPTY_REAL_ESTATE_FILTERS);
+  // Electronics-specific filter group
+  const [electronicsFilters, setElectronicsFilters] = useState<ElectronicsFilterState>(EMPTY_ELECTRONICS_FILTERS);
+  // Fashion-specific filter group
+  const [fashionFilters, setFashionFilters] = useState<FashionFilterState>(EMPTY_FASHION_FILTERS);
 
   // Reset category-specific filters when leaving their category
   const handleCategoryChange = (categoryId: number | null) => {
     setSelectedCategory(categoryId);
     if (categoryId !== 1) setVehicleFilters(EMPTY_VEHICLE_FILTERS);
     if (categoryId !== 2) setRealEstateFilters(EMPTY_REAL_ESTATE_FILTERS);
+    if (categoryId !== 3) setElectronicsFilters(EMPTY_ELECTRONICS_FILTERS);
+    if (categoryId !== 4) setFashionFilters(EMPTY_FASHION_FILTERS);
   };
 
   const isVehicles = selectedCategory === 1;
   const isRealEstate = selectedCategory === 2;
+  const isElectronics = selectedCategory === 3;
+  const isFashion = selectedCategory === 4;
 
   // Build filters for the hook
   const filters = useMemo(() => ({
     category: selectedCategory,
-    query: (isVehicles ? vehicleFilters.keywords : initialQuery)?.trim() || undefined,
+    query: (isVehicles
+      ? vehicleFilters.keywords
+      : isElectronics
+        ? electronicsFilters.keywords
+        : isFashion
+          ? fashionFilters.keywords
+          : initialQuery)?.trim() || undefined,
     city: selectedCity || undefined,
     priceMin: priceMin ? Number(priceMin) : undefined,
     priceMax: priceMax ? Number(priceMax) : undefined,
     conditions: selectedConditions.length > 0 ? selectedConditions : undefined,
-    wheelDriveType: (!isVehicles && selectedWheelDriveType) ? selectedWheelDriveType as 'fwd' | 'rwd' | 'awd' | '4wd' : undefined,
+    wheelDriveType: (!isVehicles && !isElectronics && selectedWheelDriveType) ? selectedWheelDriveType as 'fwd' | 'rwd' | 'awd' | '4wd' : undefined,
     sortBy: sortBy as 'newest' | 'oldest' | 'priceLow' | 'priceHigh',
+    searchTick: electronicsSearchTick + fashionSearchTick,
     vehicleFilters: isVehicles ? {
       vehicleMake: vehicleFilters.make || undefined,
       vehicleModel: vehicleFilters.model || undefined,
@@ -95,12 +118,33 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory,
         ? (realEstateFilters.buildingAgeManual || undefined)
         : (realEstateFilters.buildingAge || undefined),
     } : undefined,
+    electronicsFilters: isElectronics ? {
+      ...electronicsFilters,
+    } : undefined,
+    fashionFilters: isFashion ? {
+      ...fashionFilters,
+    } : undefined,
   }), [
     selectedCategory, initialQuery, selectedCity, priceMin, priceMax,
-    selectedConditions, selectedWheelDriveType, sortBy, isVehicles, isRealEstate, vehicleFilters, realEstateFilters,
+    selectedConditions, selectedWheelDriveType, sortBy, isVehicles, isRealEstate, isElectronics, isFashion, vehicleFilters, realEstateFilters, electronicsFilters, fashionFilters, electronicsSearchTick, fashionSearchTick,
   ]);
 
   const { listings, loading, error } = useListings(filters);
+
+  const handleMobileApplyFilters = () => {
+    if (isElectronics) {
+      setElectronicsSearchTick((v) => v + 1);
+    }
+    if (isFashion) {
+      setFashionSearchTick((v) => v + 1);
+    }
+    setMobileFiltersOpen(false);
+
+    // Wait for panel collapse, then jump user to results section.
+    requestAnimationFrame(() => {
+      resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  };
 
   return (
     <main className="flex-1 bg-slate-50">
@@ -145,11 +189,49 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory,
               onVehicleFiltersChange={setVehicleFilters}
               realEstateFilters={realEstateFilters}
               onRealEstateFiltersChange={setRealEstateFilters}
+              electronicsFilters={electronicsFilters}
+              onElectronicsFiltersChange={setElectronicsFilters}
+              fashionFilters={fashionFilters}
+              onFashionFiltersChange={setFashionFilters}
+              onElectronicsClear={() => {
+                setPriceMin('');
+                setPriceMax('');
+                setSelectedCity('');
+                setElectronicsSearchTick((v) => v + 1);
+                setMobileFiltersOpen(false);
+              }}
+              onElectronicsSearch={() => {
+                setElectronicsSearchTick((v) => v + 1);
+                setMobileFiltersOpen(false);
+              }}
+              onFashionClear={() => {
+                setPriceMin('');
+                setPriceMax('');
+                setSelectedCity('');
+                setFashionSearchTick((v) => v + 1);
+                setMobileFiltersOpen(false);
+              }}
+              onFashionSearch={() => {
+                setFashionSearchTick((v) => v + 1);
+                setMobileFiltersOpen(false);
+              }}
             />
+
+            {mobileFiltersOpen && (
+              <div className="lg:hidden mt-3">
+                <button
+                  type="button"
+                  onClick={handleMobileApplyFilters}
+                  className="w-full px-4 py-2.5 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 transition"
+                >
+                  {tCommon('search')}
+                </button>
+              </div>
+            )}
           </aside>
 
           {/* Main content */}
-          <div className="flex-1 min-w-0">
+          <div ref={resultsRef} className="flex-1 min-w-0">
             {/* Results header */}
             <div
               className={`flex items-center justify-between mb-4 flex-wrap gap-3 ${isRtl ? 'flex-row-reverse' : ''}`}

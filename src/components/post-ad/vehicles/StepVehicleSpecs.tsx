@@ -21,6 +21,7 @@ export interface VehicleSpecsData {
   trimLevel: string;
   customTrim: string;
   bodyType: BodyType | '';
+  customBodyType: string;
   gearType: GearType | '';
   engineSize: string;
   enginePower: string;
@@ -105,6 +106,8 @@ export const StepVehicleSpecs: React.FC<StepVehicleSpecsProps> = ({
           {t('year')} <span className="text-red-500">*</span>
         </label>
         <select
+          aria-label={t('year')}
+          title={t('year')}
           value={data.year}
           onChange={(e) => onChange({ year: e.target.value })}
           className={`${inputClass} bg-white`}
@@ -123,6 +126,8 @@ export const StepVehicleSpecs: React.FC<StepVehicleSpecsProps> = ({
           {t('make')} <span className="text-red-500">*</span>
         </label>
         <select
+          aria-label={t('make')}
+          title={t('make')}
           value={data.make}
           onChange={(e) => handleMakeChange(e.target.value)}
           className={`${inputClass} bg-white`}
@@ -163,6 +168,8 @@ export const StepVehicleSpecs: React.FC<StepVehicleSpecsProps> = ({
         ) : (
           <>
             <select
+              aria-label={t('model')}
+              title={t('model')}
               value={data.model}
               onChange={(e) => handleModelChange(e.target.value)}
               className={`${inputClass} bg-white`}
@@ -193,6 +200,8 @@ export const StepVehicleSpecs: React.FC<StepVehicleSpecsProps> = ({
       <div>
         <label className={labelClass}>{t('trimLevel')}</label>
         <select
+          aria-label={t('trimLevel')}
+          title={t('trimLevel')}
           value={data.trimLevel}
           onChange={(e) => onChange({ trimLevel: e.target.value, customTrim: '' })}
           className={`${inputClass} bg-white`}
@@ -227,7 +236,7 @@ export const StepVehicleSpecs: React.FC<StepVehicleSpecsProps> = ({
               <button
                 key={bt}
                 type="button"
-                onClick={() => onChange({ bodyType: bt })}
+                onClick={() => onChange({ bodyType: bt, customBodyType: bt === 'other' ? data.customBodyType : '' })}
                 className={`px-4 py-2 rounded-lg text-sm font-medium border-2 transition ${
                   isSelected
                     ? 'border-primary-500 bg-primary-50 text-primary-700'
@@ -239,6 +248,16 @@ export const StepVehicleSpecs: React.FC<StepVehicleSpecsProps> = ({
             );
           })}
         </div>
+        {data.bodyType === 'other' && (
+          <input
+            type="text"
+            value={data.customBodyType}
+            onChange={(e) => onChange({ customBodyType: e.target.value })}
+            placeholder={t('enterBodyType')}
+            className={`${inputClass} mt-2`}
+            dir={rtl ? 'rtl' : 'ltr'}
+          />
+        )}
       </div>
 
       {/* Gear Type */}

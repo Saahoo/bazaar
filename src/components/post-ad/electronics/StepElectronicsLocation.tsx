@@ -167,7 +167,7 @@ export const StepElectronicsLocation: React.FC<StepElectronicsLocationProps> = (
       </div>
 
       <div>
-        <label className={labelClass}>{t('mapPicker')} <span className="text-red-500">*</span></label>
+        <label className={labelClass}>{t('mapPicker')}</label>
         <p className={`text-sm text-slate-500 mb-3 ${rtl ? 'text-right' : 'text-left'}`}>{t('mapHint')}</p>
         <LocationMap lat={data.lat} lng={data.lng} onLocationChange={(lat, lng) => onChange({ lat, lng })} />
         {data.lat !== null && data.lng !== null && (

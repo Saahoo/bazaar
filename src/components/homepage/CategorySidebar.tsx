@@ -11,11 +11,12 @@ import { createClient } from '@/lib/supabase/client';
 
 interface CategorySidebarProps {
   locale: Locale;
+  titleOverride?: string;
 }
 
 const INITIAL_SHOW = 8;
 
-export const CategorySidebar: React.FC<CategorySidebarProps> = ({ locale }) => {
+export const CategorySidebar: React.FC<CategorySidebarProps> = ({ locale, titleOverride }) => {
   const t = useTranslations('homepage');
   const isRtl = isRTL(locale);
   const [expanded, setExpanded] = useState(false);
@@ -27,7 +28,8 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({ locale }) => {
       const { data } = await supabase
         .from('listings')
         .select('category_id')
-        .eq('status', 'active');
+        .eq('status', 'active')
+        .is('deleted_at', null);
       if (!data) return;
       const map: Record<number, number> = {};
       for (const row of data) {
@@ -45,7 +47,7 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({ locale }) => {
     <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
       {/* Header */}
       <div className={`px-4 py-3 border-b border-slate-200 ${isRtl ? 'text-right' : 'text-left'}`}>
-        <h3 className="text-sm font-bold text-slate-800">{t('categories')}</h3>
+        <h3 className="text-sm font-bold text-slate-800">{titleOverride || t('categories')}</h3>
       </div>
 
       {/* Category list */}

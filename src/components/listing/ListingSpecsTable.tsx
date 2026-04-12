@@ -5,15 +5,25 @@ import React from 'react';
 import { useTranslations } from 'next-intl';
 import { Locale, isRTL } from '@/lib/i18n/config';
 import { getMakesForType, getMakeName, VEHICLE_TYPES } from '@/lib/constants/vehicles';
+import {
+  getElectronicsSpecsConfig,
+  ELECTRONICS_SUBCATEGORIES,
+  ElectronicsSubcategory,
+} from '@/lib/constants/electronics-wizard';
 
 const VEHICLES_CATEGORY = 1;
 const REAL_ESTATE_CATEGORY = 2;
+const ELECTRONICS_CATEGORY = 3;
+const FASHION_CATEGORY = 4;
 
 interface ListingSpecsTableProps {
   metadata: Record<string, unknown>;
   categoryId: number;
   locale: Locale;
 }
+
+const isElectronicsSubcategory = (value: string): value is ElectronicsSubcategory =>
+  ELECTRONICS_SUBCATEGORIES.some((subcategory) => subcategory.value === value);
 
 function SpecRow({
   label,
@@ -48,8 +58,15 @@ export const ListingSpecsTable: React.FC<ListingSpecsTableProps> = ({
 }) => {
   const tVH = useTranslations('postAd.vehicles');
   const tRE = useTranslations('postAd.realEstate');
+  const tEl = useTranslations('postAd.electronics');
   const tCommon = useTranslations('common');
   const rtl = isRTL(locale);
+
+  const humanize = (value: string): string =>
+    value
+      .replace(/_/g, ' ')
+      .replace(/([a-z])([A-Z])/g, '$1 $2')
+      .replace(/^./, (s) => s.toUpperCase());
 
   /* ─── VEHICLES ──────────────────────────────────────────────── */
   if (categoryId === VEHICLES_CATEGORY) {
@@ -428,6 +445,277 @@ export const ListingSpecsTable: React.FC<ListingSpecsTableProps> = ({
                 </span>
               ))}
             </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  /* ─── ELECTRONICS ──────────────────────────────────────────────── */
+  if (categoryId === ELECTRONICS_CATEGORY) {
+    const subcategory = (metadata.subcategory as string) || '';
+    const negotiable = metadata.negotiable as boolean;
+    const sellerType = (metadata.sellerType as string) || '';
+    const contact = (metadata.contact as Record<string, unknown>) || {};
+    const media = (metadata.media as Record<string, unknown>) || {};
+
+    // Get all spec fields for this subcategory
+    const allSpecFields = isElectronicsSubcategory(subcategory)
+      ? getElectronicsSpecsConfig(subcategory)
+      : [];
+    const subcategoryLabel = ELECTRONICS_SUBCATEGORIES.find((s) => s.value === subcategory)?.label || subcategory;
+
+    // Build specs display object from metadata
+    const displayedSpecs: Record<string, string> = {};
+    allSpecFields.forEach((field) => {
+      const value = metadata[field.id] as string;
+      if (value && value !== '' && value !== 'Other') {
+        displayedSpecs[field.id] = value;
+      }
+    });
+
+    const yesLabel = tCommon('yes');
+    const noLabel = tCommon('no');
+
+    const hasSpecs = Object.keys(displayedSpecs).length > 0;
+    const contactPhone = contact.phone as string | undefined;
+    const contactWhatsapp = contact.whatsapp as string | undefined;
+    const contactEmail = contact.email as string | undefined;
+    const hasContact = contactPhone || contactWhatsapp || contactEmail;
+    const videoUrl = media.video as string | undefined;
+
+    if (!subcategory && !hasSpecs && !hasContact && !sellerType) return null;
+
+    const specsArray = Object.entries(displayedSpecs);
+
+    return (
+      <div className="bg-white border border-slate-200 rounded-lg p-5 mb-6">
+        <h2
+          className={`text-lg font-semibold text-slate-900 mb-4 ${rtl ? 'text-right' : 'text-left'}`}
+        >
+          {tEl('specifications')}
+        </h2>
+
+        {/* Basic Info */}
+        <div className="space-y-2 mb-4">
+          {subcategory && (
+            <SpecRow
+              label={tEl('subcategoryLabel')}
+              value={subcategoryLabel}
+              rtl={rtl}
+            />
+          )}
+          {sellerType && (
+            <SpecRow
+              label={tEl('sellerType')}
+              value={
+                sellerType === 'individual'
+                  ? tEl('sellerTypeIndividual')
+                  : sellerType === 'dealer'
+                    ? tEl('sellerTypeDealer')
+                    : sellerType
+              }
+              rtl={rtl}
+            />
+          )}
+          {typeof negotiable === 'boolean' && (
+            <SpecRow
+              label={tEl('negotiable')}
+              value={negotiable ? yesLabel : noLabel}
+              rtl={rtl}
+            />
+          )}
+        </div>
+
+        {/* Specifications Grid */}
+        {hasSpecs && specsArray.length > 0 && (
+          <div className="mb-4 pt-4 border-t border-slate-100">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8">
+              <div>
+                {specsArray.map(([fieldId, value], idx) => {
+                  // Only show first half in left column
+                  const isFirstHalf = idx < Math.ceil(specsArray.length / 2);
+                  if (!isFirstHalf) return null;
+
+                  const field = allSpecFields.find((f) => f.id === fieldId);
+                  const fieldLabel = field?.label || fieldId;
+
+                  return (
+                    <SpecRow
+                      key={fieldId}
+                      label={fieldLabel}
+                      value={value}
+                      rtl={rtl}
+                    />
+                  );
+                })}
+              </div>
+              <div>
+                {specsArray.map(([fieldId, value], idx) => {
+                  // Only show second half in right column
+                  const isFirstHalf = idx < Math.ceil(specsArray.length / 2);
+                  if (isFirstHalf) return null;
+
+                  const field = allSpecFields.find((f) => f.id === fieldId);
+                  const fieldLabel = field?.label || fieldId;
+
+                  return (
+                    <SpecRow
+                      key={fieldId}
+                      label={fieldLabel}
+                      value={value}
+                      rtl={rtl}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Contact Information */}
+        {hasContact && (
+          <div className="mt-4 pt-4 border-t border-slate-100">
+            <p
+              className={`text-sm font-medium text-slate-700 mb-3 ${rtl ? 'text-right' : 'text-left'}`}
+            >
+              {tEl('contactHeading')}
+            </p>
+            <div className="space-y-2">
+              {contactPhone && (
+                <div className={`flex items-center justify-between gap-4 text-sm ${rtl ? 'flex-row-reverse' : ''}`}>
+                  <span className={`text-slate-500 ${rtl ? 'text-right' : 'text-left'}`}>
+                    {tEl('phone')}
+                  </span>
+                  <span className={`text-slate-800 font-medium ${rtl ? 'text-left' : 'text-right'}`}>
+                    {contactPhone}
+                  </span>
+                </div>
+              )}
+              {contactWhatsapp && (
+                <div className={`flex items-center justify-between gap-4 text-sm ${rtl ? 'flex-row-reverse' : ''}`}>
+                  <span className={`text-slate-500 ${rtl ? 'text-right' : 'text-left'}`}>
+                    {tEl('whatsapp')}
+                  </span>
+                  <span className={`text-slate-800 font-medium ${rtl ? 'text-left' : 'text-right'}`}>
+                    {contactWhatsapp}
+                  </span>
+                </div>
+              )}
+              {contactEmail && (
+                <div className={`flex items-center justify-between gap-4 text-sm ${rtl ? 'flex-row-reverse' : ''}`}>
+                  <span className={`text-slate-500 ${rtl ? 'text-right' : 'text-left'}`}>
+                    {tEl('email')}
+                  </span>
+                  <span className={`text-slate-800 font-medium ${rtl ? 'text-left' : 'text-right'}`}>
+                    {contactEmail}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Media */}
+        {videoUrl && (
+          <div className="mt-4 pt-4 border-t border-slate-100">
+            <p
+              className={`text-sm font-medium text-slate-700 mb-2 ${rtl ? 'text-right' : 'text-left'}`}
+            >
+              {tEl('videoUrl')}
+            </p>
+            <a
+              href={videoUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary-600 hover:text-primary-700 underline text-sm break-all"
+            >
+              {videoUrl.substring(0, 50)}...
+            </a>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  /* ─── FASHION & CLOTHING ─────────────────────────────────────── */
+  if (categoryId === FASHION_CATEGORY) {
+    const subcategory = String(metadata.subcategory || '');
+    const condition = String(metadata.condition || '');
+    const brand = String(metadata.brand || '');
+    const sellerType = String(metadata.sellerType || '');
+    const location = (metadata.location as Record<string, unknown>) || {};
+    const contact = (metadata.contact as Record<string, unknown>) || {};
+    const media = (metadata.media as Record<string, unknown>) || {};
+
+    const city = String(location.city || '');
+    const lat = typeof location.lat === 'number' ? location.lat : null;
+    const lng = typeof location.lng === 'number' ? location.lng : null;
+    const phone = String(contact.phone || '');
+    const whatsapp = String(contact.whatsapp || '');
+    const email = String(contact.email || '');
+    const video = String(media.video || '');
+
+    const excludedKeys = new Set(['subcategory', 'condition', 'brand', 'sellerType', 'location', 'contact', 'media', 'wizard_forms']);
+    const extraEntries = Object.entries(metadata).filter(([key, value]) => {
+      if (excludedKeys.has(key)) return false;
+      if (value === null || value === undefined) return false;
+      if (typeof value === 'string') return value.trim() !== '';
+      if (Array.isArray(value)) return value.length > 0;
+      return true;
+    });
+
+    if (!subcategory && !brand && !condition && extraEntries.length === 0 && !city && !phone) return null;
+
+    const yesLabel = tCommon('yes');
+    const noLabel = tCommon('no');
+
+    return (
+      <div className="mb-6 rounded-lg border border-slate-200 bg-white p-5">
+        <h2 className={`mb-4 text-lg font-semibold text-slate-900 ${rtl ? 'text-right' : 'text-left'}`}>
+          Fashion & Clothing Details
+        </h2>
+
+        <div className="grid grid-cols-1 gap-x-8 sm:grid-cols-2">
+          <div>
+            {subcategory && <SpecRow label="Subcategory" value={subcategory} rtl={rtl} />}
+            {brand && <SpecRow label="Brand" value={brand} rtl={rtl} />}
+            {condition && <SpecRow label="Condition" value={condition} rtl={rtl} />}
+            {sellerType && <SpecRow label="Seller Type" value={sellerType} rtl={rtl} />}
+          </div>
+          <div>
+            {city && <SpecRow label="City" value={city} rtl={rtl} />}
+            {lat !== null && lng !== null && (
+              <SpecRow label="Map" value={`${lat.toFixed(5)}, ${lng.toFixed(5)}`} rtl={rtl} />
+            )}
+            {phone && <SpecRow label="Phone" value={phone} rtl={rtl} />}
+            {whatsapp && <SpecRow label="WhatsApp" value={whatsapp} rtl={rtl} />}
+            {email && <SpecRow label="Email" value={email} rtl={rtl} />}
+          </div>
+        </div>
+
+        {extraEntries.length > 0 && (
+          <div className="mt-4 border-t border-slate-100 pt-4">
+            <p className={`mb-2 text-sm font-medium text-slate-700 ${rtl ? 'text-right' : 'text-left'}`}>Specifications</p>
+            <div className="grid grid-cols-1 gap-x-8 sm:grid-cols-2">
+              {extraEntries.map(([key, value]) => (
+                <SpecRow
+                  key={key}
+                  label={humanize(key)}
+                  value={Array.isArray(value) ? value.join(', ') : typeof value === 'boolean' ? (value ? yesLabel : noLabel) : String(value)}
+                  rtl={rtl}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {video && (
+          <div className="mt-4 border-t border-slate-100 pt-4">
+            <p className={`mb-2 text-sm font-medium text-slate-700 ${rtl ? 'text-right' : 'text-left'}`}>Video</p>
+            <a href={video} target="_blank" rel="noopener noreferrer" className="break-all text-sm text-primary-600 underline hover:text-primary-700">
+              {video}
+            </a>
           </div>
         )}
       </div>

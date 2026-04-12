@@ -8,6 +8,8 @@ import { PopularInYourArea } from '@/components/homepage/PopularInYourArea';
 import { Header } from '@/components/layout/Header';
 import { Locale } from '@/lib/i18n/config';
 import { getMessages } from '@/lib/i18n/request';
+import { createClient } from '@/lib/supabase/server';
+import { DEFAULT_HOMEPAGE_CONFIG, normalizeHomepageConfig, pickLocalized } from '@/lib/content/homepageSettings';
 
 interface PageProps {
   params: Promise<{ lang: string }>;
@@ -16,6 +18,19 @@ interface PageProps {
 export default async function HomePage({ params }: PageProps) {
   const { lang: locale } = await params;
   const messages = await getMessages(locale as Locale);
+  const supabase = await createClient();
+
+  let homepageConfig = DEFAULT_HOMEPAGE_CONFIG;
+  const { data: homepageSettings } = await supabase
+    .from('site_settings')
+    .select('setting_value')
+    .eq('setting_key', 'homepage')
+    .maybeSingle();
+
+  if (homepageSettings?.setting_value) {
+    homepageConfig = normalizeHomepageConfig(homepageSettings.setting_value);
+  }
+
   const t = (key: string) => {
     const keys = key.split('.');
     let result: Record<string, unknown> = messages;
@@ -32,45 +47,67 @@ export default async function HomePage({ params }: PageProps) {
         <div className="container mx-auto px-4 py-6">
           {/* Top banner */}
           <div className="mb-6">
-            <HeroSection locale={locale as Locale} />
+            <HeroSection locale={locale as Locale} config={homepageConfig.header} />
           </div>
 
           {/* Marketplace body */}
           <div className="flex flex-col lg:flex-row gap-5">
-            <aside className="w-full lg:w-60 flex-shrink-0">
-              <CategorySidebar locale={locale as Locale} />
-            </aside>
+            {homepageConfig.blocks.categorySidebar.enabled && (
+              <aside className="w-full lg:w-60 flex-shrink-0">
+                <CategorySidebar
+                  locale={locale as Locale}
+                  titleOverride={pickLocalized(homepageConfig.blocks.categorySidebar.title, locale as Locale)}
+                />
+              </aside>
+            )}
 
-            <section className="flex-1 min-w-0 bg-white border border-slate-200 rounded-lg p-3 md:p-4">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-base md:text-lg font-semibold text-slate-900">
-                  {locale === 'en' ? 'Homepage Showcase' : locale === 'ps' ? 'د کورپاڼې نندارتون' : 'ویترین صفحه اصلی'}
-                </h2>
-                <a
-                  href={`/${locale}/search`}
-                  className="text-xs md:text-sm text-primary-600 hover:text-primary-700"
-                >
-                  {locale === 'en' ? 'Show all showcase ads' : locale === 'ps' ? 'ټول اعلانونه وګورئ' : 'نمایش همه آگهی‌ها'}
-                </a>
-              </div>
-              <FeaturedListings locale={locale as Locale} />
-            </section>
+            {homepageConfig.blocks.showcase.enabled && (
+              <section className="flex-1 min-w-0 bg-white border border-slate-200 rounded-lg p-3 md:p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-base md:text-lg font-semibold text-slate-900">
+                    {pickLocalized(homepageConfig.blocks.showcase.title, locale as Locale)}
+                  </h2>
+                  <a
+                    href={`/${locale}/search`}
+                    className="text-xs md:text-sm text-primary-600 hover:text-primary-700"
+                  >
+                    {locale === 'en' ? 'Show all showcase ads' : locale === 'ps' ? 'ټول اعلانونه وګورئ' : 'نمایش همه آگهی‌ها'}
+                  </a>
+                </div>
+                <FeaturedListings locale={locale as Locale} />
+              </section>
+            )}
           </div>
 
           {/* Trending Items */}
-          <div className="mt-6">
-            <TrendingItems locale={locale as Locale} />
-          </div>
+          {homepageConfig.blocks.trending.enabled && (
+            <div className="mt-6">
+              <TrendingItems
+                locale={locale as Locale}
+                titleOverride={pickLocalized(homepageConfig.blocks.trending.title, locale as Locale)}
+              />
+            </div>
+          )}
 
           {/* Most Watched */}
-          <div className="mt-6">
-            <MostWatched locale={locale as Locale} />
-          </div>
+          {homepageConfig.blocks.mostWatched.enabled && (
+            <div className="mt-6">
+              <MostWatched
+                locale={locale as Locale}
+                titleOverride={pickLocalized(homepageConfig.blocks.mostWatched.title, locale as Locale)}
+              />
+            </div>
+          )}
 
           {/* Popular in Your Area */}
-          <div className="mt-6">
-            <PopularInYourArea locale={locale as Locale} />
-          </div>
+          {homepageConfig.blocks.popularArea.enabled && (
+            <div className="mt-6">
+              <PopularInYourArea
+                locale={locale as Locale}
+                titleOverride={pickLocalized(homepageConfig.blocks.popularArea.title, locale as Locale)}
+              />
+            </div>
+          )}
         </div>
       </main>
 

@@ -15,6 +15,7 @@ export interface VehicleConditionData {
   currency: string;
   mileage: string;
   color: VehicleColor | '';
+  customColor: string;
   sellerSource: 'owner' | 'gallery' | 'authorizedDealer' | '';
   hasDamage: boolean | null;
   exchange: boolean | null;
@@ -123,7 +124,10 @@ export const StepVehicleCondition: React.FC<StepVehicleConditionProps> = ({
         <select
           id="vehicle-color"
           value={data.color}
-          onChange={(e) => onChange({ color: e.target.value as VehicleColor })}
+          onChange={(e) => {
+            const color = e.target.value as VehicleColor;
+            onChange({ color, customColor: color === 'other' ? data.customColor : '' });
+          }}
           className={`${inputClass} bg-white`}
           dir={rtl ? 'rtl' : 'ltr'}
         >
@@ -132,6 +136,16 @@ export const StepVehicleCondition: React.FC<StepVehicleConditionProps> = ({
             <option key={c} value={c}>{t(`color_${c}`)}</option>
           ))}
         </select>
+        {data.color === 'other' && (
+          <input
+            type="text"
+            value={data.customColor}
+            onChange={(e) => onChange({ customColor: e.target.value })}
+            placeholder={t('enterColor')}
+            className={`${inputClass} mt-2`}
+            dir={rtl ? 'rtl' : 'ltr'}
+          />
+        )}
       </div>
 
       {/* Seller Source */}

@@ -3,9 +3,16 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Shield, Tags, Flag, Save, Trash2, GripVertical, Building2, ClipboardList, Plus } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { Locale, isRTL } from '@/lib/i18n/config';
 import { createClient } from '@/lib/supabase/client';
 import { MAIN_CATEGORIES } from '@/lib/constants/categories';
+import {
+  DEFAULT_HOMEPAGE_CONFIG,
+  HomepageContentConfig,
+  LocalizedText,
+  normalizeHomepageConfig,
+} from '@/lib/content/homepageSettings';
 
 interface AdminPanelProps {
   locale: Locale;
@@ -58,6 +65,7 @@ interface WizardField {
 interface WizardSection {
   id: string;
   title: string;
+  step?: string;
   fields: WizardField[];
 }
 
@@ -70,6 +78,7 @@ interface WizardSubList {
 interface WizardListGroup {
   id: string;
   title: string;
+  step?: string;
   values: string[];
   sub_lists: WizardSubList[];
 }
@@ -82,11 +91,24 @@ interface WizardFormConfig {
 const TAB_CATEGORIES = 'categories';
 const TAB_CITIES = 'cities';
 const TAB_WIZARD = 'wizard';
+const TAB_CONTENT = 'content';
 const TAB_MODERATION = 'moderation';
 
 const EMPTY_WIZARD_CONFIG: WizardFormConfig = {
   sections: [],
   lists: [],
+};
+
+const DEFAULT_WIZARD_STEPS = ['stepDetails', 'stepContact'];
+const REAL_ESTATE_WIZARD_STEPS = ['reStepType', 'reStepDetails', 'reStepAddress', 'reStepContact'];
+const VEHICLES_WIZARD_STEPS = ['vhStepType', 'vhStepSpecs', 'vhStepCondition', 'vhStepAddress', 'vhStepContact'];
+const ELECTRONICS_WIZARD_STEPS = ['elStepBasic', 'elStepSpecs', 'elStepPrice', 'elStepLocation', 'elStepContact'];
+
+const getWizardStepsForSlug = (slug: string | undefined): string[] => {
+  if (slug === 'real-estate') return REAL_ESTATE_WIZARD_STEPS;
+  if (slug === 'vehicles') return VEHICLES_WIZARD_STEPS;
+  if (slug === 'electronics') return ELECTRONICS_WIZARD_STEPS;
+  return DEFAULT_WIZARD_STEPS;
 };
 
 const BUILTIN_WIZARD_TEMPLATES: Record<string, WizardFormConfig> = {
@@ -95,6 +117,7 @@ const BUILTIN_WIZARD_TEMPLATES: Record<string, WizardFormConfig> = {
       {
         id: 'vh_basic',
         title: 'Vehicle Basic Details',
+        step: 'vhStepType',
         fields: [
           { id: 'title', label: 'Title', type: 'text', required: true, options: [] },
           { id: 'description', label: 'Description', type: 'textarea', required: true, options: [] },
@@ -104,6 +127,7 @@ const BUILTIN_WIZARD_TEMPLATES: Record<string, WizardFormConfig> = {
       {
         id: 'vh_specs',
         title: 'Vehicle Specs',
+        step: 'vhStepSpecs',
         fields: [
           { id: 'year', label: 'Year', type: 'number', required: true, options: [] },
           { id: 'make', label: 'Make', type: 'text', required: true, options: [] },
@@ -117,6 +141,7 @@ const BUILTIN_WIZARD_TEMPLATES: Record<string, WizardFormConfig> = {
       {
         id: 'vh_damage',
         title: 'Damage Details',
+        step: 'vhStepCondition',
         values: ['No damage', 'Minor scratches', 'Body repair', 'Engine issue'],
         sub_lists: [
           { id: 'vh_damage_area', title: 'Damage Area', values: ['Front', 'Rear', 'Left side', 'Right side'] },
@@ -129,6 +154,7 @@ const BUILTIN_WIZARD_TEMPLATES: Record<string, WizardFormConfig> = {
       {
         id: 're_type',
         title: 'Property Type & Purpose',
+        step: 'reStepType',
         fields: [
           { id: 'property_type', label: 'Property Type', type: 'select', required: true, options: ['house', 'apartment', 'land', 'office', 'shop'] },
           { id: 'purpose', label: 'Purpose', type: 'select', required: true, options: ['sale', 'rent'] },
@@ -137,6 +163,7 @@ const BUILTIN_WIZARD_TEMPLATES: Record<string, WizardFormConfig> = {
       {
         id: 're_details',
         title: 'Property Details',
+        step: 'reStepDetails',
         fields: [
           { id: 'title', label: 'Title', type: 'text', required: true, options: [] },
           { id: 'description', label: 'Description', type: 'textarea', required: true, options: [] },
@@ -151,6 +178,7 @@ const BUILTIN_WIZARD_TEMPLATES: Record<string, WizardFormConfig> = {
       {
         id: 're_neighborhood',
         title: 'Neighborhood Features',
+        step: 'reStepAddress',
         values: ['Park', 'School', 'Hospital', 'Market', 'Mosque', 'Transport'],
         sub_lists: [
           { id: 're_utilities', title: 'Utilities', values: ['Water', 'Electricity', 'Gas', 'Internet'] },
@@ -177,6 +205,7 @@ const normalizeWizardConfig = (value: unknown): WizardFormConfig => {
     return {
       id: String(s.id || `section_${sectionIdx + 1}`),
       title: String(s.title || ''),
+      step: s.step ? String(s.step) : undefined,
       fields: rawFields.map((field, fieldIdx) => {
         const f = (field && typeof field === 'object' ? field : {}) as Record<string, unknown>;
         const rawType = String(f.type || 'text');
@@ -202,6 +231,7 @@ const normalizeWizardConfig = (value: unknown): WizardFormConfig => {
     return {
       id: String(l.id || `list_${listIdx + 1}`),
       title: String(l.title || ''),
+      step: l.step ? String(l.step) : undefined,
       values: normalizeStringArray(l.values),
       sub_lists: rawSubLists.map((sub, subIdx) => {
         const s = (sub && typeof sub === 'object' ? sub : {}) as Record<string, unknown>;
@@ -224,8 +254,71 @@ const deepCloneWizardConfig = (config: WizardFormConfig): WizardFormConfig =>
   JSON.parse(JSON.stringify(config)) as WizardFormConfig;
 
 export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
+  const tCommon = useTranslations('common');
   const rtl = isRTL(locale);
   const supabase = createClient();
+
+  const adminText = useMemo(() => {
+    if (locale === 'ps') {
+      return {
+        panelTitle: 'اډمین ډشبورډ',
+        panelSubtitle: 'کټګورۍ، ښارونه، د اعلان فورمونه او څارنه له یوه ځایه اداره کړئ.',
+        categories: 'کټګورۍ',
+        cities: 'ښارونه',
+        wizardForms: 'د اعلان فورمونه',
+        contentSettings: 'د کورپاڼې CMS',
+        moderation: 'د اعلان څارنه',
+        totalCategories: 'ټولې کټګورۍ',
+        totalCities: 'ټول ښارونه',
+        pendingReview: 'د څارنې کتار',
+        wizardEnabled: 'ویزارد فعال',
+        wizardStep: 'د فورم پړاو',
+        chooseStep: 'پړاو وټاکئ',
+        appliesToAll: 'ټولو مناسب پړاوونو ته تطبیق',
+        stepHint: 'هره برخه یا لست هغه پړاو ته وتړئ چې په پوسټ اعلان ویزارد کې ښکاره شي.',
+        saveHomepage: 'د کورپاڼې تنظیمات خوندي کړئ',
+      };
+    }
+    if (locale === 'fa') {
+      return {
+        panelTitle: 'داشبورد ادمین',
+        panelSubtitle: 'دسته‌بندی‌ها، شهرها، فرم‌های آگهی و نظارت را از یک‌جا مدیریت کنید.',
+        categories: 'دسته‌بندی‌ها',
+        cities: 'شهرها',
+        wizardForms: 'فرم‌های آگهی',
+        contentSettings: 'CMS صفحه اصلی',
+        moderation: 'نظارت آگهی‌ها',
+        totalCategories: 'کل دسته‌بندی‌ها',
+        totalCities: 'کل شهرها',
+        pendingReview: 'صف نظارت',
+        wizardEnabled: 'ویزارد فعال',
+        wizardStep: 'مرحله فرم',
+        chooseStep: 'انتخاب مرحله',
+        appliesToAll: 'اعمال به همه مراحل سازگار',
+        stepHint: 'هر بخش یا لیست را به یک مرحله مشخص وصل کنید تا در همان مرحله ویزارد نشر آگهی نمایش شود.',
+        saveHomepage: 'ذخیره تنظیمات صفحه اصلی',
+      };
+    }
+
+    return {
+      panelTitle: 'Admin Dashboard',
+      panelSubtitle: 'Manage categories, cities, listing forms, and moderation from one place.',
+      categories: 'Categories',
+      cities: 'Cities',
+      wizardForms: 'Listing Forms',
+      contentSettings: 'Homepage CMS',
+      moderation: 'Post Moderation',
+      totalCategories: 'Total Categories',
+      totalCities: 'Total Cities',
+      pendingReview: 'Moderation Queue',
+      wizardEnabled: 'Wizard Enabled',
+      wizardStep: 'Form Step',
+      chooseStep: 'Choose step',
+      appliesToAll: 'Apply to all matching steps',
+      stepHint: 'Assign each section or list to a specific posting step so it appears in the correct wizard form.',
+      saveHomepage: 'Save Homepage Settings',
+    };
+  }, [locale]);
 
   const [activeTab, setActiveTab] = useState(TAB_CATEGORIES);
   const [categories, setCategories] = useState<CategoryRow[]>([]);
@@ -271,6 +364,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
   });
   const [wizardCategoryId, setWizardCategoryId] = useState('');
   const [wizardConfig, setWizardConfig] = useState<WizardFormConfig>(EMPTY_WIZARD_CONFIG);
+  const [homepageConfig, setHomepageConfig] = useState<HomepageContentConfig>(DEFAULT_HOMEPAGE_CONFIG);
+  const [loadingHomepageConfig, setLoadingHomepageConfig] = useState(true);
+  const [savingHomepageConfig, setSavingHomepageConfig] = useState(false);
+
+  const updateLocalizedText = useCallback((value: LocalizedText, key: keyof LocalizedText, next: string): LocalizedText => {
+    return { ...value, [key]: next };
+  }, []);
 
   const reasonOptions = useMemo(
     () =>
@@ -387,11 +487,35 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
     setLoadingCities(false);
   }, [supabase]);
 
+  const loadHomepageSettings = useCallback(async () => {
+    setLoadingHomepageConfig(true);
+    const { data } = await supabase
+      .from('site_settings')
+      .select('setting_value')
+      .eq('setting_key', 'homepage')
+      .maybeSingle();
+
+    setHomepageConfig(normalizeHomepageConfig(data?.setting_value || DEFAULT_HOMEPAGE_CONFIG));
+    setLoadingHomepageConfig(false);
+  }, [supabase]);
+
   useEffect(() => {
     loadCategories();
     loadListings();
     loadCities();
-  }, [loadCategories, loadListings, loadCities]);
+    loadHomepageSettings();
+  }, [loadCategories, loadListings, loadCities, loadHomepageSettings]);
+
+  const saveHomepageSettings = async () => {
+    setSavingHomepageConfig(true);
+    await supabase
+      .from('site_settings')
+      .upsert({
+        setting_key: 'homepage',
+        setting_value: homepageConfig,
+      }, { onConflict: 'setting_key' });
+    setSavingHomepageConfig(false);
+  };
 
   useEffect(() => {
     if (!loadingCats && categories.length > 0 && categories.length < MAIN_CATEGORIES.length) {
@@ -550,34 +674,34 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
     loadCities();
   };
 
-  const readWizardConfig = (category: CategoryRow | undefined): WizardFormConfig => {
+  const readWizardConfig = useCallback((category: CategoryRow | undefined): WizardFormConfig => {
     if (!category?.options_json || typeof category.options_json !== 'object') return EMPTY_WIZARD_CONFIG;
 
     const raw = category.options_json as Record<string, unknown>;
     const source = raw.wizard_forms ?? raw.wizardForms ?? raw.wizard_form ?? raw.wizard;
     return normalizeWizardConfig(source);
-  };
+  }, []);
 
-  const hasPersistedWizardConfig = (category: CategoryRow | undefined): boolean => {
+  const hasPersistedWizardConfig = useCallback((category: CategoryRow | undefined): boolean => {
     if (!category?.options_json || typeof category.options_json !== 'object') return false;
     const raw = category.options_json as Record<string, unknown>;
     return raw.wizard_forms !== undefined || raw.wizardForms !== undefined || raw.wizard_form !== undefined || raw.wizard !== undefined;
-  };
+  }, []);
 
-  const getWizardConfigWithTemplate = (category: CategoryRow | undefined): WizardFormConfig => {
+  const getWizardConfigWithTemplate = useCallback((category: CategoryRow | undefined): WizardFormConfig => {
     const saved = readWizardConfig(category);
     if (hasWizardContent(saved)) return saved;
 
     const slug = category?.slug || '';
     const template = BUILTIN_WIZARD_TEMPLATES[slug];
     return template ? deepCloneWizardConfig(template) : EMPTY_WIZARD_CONFIG;
-  };
+  }, [readWizardConfig]);
 
   const onSelectWizardCategory = useCallback((id: string) => {
     setWizardCategoryId(id);
     const category = categories.find((c) => c.id === Number(id));
     setWizardConfig(getWizardConfigWithTemplate(category));
-  }, [categories]);
+  }, [categories, getWizardConfigWithTemplate]);
 
   useEffect(() => {
     if (activeTab !== TAB_WIZARD || categories.length === 0) return;
@@ -585,7 +709,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
     if (wizardCategoryId) {
       const selected = categories.find((c) => c.id === Number(wizardCategoryId));
       if (selected) {
-        setWizardConfig(readWizardConfig(selected));
+        setWizardConfig(getWizardConfigWithTemplate(selected));
         return;
       }
     }
@@ -597,7 +721,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
 
     const fallback = firstWithConfig || categories[0];
     if (fallback) onSelectWizardCategory(String(fallback.id));
-  }, [activeTab, categories, wizardCategoryId, onSelectWizardCategory]);
+  }, [activeTab, categories, wizardCategoryId, onSelectWizardCategory, getWizardConfigWithTemplate, readWizardConfig]);
 
   const saveWizardConfig = async () => {
     if (!wizardCategoryId) return;
@@ -642,6 +766,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
     setWizardConfig((prev) => ({
       ...prev,
       sections: prev.sections.map((s) => (s.id === sectionId ? { ...s, title } : s)),
+    }));
+  };
+
+  const updateSectionStep = (sectionId: string, step: string) => {
+    setWizardConfig((prev) => ({
+      ...prev,
+      sections: prev.sections.map((s) => (s.id === sectionId ? { ...s, step: step || undefined } : s)),
     }));
   };
 
@@ -697,6 +828,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
     }));
   };
 
+  const updateListStep = (listId: string, step: string) => {
+    setWizardConfig((prev) => ({
+      ...prev,
+      lists: prev.lists.map((l) => (l.id === listId ? { ...l, step: step || undefined } : l)),
+    }));
+  };
+
   const removeList = (listId: string) => {
     setWizardConfig((prev) => ({
       ...prev,
@@ -741,6 +879,32 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
   };
 
   const parentCategories = categories.filter((c) => c.parent_id === null);
+  const selectedWizardCategory = categories.find((c) => c.id === Number(wizardCategoryId));
+  const wizardStepOptions = useMemo(() => {
+    const slug = selectedWizardCategory?.slug;
+    const steps = getWizardStepsForSlug(slug);
+    const labels: Record<string, string> = {
+      stepDetails: locale === 'ps' ? 'د اعلان جزئيات' : locale === 'fa' ? 'جزئیات آگهی' : 'Listing Details',
+      stepContact: locale === 'ps' ? 'د اړیکې معلومات' : locale === 'fa' ? 'اطلاعات تماس' : 'Contact & Submit',
+      reStepType: locale === 'ps' ? 'د ملکیت ډول' : locale === 'fa' ? 'نوع ملک' : 'Property Type',
+      reStepDetails: locale === 'ps' ? 'د ملکیت جزئيات' : locale === 'fa' ? 'جزئیات ملک' : 'Property Details',
+      reStepAddress: locale === 'ps' ? 'پته او ځای' : locale === 'fa' ? 'آدرس و موقعیت' : 'Address & Location',
+      reStepContact: locale === 'ps' ? 'د اړیکې معلومات' : locale === 'fa' ? 'اطلاعات تماس' : 'Contact Info',
+      vhStepType: locale === 'ps' ? 'د موټر معلومات' : locale === 'fa' ? 'اطلاعات وسیله' : 'Vehicle Info',
+      vhStepSpecs: locale === 'ps' ? 'تخنیکي مشخصات' : locale === 'fa' ? 'مشخصات' : 'Specifications',
+      vhStepCondition: locale === 'ps' ? 'حالت او بیه' : locale === 'fa' ? 'وضعیت و قیمت' : 'Condition & Price',
+      vhStepAddress: locale === 'ps' ? 'ځای' : locale === 'fa' ? 'موقعیت' : 'Location',
+      vhStepContact: locale === 'ps' ? 'د اړیکې معلومات' : locale === 'fa' ? 'اطلاعات تماس' : 'Contact Info',
+      elStepBasic: locale === 'ps' ? 'اساسي معلومات' : locale === 'fa' ? 'اطلاعات ابتدایی' : 'Basic Info',
+      elStepSpecs: locale === 'ps' ? 'مشخصات' : locale === 'fa' ? 'مشخصات' : 'Specifications',
+      elStepPrice: locale === 'ps' ? 'بیه' : locale === 'fa' ? 'قیمت' : 'Price',
+      elStepLocation: locale === 'ps' ? 'ځای' : locale === 'fa' ? 'موقعیت' : 'Location',
+      elStepContact: locale === 'ps' ? 'د اړیکې معلومات' : locale === 'fa' ? 'اطلاعات تماس' : 'Contact Info',
+    };
+
+    return steps.map((step) => ({ value: step, label: labels[step] || step }));
+  }, [selectedWizardCategory?.slug, locale]);
+
   const wizardSavedByCategory = categories
     .map((c) => {
       const cfg = getWizardConfigWithTemplate(c);
@@ -813,23 +977,39 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
     setDragOverChildId(null);
   };
 
+  const wizardEnabledCount = categories.filter((category) => hasWizardContent(readWizardConfig(category))).length;
+  const adminStats = [
+    { label: adminText.totalCategories, value: categories.length, tone: 'from-blue-500 to-cyan-500' },
+    { label: adminText.totalCities, value: cities.length, tone: 'from-emerald-500 to-teal-500' },
+    { label: adminText.pendingReview, value: listings.length, tone: 'from-amber-500 to-orange-500' },
+    { label: adminText.wizardEnabled, value: wizardEnabledCount, tone: 'from-violet-500 to-indigo-500' },
+  ];
+
   return (
-    <div className="container mx-auto px-4">
-      <div className="flex items-center gap-3 mb-5">
-        <div className="w-10 h-10 rounded-lg bg-primary-100 text-primary-700 flex items-center justify-center">
-          <Shield className="w-5 h-5" />
-        </div>
-        <div>
-          <h1 className={`text-xl font-bold text-slate-900 ${rtl ? 'text-right' : 'text-left'}`}>
-            {locale === 'en' ? 'Admin Panel' : locale === 'ps' ? 'د اډمین پینل' : 'پنل ادمین'}
-          </h1>
-          <p className="text-sm text-slate-500">
-            {locale === 'en' ? 'Manage categories and moderate listings.' : locale === 'ps' ? 'کټګورۍ او اعلانونه اداره کړئ.' : 'دسته‌بندی‌ها و آگهی‌ها را مدیریت کنید.'}
-          </p>
+    <div className="container mx-auto px-4 space-y-5">
+      <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-700 p-5 text-white shadow-sm">
+        <div className={`flex items-center gap-3 ${rtl ? 'flex-row-reverse' : ''}`}>
+          <div className="w-11 h-11 rounded-xl bg-white/10 text-white flex items-center justify-center border border-white/20">
+            <Shield className="w-5 h-5" />
+          </div>
+          <div className={rtl ? 'text-right' : 'text-left'}>
+            <h1 className="text-xl font-bold">{adminText.panelTitle}</h1>
+            <p className="text-sm text-white/80">{adminText.panelSubtitle}</p>
+          </div>
         </div>
       </div>
 
-      <div className={`flex gap-2 mb-5 ${rtl ? 'flex-row-reverse' : ''}`}>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {adminStats.map((stat) => (
+          <div key={stat.label} className="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+            <div className={`inline-flex rounded-md bg-gradient-to-r ${stat.tone} px-2 py-0.5 text-xs font-semibold text-white`}>KPI</div>
+            <p className={`mt-2 text-xs text-slate-500 ${rtl ? 'text-right' : 'text-left'}`}>{stat.label}</p>
+            <p className={`text-xl font-bold text-slate-900 ${rtl ? 'text-right' : 'text-left'}`}>{stat.value}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className={`flex items-center gap-2 mb-1 ${rtl ? 'flex-row-reverse' : ''}`}>
         <button
           type="button"
           onClick={() => setActiveTab(TAB_CATEGORIES)}
@@ -837,7 +1017,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
         >
           <span className={`inline-flex items-center gap-1.5 ${rtl ? 'flex-row-reverse' : ''}`}>
             <Tags className="w-4 h-4" />
-            {locale === 'en' ? 'Categories' : locale === 'ps' ? 'کټګورۍ' : 'دسته‌بندی‌ها'}
+            {adminText.categories}
           </span>
         </button>
         <button
@@ -847,7 +1027,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
         >
           <span className={`inline-flex items-center gap-1.5 ${rtl ? 'flex-row-reverse' : ''}`}>
             <Building2 className="w-4 h-4" />
-            {locale === 'en' ? 'Cities' : locale === 'ps' ? 'ښارونه' : 'شهرها'}
+            {adminText.cities}
           </span>
         </button>
         <button
@@ -857,7 +1037,17 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
         >
           <span className={`inline-flex items-center gap-1.5 ${rtl ? 'flex-row-reverse' : ''}`}>
             <ClipboardList className="w-4 h-4" />
-            {locale === 'en' ? 'Wizard Forms' : locale === 'ps' ? 'د فورم ویزارډ' : 'فرم‌های ویزارد'}
+            {adminText.wizardForms}
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab(TAB_CONTENT)}
+          className={`px-3.5 py-2 rounded-lg text-sm font-medium ${activeTab === TAB_CONTENT ? 'bg-primary-600 text-white' : 'bg-white text-slate-700 border border-slate-200'}`}
+        >
+          <span className={`inline-flex items-center gap-1.5 ${rtl ? 'flex-row-reverse' : ''}`}>
+            <ClipboardList className="w-4 h-4" />
+            {adminText.contentSettings}
           </span>
         </button>
         <button
@@ -867,7 +1057,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
         >
           <span className={`inline-flex items-center gap-1.5 ${rtl ? 'flex-row-reverse' : ''}`}>
             <Flag className="w-4 h-4" />
-            {locale === 'en' ? 'Post Moderation' : locale === 'ps' ? 'د اعلان څارنه' : 'مدیریت آگهی‌ها'}
+            {adminText.moderation}
           </span>
         </button>
       </div>
@@ -896,7 +1086,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
               <input value={catForm.slug} onChange={(e) => setCatForm((p) => ({ ...p, slug: e.target.value }))} placeholder="slug" className="w-full px-3 py-2.5 border border-slate-300 rounded-lg" />
 
               <div className="grid grid-cols-2 gap-3">
-                <select value={catForm.parent_id} onChange={(e) => setCatForm((p) => ({ ...p, parent_id: e.target.value }))} className="w-full px-3 py-2.5 border border-slate-300 rounded-lg bg-white">
+                <select aria-label="Parent category" value={catForm.parent_id} onChange={(e) => setCatForm((p) => ({ ...p, parent_id: e.target.value }))} className="w-full px-3 py-2.5 border border-slate-300 rounded-lg bg-white">
                   <option value="">Parent: none</option>
                   {parentCategories.map((c) => (
                     <option key={c.id} value={c.id}>{c.name_en}</option>
@@ -1077,9 +1267,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
       ) : activeTab === TAB_WIZARD ? (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           <div className="bg-white border border-slate-200 rounded-xl p-4">
-            <h3 className="text-sm font-semibold text-slate-900 mb-3">Saved Wizard Forms</h3>
+            <h3 className="text-sm font-semibold text-slate-900 mb-3">{adminText.wizardForms}</h3>
             {wizardSavedByCategory.length === 0 ? (
-              <p className="text-sm text-slate-500">No saved wizard forms yet.</p>
+              <p className="text-sm text-slate-500">{locale === 'ps' ? 'تر اوسه کوم ویزارد خوندي نه دی.' : locale === 'fa' ? 'هنوز فرم ذخیره‌شده‌ای وجود ندارد.' : 'No saved wizard forms yet.'}</p>
             ) : (
               <div className="space-y-2 max-h-[70vh] overflow-y-auto">
                 {wizardSavedByCategory.map((item) => (
@@ -1100,11 +1290,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
           <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-4 lg:col-span-2">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <select
+              aria-label="Wizard category"
               value={wizardCategoryId}
               onChange={(e) => onSelectWizardCategory(e.target.value)}
               className="px-3 py-2.5 border border-slate-300 rounded-lg bg-white md:col-span-2"
             >
-              <option value="">Select category...</option>
+              <option value="">{locale === 'ps' ? 'کټګوري وټاکئ...' : locale === 'fa' ? 'دسته‌بندی را انتخاب کنید...' : 'Select category...'}</option>
               {categories.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.parent_id ? `↳ ${c.name_en}` : c.name_en}
@@ -1117,38 +1308,57 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
               disabled={!wizardCategoryId || savingWizard}
               className="px-3.5 py-2 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 disabled:opacity-60"
             >
-              {savingWizard ? 'Saving...' : 'Save wizard form'}
+              {savingWizard ? tCommon('loading') : locale === 'ps' ? 'ویزارد خوندي کړئ' : locale === 'fa' ? 'ذخیره فرم ویزارد' : 'Save wizard form'}
             </button>
             </div>
+
+            {wizardCategoryId && (
+              <div className="rounded-lg border border-blue-100 bg-blue-50 text-blue-800 text-xs px-3 py-2">
+                {adminText.stepHint}
+              </div>
+            )}
 
             {wizardCategoryId ? (
             <>
               <div className="border border-slate-200 rounded-lg p-3">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-slate-900">Sections</h3>
+                  <h3 className="text-sm font-semibold text-slate-900">{locale === 'ps' ? 'برخې' : locale === 'fa' ? 'بخش‌ها' : 'Sections'}</h3>
                   <button onClick={addSection} className="px-2 py-1 text-xs rounded bg-slate-100 text-slate-700 hover:bg-slate-200 inline-flex items-center gap-1">
-                    <Plus className="w-3 h-3" /> Add section
+                    <Plus className="w-3 h-3" /> {locale === 'ps' ? 'برخه اضافه کړئ' : locale === 'fa' ? 'افزودن بخش' : 'Add section'}
                   </button>
                 </div>
                 <div className="space-y-3">
                   {wizardConfig.sections.map((section) => (
                     <div key={section.id} className="border border-slate-200 rounded-lg p-3 space-y-2">
-                      <div className="flex items-center gap-2">
+                      <div className="grid grid-cols-1 md:grid-cols-6 gap-2">
                         <input
                           value={section.title}
                           onChange={(e) => updateSectionTitle(section.id, e.target.value)}
                           placeholder="Section title"
-                          className="flex-1 px-3 py-2 border border-slate-300 rounded-lg"
+                          className="md:col-span-3 px-3 py-2 border border-slate-300 rounded-lg"
                         />
-                        <button onClick={() => removeSection(section.id)} className="px-2 py-1 text-xs rounded bg-red-50 text-red-600 hover:bg-red-100">Delete</button>
-                        <button onClick={() => addField(section.id)} className="px-2 py-1 text-xs rounded bg-slate-100 text-slate-700 hover:bg-slate-200">Add field</button>
+                        <select
+                          aria-label="Section step"
+                          value={section.step || ''}
+                          onChange={(e) => updateSectionStep(section.id, e.target.value)}
+                          className="md:col-span-2 px-2 py-2 border border-slate-300 rounded-lg text-sm bg-white"
+                        >
+                          <option value="">{adminText.appliesToAll}</option>
+                          {wizardStepOptions.map((opt) => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          ))}
+                        </select>
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => addField(section.id)} className="px-2 py-1 text-xs rounded bg-slate-100 text-slate-700 hover:bg-slate-200">{locale === 'ps' ? 'فیلډ اضافه کړئ' : locale === 'fa' ? 'افزودن فیلد' : 'Add field'}</button>
+                          <button onClick={() => removeSection(section.id)} className="px-2 py-1 text-xs rounded bg-red-50 text-red-600 hover:bg-red-100">{tCommon('delete')}</button>
+                        </div>
                       </div>
 
                       <div className="space-y-2">
                         {section.fields.map((field) => (
                           <div key={field.id} className="grid grid-cols-1 md:grid-cols-5 gap-2 items-center border border-slate-100 rounded p-2">
                             <input value={field.label} onChange={(e) => updateField(section.id, field.id, 'label', e.target.value)} placeholder="Field label" className="px-2 py-1.5 border border-slate-300 rounded text-sm" />
-                            <select value={field.type} onChange={(e) => updateField(section.id, field.id, 'type', e.target.value as WizardFieldType)} className="px-2 py-1.5 border border-slate-300 rounded text-sm bg-white">
+                            <select aria-label="Field type" value={field.type} onChange={(e) => updateField(section.id, field.id, 'type', e.target.value as WizardFieldType)} className="px-2 py-1.5 border border-slate-300 rounded text-sm bg-white">
                               <option value="text">text</option>
                               <option value="number">number</option>
                               <option value="textarea">textarea</option>
@@ -1156,7 +1366,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
                               <option value="checkbox">checkbox</option>
                             </select>
                             <label className="text-xs text-slate-700 flex items-center gap-2">
-                              <input type="checkbox" checked={field.required} onChange={(e) => updateField(section.id, field.id, 'required', e.target.checked)} /> required
+                              <input type="checkbox" checked={field.required} onChange={(e) => updateField(section.id, field.id, 'required', e.target.checked)} /> {locale === 'ps' ? 'اړین' : locale === 'fa' ? 'ضروری' : 'required'}
                             </label>
                             <input
                               value={field.options.join(', ')}
@@ -1175,24 +1385,37 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
 
               <div className="border border-slate-200 rounded-lg p-3">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-slate-900">Lists and sub-lists</h3>
+                  <h3 className="text-sm font-semibold text-slate-900">{locale === 'ps' ? 'لیستونه او فرعي لیستونه' : locale === 'fa' ? 'لیست‌ها و زیرلیست‌ها' : 'Lists and sub-lists'}</h3>
                   <button onClick={addList} className="px-2 py-1 text-xs rounded bg-slate-100 text-slate-700 hover:bg-slate-200 inline-flex items-center gap-1">
-                    <Plus className="w-3 h-3" /> Add list
+                    <Plus className="w-3 h-3" /> {locale === 'ps' ? 'لیست اضافه کړئ' : locale === 'fa' ? 'افزودن لیست' : 'Add list'}
                   </button>
                 </div>
 
                 <div className="space-y-3">
                   {wizardConfig.lists.map((list) => (
                     <div key={list.id} className="border border-slate-200 rounded-lg p-3 space-y-2">
-                      <div className="flex items-center gap-2">
+                      <div className="grid grid-cols-1 md:grid-cols-6 gap-2">
                         <input
                           value={list.title}
                           onChange={(e) => updateList(list.id, 'title', e.target.value)}
                           placeholder="List title"
-                          className="flex-1 px-3 py-2 border border-slate-300 rounded-lg"
+                          className="md:col-span-3 px-3 py-2 border border-slate-300 rounded-lg"
                         />
-                        <button onClick={() => addSubList(list.id)} className="px-2 py-1 text-xs rounded bg-slate-100 text-slate-700 hover:bg-slate-200">Add sub-list</button>
-                        <button onClick={() => removeList(list.id)} className="px-2 py-1 text-xs rounded bg-red-50 text-red-600 hover:bg-red-100">Delete</button>
+                        <select
+                          aria-label="List step"
+                          value={list.step || ''}
+                          onChange={(e) => updateListStep(list.id, e.target.value)}
+                          className="md:col-span-2 px-2 py-2 border border-slate-300 rounded-lg text-sm bg-white"
+                        >
+                          <option value="">{adminText.appliesToAll}</option>
+                          {wizardStepOptions.map((opt) => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          ))}
+                        </select>
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => addSubList(list.id)} className="px-2 py-1 text-xs rounded bg-slate-100 text-slate-700 hover:bg-slate-200">{locale === 'ps' ? 'فرعي لیست' : locale === 'fa' ? 'زیرلیست' : 'Add sub-list'}</button>
+                          <button onClick={() => removeList(list.id)} className="px-2 py-1 text-xs rounded bg-red-50 text-red-600 hover:bg-red-100">{tCommon('delete')}</button>
+                        </div>
                       </div>
 
                       <textarea
@@ -1231,14 +1454,230 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
               </div>
             </>
           ) : (
-            <p className="text-sm text-slate-500">Select a category to manage its posting wizard sections/lists/sub-lists.</p>
+            <p className="text-sm text-slate-500">{locale === 'ps' ? 'د اعلان ویزارد د مدیریت لپاره یوه کټګوري وټاکئ.' : locale === 'fa' ? 'برای مدیریت ویزارد نشر، یک دسته‌بندی را انتخاب کنید.' : 'Select a category to manage its posting wizard sections, fields, and lists.'}</p>
           )}
+          </div>
+        </div>
+      ) : activeTab === TAB_CONTENT ? (
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
+          <div className="xl:col-span-2 bg-white border border-slate-200 rounded-xl p-4 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-semibold text-slate-900">{adminText.contentSettings}</h2>
+              <button
+                type="button"
+                onClick={saveHomepageSettings}
+                disabled={savingHomepageConfig || loadingHomepageConfig}
+                className="px-3.5 py-2 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 disabled:opacity-60"
+              >
+                {savingHomepageConfig ? tCommon('loading') : adminText.saveHomepage}
+              </button>
+            </div>
+
+            {loadingHomepageConfig ? (
+              <p className="text-sm text-slate-500">{tCommon('loading')}</p>
+            ) : (
+              <>
+                <div className="border border-slate-200 rounded-lg p-3 space-y-3">
+                  <h3 className="text-sm font-semibold text-slate-900">Header Block</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <input
+                      value={homepageConfig.header.title.en}
+                      onChange={(e) => setHomepageConfig((prev) => ({ ...prev, header: { ...prev.header, title: updateLocalizedText(prev.header.title, 'en', e.target.value) } }))}
+                      placeholder="Header title (EN)"
+                      className="px-3 py-2 border border-slate-300 rounded-lg"
+                    />
+                    <input
+                      value={homepageConfig.header.title.ps}
+                      onChange={(e) => setHomepageConfig((prev) => ({ ...prev, header: { ...prev.header, title: updateLocalizedText(prev.header.title, 'ps', e.target.value) } }))}
+                      placeholder="Header title (PS)"
+                      className="px-3 py-2 border border-slate-300 rounded-lg"
+                    />
+                    <input
+                      value={homepageConfig.header.title.fa}
+                      onChange={(e) => setHomepageConfig((prev) => ({ ...prev, header: { ...prev.header, title: updateLocalizedText(prev.header.title, 'fa', e.target.value) } }))}
+                      placeholder="Header title (FA)"
+                      className="px-3 py-2 border border-slate-300 rounded-lg"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <input
+                      value={homepageConfig.header.subtitle.en}
+                      onChange={(e) => setHomepageConfig((prev) => ({ ...prev, header: { ...prev.header, subtitle: updateLocalizedText(prev.header.subtitle, 'en', e.target.value) } }))}
+                      placeholder="Header subtitle (EN)"
+                      className="px-3 py-2 border border-slate-300 rounded-lg"
+                    />
+                    <input
+                      value={homepageConfig.header.subtitle.ps}
+                      onChange={(e) => setHomepageConfig((prev) => ({ ...prev, header: { ...prev.header, subtitle: updateLocalizedText(prev.header.subtitle, 'ps', e.target.value) } }))}
+                      placeholder="Header subtitle (PS)"
+                      className="px-3 py-2 border border-slate-300 rounded-lg"
+                    />
+                    <input
+                      value={homepageConfig.header.subtitle.fa}
+                      onChange={(e) => setHomepageConfig((prev) => ({ ...prev, header: { ...prev.header, subtitle: updateLocalizedText(prev.header.subtitle, 'fa', e.target.value) } }))}
+                      placeholder="Header subtitle (FA)"
+                      className="px-3 py-2 border border-slate-300 rounded-lg"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <input
+                      value={homepageConfig.header.primaryCtaUrl}
+                      onChange={(e) => setHomepageConfig((prev) => ({ ...prev, header: { ...prev.header, primaryCtaUrl: e.target.value } }))}
+                      placeholder="Primary CTA URL"
+                      className="px-3 py-2 border border-slate-300 rounded-lg"
+                    />
+                    <input
+                      value={homepageConfig.header.secondaryCtaUrl}
+                      onChange={(e) => setHomepageConfig((prev) => ({ ...prev, header: { ...prev.header, secondaryCtaUrl: e.target.value } }))}
+                      placeholder="Secondary CTA URL"
+                      className="px-3 py-2 border border-slate-300 rounded-lg"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <select
+                      aria-label="Header animation style"
+                      value={homepageConfig.header.animation.style}
+                      onChange={(e) => setHomepageConfig((prev) => ({ ...prev, header: { ...prev.header, animation: { ...prev.header.animation, style: e.target.value as HomepageContentConfig['header']['animation']['style'] } } }))}
+                      className="px-3 py-2 border border-slate-300 rounded-lg bg-white"
+                    >
+                      <option value="none">No animation</option>
+                      <option value="pulse-circles">Pulse circles</option>
+                      <option value="floating-cards">Floating cards</option>
+                      <option value="gradient-orbs">Gradient orbs</option>
+                    </select>
+                    <input
+                      type="number"
+                      value={homepageConfig.header.animation.speed}
+                      onChange={(e) => setHomepageConfig((prev) => ({ ...prev, header: { ...prev.header, animation: { ...prev.header.animation, speed: Number(e.target.value) || 1 } } }))}
+                      placeholder="Animation speed"
+                      className="px-3 py-2 border border-slate-300 rounded-lg"
+                    />
+                    <input
+                      type="number"
+                      value={homepageConfig.header.animation.density}
+                      onChange={(e) => setHomepageConfig((prev) => ({ ...prev, header: { ...prev.header, animation: { ...prev.header.animation, density: Number(e.target.value) || 1 } } }))}
+                      placeholder="Animation density"
+                      className="px-3 py-2 border border-slate-300 rounded-lg"
+                    />
+                  </div>
+
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 space-y-2">
+                    <label className="flex items-center gap-2 text-sm text-slate-700">
+                      <input
+                        type="checkbox"
+                        checked={homepageConfig.header.ad.enabled}
+                        onChange={(e) => setHomepageConfig((prev) => ({ ...prev, header: { ...prev.header, ad: { ...prev.header.ad, enabled: e.target.checked } } }))}
+                      />
+                      Enable header ad slot (AdSense)
+                    </label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <input
+                        value={homepageConfig.header.ad.client}
+                        onChange={(e) => setHomepageConfig((prev) => ({ ...prev, header: { ...prev.header, ad: { ...prev.header.ad, client: e.target.value } } }))}
+                        placeholder="AdSense client (ca-pub-...)"
+                        className="px-3 py-2 border border-slate-300 rounded-lg"
+                      />
+                      <input
+                        value={homepageConfig.header.ad.slot}
+                        onChange={(e) => setHomepageConfig((prev) => ({ ...prev, header: { ...prev.header, ad: { ...prev.header.ad, slot: e.target.value } } }))}
+                        placeholder="Ad slot ID"
+                        className="px-3 py-2 border border-slate-300 rounded-lg"
+                      />
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <select
+                        aria-label="Ad format"
+                        value={homepageConfig.header.ad.format}
+                        onChange={(e) => setHomepageConfig((prev) => ({ ...prev, header: { ...prev.header, ad: { ...prev.header.ad, format: e.target.value as HomepageContentConfig['header']['ad']['format'] } } }))}
+                        className="px-3 py-2 border border-slate-300 rounded-lg bg-white"
+                      >
+                        <option value="auto">auto</option>
+                        <option value="horizontal">horizontal</option>
+                        <option value="vertical">vertical</option>
+                        <option value="rectangle">rectangle</option>
+                      </select>
+                      <label className="flex items-center gap-2 text-sm text-slate-700">
+                        <input
+                          type="checkbox"
+                          checked={homepageConfig.header.ad.responsive}
+                          onChange={(e) => setHomepageConfig((prev) => ({ ...prev, header: { ...prev.header, ad: { ...prev.header.ad, responsive: e.target.checked } } }))}
+                        />
+                        Responsive
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border border-slate-200 rounded-lg p-3 space-y-3">
+                  <h3 className="text-sm font-semibold text-slate-900">Homepage Blocks</h3>
+                  {([
+                    ['categorySidebar', 'Category Sidebar'],
+                    ['showcase', 'Showcase'],
+                    ['trending', 'Trending'],
+                    ['mostWatched', 'Most Watched'],
+                    ['popularArea', 'Popular in Your Area'],
+                  ] as const).map(([key, label]) => (
+                    <div key={key} className="rounded-md border border-slate-200 p-2 space-y-2">
+                      <label className="flex items-center gap-2 text-sm text-slate-700">
+                        <input
+                          type="checkbox"
+                          checked={homepageConfig.blocks[key].enabled}
+                          onChange={(e) =>
+                            setHomepageConfig((prev) => ({
+                              ...prev,
+                              blocks: {
+                                ...prev.blocks,
+                                [key]: { ...prev.blocks[key], enabled: e.target.checked },
+                              },
+                            }))
+                          }
+                        />
+                        {label}
+                      </label>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                        <input
+                          value={homepageConfig.blocks[key].title.en}
+                          onChange={(e) => setHomepageConfig((prev) => ({ ...prev, blocks: { ...prev.blocks, [key]: { ...prev.blocks[key], title: updateLocalizedText(prev.blocks[key].title, 'en', e.target.value) } } }))}
+                          placeholder={`${label} title (EN)`}
+                          className="px-3 py-2 border border-slate-300 rounded-lg"
+                        />
+                        <input
+                          value={homepageConfig.blocks[key].title.ps}
+                          onChange={(e) => setHomepageConfig((prev) => ({ ...prev, blocks: { ...prev.blocks, [key]: { ...prev.blocks[key], title: updateLocalizedText(prev.blocks[key].title, 'ps', e.target.value) } } }))}
+                          placeholder={`${label} title (PS)`}
+                          className="px-3 py-2 border border-slate-300 rounded-lg"
+                        />
+                        <input
+                          value={homepageConfig.blocks[key].title.fa}
+                          onChange={(e) => setHomepageConfig((prev) => ({ ...prev, blocks: { ...prev.blocks, [key]: { ...prev.blocks[key], title: updateLocalizedText(prev.blocks[key].title, 'fa', e.target.value) } } }))}
+                          placeholder={`${label} title (FA)`}
+                          className="px-3 py-2 border border-slate-300 rounded-lg"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
+          <div className="bg-white border border-slate-200 rounded-xl p-4">
+            <h3 className="text-sm font-semibold text-slate-900 mb-2">Notes</h3>
+            <ul className="text-xs text-slate-600 space-y-2 list-disc pl-4">
+              <li>Header text, CTA buttons, and hero animation are configurable from this panel.</li>
+              <li>AdSense slot appears under header when enabled and valid client/slot are saved.</li>
+              <li>All homepage blocks can be toggled and renamed per language.</li>
+            </ul>
           </div>
         </div>
       ) : (
         <div className="bg-white border border-slate-200 rounded-xl p-4">
           <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-3">
             <select
+              aria-label="Moderation reason"
               value={moderationReason}
               onChange={(e) => setModerationReason(e.target.value)}
               className="px-3 py-2.5 border border-slate-300 rounded-lg bg-white"

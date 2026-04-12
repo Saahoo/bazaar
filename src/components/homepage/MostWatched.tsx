@@ -9,9 +9,10 @@ import { useListings } from '@/lib/hooks/useListings';
 
 interface MostWatchedProps {
   locale: Locale;
+  titleOverride?: string;
 }
 
-export const MostWatched: React.FC<MostWatchedProps> = ({ locale }) => {
+export const MostWatched: React.FC<MostWatchedProps> = ({ locale, titleOverride }) => {
   const t = useTranslations('homepage');
   const isRtl = isRTL(locale);
 
@@ -24,7 +25,7 @@ export const MostWatched: React.FC<MostWatchedProps> = ({ locale }) => {
           <div className="w-7 h-7 bg-rose-100 rounded-full flex items-center justify-center flex-shrink-0">
             <Heart className="w-4 h-4 text-rose-500" />
           </div>
-          <h2 className="text-base md:text-lg font-semibold text-slate-900">{t('mostWatched')}</h2>
+          <h2 className="text-base md:text-lg font-semibold text-slate-900">{titleOverride || t('mostWatched')}</h2>
         </div>
         <Link
           href={`/${locale}/search`}
@@ -39,7 +40,7 @@ export const MostWatched: React.FC<MostWatchedProps> = ({ locale }) => {
           <Loader2 className="w-6 h-6 text-primary-600 animate-spin" />
         </div>
       ) : listings.length === 0 ? (
-        <p className="text-slate-400 text-sm text-center py-8">{t('mostWatched')}</p>
+        <p className="text-slate-400 text-sm text-center py-8">{titleOverride || t('mostWatched')}</p>
       ) : (
         <div
           className={`flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${isRtl ? 'flex-row-reverse' : ''}`}

@@ -9,9 +9,10 @@ import { useListings } from '@/lib/hooks/useListings';
 
 interface TrendingItemsProps {
   locale: Locale;
+  titleOverride?: string;
 }
 
-export const TrendingItems: React.FC<TrendingItemsProps> = ({ locale }) => {
+export const TrendingItems: React.FC<TrendingItemsProps> = ({ locale, titleOverride }) => {
   const t = useTranslations('homepage');
   const isRtl = isRTL(locale);
 
@@ -24,7 +25,7 @@ export const TrendingItems: React.FC<TrendingItemsProps> = ({ locale }) => {
           <div className="w-7 h-7 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
             <Flame className="w-4 h-4 text-orange-500" />
           </div>
-          <h2 className="text-base md:text-lg font-semibold text-slate-900">{t('trending')}</h2>
+          <h2 className="text-base md:text-lg font-semibold text-slate-900">{titleOverride || t('trending')}</h2>
         </div>
         <Link
           href={`/${locale}/search`}
@@ -39,7 +40,7 @@ export const TrendingItems: React.FC<TrendingItemsProps> = ({ locale }) => {
           <Loader2 className="w-6 h-6 text-primary-600 animate-spin" />
         </div>
       ) : listings.length === 0 ? (
-        <p className="text-slate-400 text-sm text-center py-8">{t('trending')}</p>
+        <p className="text-slate-400 text-sm text-center py-8">{titleOverride || t('trending')}</p>
       ) : (
         <div className={`flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${isRtl ? 'flex-row-reverse' : ''}`}>
           {listings.map((listing) => (

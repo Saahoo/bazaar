@@ -6,6 +6,9 @@ import { Locale, LOCALES } from '@/lib/i18n/config';
 import { createClient } from '@/lib/supabase/server';
 import { getMockListing, getMockUser, getListingTitle, getListingDescription } from '@/lib/constants/mock-data';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 interface PageProps {
   params: Promise<{ lang: string; id: string }>;
 }
@@ -84,6 +87,8 @@ export default async function ListingPage({ params }: PageProps) {
     .from('listings')
     .select('*')
     .eq('id', id)
+    .eq('status', 'active')
+    .is('deleted_at', null)
     .maybeSingle();
 
   if (!listing) {

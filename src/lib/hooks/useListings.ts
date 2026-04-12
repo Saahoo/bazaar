@@ -66,6 +66,56 @@ export interface RealEstateFilters {
   buildingAge?: string;
 }
 
+export interface ElectronicsFilters {
+  subcategory?: string;
+  postedDate?: string;
+  sellerType?: string;
+  make?: string;
+  model?: string;
+  condition?: string;
+  keywords?: string;
+  [key: string]: string | number | boolean | string[] | undefined;
+}
+
+export interface FashionFilters {
+  subcategory?: string;
+  postedDate?: string;
+  sellerType?: string;
+  keywords?: string;
+  condition?: string;
+  brand?: string;
+  clothingType?: string;
+  gender?: string;
+  size?: string[];
+  fitType?: string;
+  color?: string[];
+  material?: string;
+  sleeveType?: string;
+  pattern?: string;
+  season?: string;
+  occasion?: string;
+  authenticity?: string;
+  warranty?: string;
+  tagsAvailable?: string;
+  model?: string;
+  shoeType?: string;
+  originalBox?: string;
+  usageType?: string;
+  bagType?: string;
+  closureType?: string;
+  strapType?: string;
+  waterproof?: string;
+  type?: string;
+  style?: string;
+  displayType?: string;
+  strapMaterial?: string;
+  dialShape?: string;
+  movement?: string;
+  waterResistant?: string;
+  stoneType?: string;
+  certification?: string;
+}
+
 export interface ListingFilters {
   category?: number | null;
   query?: string;
@@ -76,8 +126,11 @@ export interface ListingFilters {
   wheelDriveType?: 'fwd' | 'rwd' | 'awd' | '4wd';
   sortBy?: 'newest' | 'oldest' | 'priceLow' | 'priceHigh' | 'mostViewed' | 'mostFavorited';
   limit?: number;
+  searchTick?: number;
   vehicleFilters?: VehicleFilters;
   realEstateFilters?: RealEstateFilters;
+  electronicsFilters?: ElectronicsFilters;
+  fashionFilters?: FashionFilters;
 }
 
 // ─── Engine Power / Capacity helpers ────────────────────────────────────────
@@ -190,6 +243,157 @@ function applyRealEstateFilters(listings: Listing[], rf?: RealEstateFilters): Li
   });
 }
 
+function applyElectronicsFilters(listings: Listing[], ef?: ElectronicsFilters): Listing[] {
+  if (!ef) return listings;
+
+  const fieldMap: Record<string, string[]> = {
+    make: ['make', 'brand'],
+    model: ['model'],
+    internalStorage: ['storage', 'internalStorage'],
+    ram: ['ram'],
+    batteryCapacity: ['batteryCapacity'],
+    refreshRate: ['refreshRate'],
+    cameraRearMp: ['cameraRearMp', 'rearCamera'],
+    cameraFrontMp: ['cameraFrontMp', 'frontCamera'],
+    supports5g: ['supports5g', 'fiveG'],
+    dualSim: ['dualSim'],
+    operatingSystem: ['operatingSystem', 'os'],
+    color: ['color'],
+    warranty: ['warranty'],
+    accessoriesIncluded: ['accessoriesIncluded'],
+    boxAvailable: ['boxAvailable'],
+    resolution: ['resolution'],
+    smartTv: ['smartTv'],
+    panelType: ['panelType'],
+    hdmiPorts: ['hdmiPorts'],
+    wallMountIncluded: ['wallMountIncluded'],
+    processor: ['processor', 'cpu'],
+    storageType: ['storageType'],
+    storageSize: ['storageSize'],
+    gpu: ['gpu'],
+    touchscreen: ['touchscreen'],
+    batteryLife: ['batteryLife'],
+    usageType: ['usageType'],
+    keyboardBacklight: ['keyboardBacklight'],
+    fingerprintSensor: ['fingerprintSensor'],
+    formFactor: ['formFactor'],
+    monitorIncluded: ['monitorIncluded'],
+    keyboardMouseIncluded: ['keyboardMouseIncluded'],
+    applianceType: ['applianceType'],
+    energyRating: ['energyRating'],
+    refrigeratorCapacityLiters: ['refrigeratorCapacityLiters'],
+    refrigeratorType: ['refrigeratorType'],
+    defrostType: ['defrostType'],
+    refrigeratorInverter: ['refrigeratorInverter'],
+    washingMachineType: ['washingMachineType'],
+    washingMachineCapacityKg: ['washingMachineCapacityKg'],
+    spinSpeed: ['spinSpeed'],
+    washingMode: ['washingMode'],
+    acType: ['acType'],
+    acCapacity: ['acCapacity'],
+    acInverter: ['acInverter'],
+    coolingArea: ['coolingArea'],
+    instrumentType: ['instrumentType'],
+    acousticElectric: ['acousticElectric'],
+    skillLevel: ['skillLevel'],
+    deviceType: ['deviceType'],
+    features: ['features'],
+    screenSize: ['screenSize'],
+  };
+
+  return listings.filter((l) => {
+    const m = l.metadata as Record<string, unknown>;
+    const specs = (m.specs as Record<string, unknown>) ?? {};
+
+    // subcategory is already filtered server-side; skip here to avoid double-filtering issues
+    if (ef.condition && String(l.condition ?? '') !== ef.condition) return false;
+
+    for (const [key, rawValue] of Object.entries(ef)) {
+      if (
+        rawValue === undefined ||
+        rawValue === '' ||
+        key === 'subcategory' ||
+        key === 'condition' ||
+        key === 'postedDate' ||
+        key === 'sellerType' ||
+        key === 'keywords'
+      ) {
+        continue;
+      }
+
+      const metadataKeys = fieldMap[key] || [key];
+      // Electronics specs are stored under metadata.specs — check there first, then root
+      const metadataValue = metadataKeys
+        .map((k) => specs[k] ?? m[k])
+        .find((v) => v !== undefined && v !== null && String(v).trim() !== '');
+
+      if (Array.isArray(rawValue)) {
+        if (rawValue.length === 0) continue;
+
+        if (Array.isArray(metadataValue)) {
+          const rawTokens = rawValue.map((v) => normalizeToken(v));
+          const metaTokens = metadataValue.map((v) => normalizeToken(v));
+          if (!rawTokens.some((token) => metaTokens.includes(token))) return false;
+        } else {
+          const token = normalizeToken(metadataValue);
+          if (!rawValue.some((v) => normalizeToken(v) === token)) return false;
+        }
+      } else {
+        if (!matchesLooseToken(metadataValue, String(rawValue))) return false;
+      }
+    }
+
+    return true;
+  });
+}
+
+function normalizeYesNo(value: unknown): string {
+  if (typeof value === 'boolean') return value ? 'yes' : 'no';
+  return String(value ?? '').trim().toLowerCase();
+}
+
+function applyFashionFilters(listings: Listing[], ff?: FashionFilters): Listing[] {
+  if (!ff) return listings;
+
+  const skipFields = new Set(['subcategory', 'postedDate', 'sellerType', 'keywords', 'condition']);
+
+  return listings.filter((l) => {
+    const m = l.metadata as Record<string, unknown>;
+
+    if (ff.condition && !matchesLooseToken(m.condition ?? l.condition, ff.condition)) return false;
+
+    for (const [key, rawValue] of Object.entries(ff)) {
+      if (skipFields.has(key) || rawValue === undefined || rawValue === '') continue;
+
+      const metadataValue = m[key];
+
+      if (Array.isArray(rawValue)) {
+        if (rawValue.length === 0) continue;
+
+        if (Array.isArray(metadataValue)) {
+          const selectedTokens = rawValue.map((v) => normalizeToken(v));
+          const metadataTokens = metadataValue.map((v) => normalizeToken(v));
+          if (!selectedTokens.some((token) => metadataTokens.includes(token))) return false;
+        } else {
+          const metadataToken = normalizeToken(metadataValue);
+          if (!rawValue.some((v) => normalizeToken(v) === metadataToken)) return false;
+        }
+        continue;
+      }
+
+      const selectedString = String(rawValue);
+      if (selectedString === 'yes' || selectedString === 'no') {
+        if (normalizeYesNo(metadataValue) !== selectedString) return false;
+        continue;
+      }
+
+      if (!matchesLooseToken(metadataValue, selectedString)) return false;
+    }
+
+    return true;
+  });
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function useListings(filters: ListingFilters = {}) {
@@ -241,6 +445,55 @@ export function useListings(filters: ListingFilters = {}) {
       if (filters.wheelDriveType) {
         query = query.contains('metadata', { wheelDriveType: filters.wheelDriveType });
       }
+      if (filters.electronicsFilters?.subcategory) {
+        query = query.contains('metadata', { subcategory: filters.electronicsFilters.subcategory });
+      }
+      if (filters.electronicsFilters?.sellerType === 'individual') {
+        query = query.eq('from_owner', true);
+      }
+      if (filters.electronicsFilters?.sellerType === 'dealer') {
+        query = query.eq('from_owner', false);
+      }
+
+      if (filters.electronicsFilters?.postedDate) {
+        const now = new Date();
+        const from = new Date(now);
+        if (filters.electronicsFilters.postedDate === 'today') {
+          from.setHours(0, 0, 0, 0);
+          query = query.gte('created_at', from.toISOString());
+        } else if (filters.electronicsFilters.postedDate === 'last7') {
+          from.setDate(now.getDate() - 7);
+          query = query.gte('created_at', from.toISOString());
+        } else if (filters.electronicsFilters.postedDate === 'last30') {
+          from.setDate(now.getDate() - 30);
+          query = query.gte('created_at', from.toISOString());
+        }
+      }
+
+      if (filters.fashionFilters?.subcategory) {
+        query = query.contains('metadata', { subcategory: filters.fashionFilters.subcategory });
+      }
+      if (filters.fashionFilters?.sellerType === 'Individual') {
+        query = query.eq('from_owner', true);
+      }
+      if (filters.fashionFilters?.sellerType === 'Dealer') {
+        query = query.eq('from_owner', false);
+      }
+      if (filters.fashionFilters?.postedDate) {
+        const now = new Date();
+        const from = new Date(now);
+        if (filters.fashionFilters.postedDate === 'today') {
+          from.setHours(0, 0, 0, 0);
+          query = query.gte('created_at', from.toISOString());
+        } else if (filters.fashionFilters.postedDate === 'last7') {
+          from.setDate(now.getDate() - 7);
+          query = query.gte('created_at', from.toISOString());
+        } else if (filters.fashionFilters.postedDate === 'last30') {
+          from.setDate(now.getDate() - 30);
+          query = query.gte('created_at', from.toISOString());
+        }
+      }
+
       // Vehicle-specific: fromOwner is a direct column
       const vf = filters.vehicleFilters;
       if (vf?.fromOwner !== undefined && vf?.fromOwner !== null) {
@@ -294,7 +547,9 @@ export function useListings(filters: ListingFilters = {}) {
 
       const vehicleFiltered = applyVehicleFilters(transformed, filters.vehicleFilters);
       const realEstateFiltered = applyRealEstateFilters(vehicleFiltered, filters.realEstateFilters);
-      setListings(realEstateFiltered);
+      const electronicsFiltered = applyElectronicsFilters(realEstateFiltered, filters.electronicsFilters);
+      const fashionFiltered = applyFashionFilters(electronicsFiltered, filters.fashionFilters);
+      setListings(fashionFiltered);
     } catch (err: unknown) {      const message = err instanceof Error ? err.message : 'Failed to load listings.';
       setError(message);
       console.error('Fetch listings error:', err);
@@ -312,10 +567,15 @@ export function useListings(filters: ListingFilters = {}) {
     filters.wheelDriveType,
     filters.sortBy,
     filters.limit,
+    filters.searchTick,
     // eslint-disable-next-line react-hooks/exhaustive-deps
     JSON.stringify(filters.vehicleFilters),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     JSON.stringify(filters.realEstateFilters),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    JSON.stringify(filters.electronicsFilters),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    JSON.stringify(filters.fashionFilters),
   ]);
 
   // Initial fetch

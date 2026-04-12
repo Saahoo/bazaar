@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: LocaleLayoutProps): Promise<M
 
   const titles: Record<string, string> = {
     en: 'Bazaar - Buy & Sell Anything from Anyone',
-    ps: 'Bazaar - په هرځاي کي هرشی خرڅ او رانیسئ',
+    ps: 'Bazaar - اسانه چټک او دباور وړ',
     fa: 'Bazaar - هرجا هرچیزی بخرید یا بفروشید',
   };
 

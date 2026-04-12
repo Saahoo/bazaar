@@ -25,21 +25,27 @@ import { StepVehicleCondition, VehicleConditionData } from './vehicles/StepVehic
 import { StepVehicleAddress, VehicleAddressData } from './vehicles/StepVehicleAddress';
 import { StepVehicleMedia, VehicleMediaData } from './vehicles/StepVehicleMedia';
 import { StepVehicleContact, VehicleContactData } from './vehicles/StepVehicleContact';
-import { StepElectronicsCategory } from './electronics/StepElectronicsCategory';
 import { StepElectronicsBasicInfo } from './electronics/StepElectronicsBasicInfo';
 import { StepElectronicsSpecs } from './electronics/StepElectronicsSpecs';
-import { StepElectronicsPrice } from './electronics/StepElectronicsPrice';
-import { StepElectronicsLocation, ElectronicsLocationData } from './electronics/StepElectronicsLocation';
 import { StepElectronicsMedia, ElectronicsMediaData } from './electronics/StepElectronicsMedia';
-import { StepElectronicsContact, ElectronicsContactData } from './electronics/StepElectronicsContact';
+import { StepElectronicsDetails } from './electronics/StepElectronicsDetails';
+import { StepElectronicsReview } from './electronics/StepElectronicsReview';
+import { StepFashionBasicInfo } from './fashion/StepFashionBasicInfo';
+import { StepFashionGeneralDetails } from './fashion/StepFashionGeneralDetails';
+import { StepFashionSpecs } from './fashion/StepFashionSpecs';
+import { StepFashionMedia, FashionMediaData } from './fashion/StepFashionMedia';
+import { StepFashionContact } from './fashion/StepFashionContact';
+import { StepFashionReview } from './fashion/StepFashionReview';
 import { DynamicWizardFields, WizardFormConfig, isWizardRequiredFieldsValid } from './DynamicWizardFields';
 import { ElectronicsSubcategory, getElectronicsSpecsConfig, hasConditionInSpecs } from '@/lib/constants/electronics-wizard';
+import { FashionSubcategory, FASHION_BRANDS_BY_SUBCATEGORY, getFashionSpecsConfig } from '@/lib/constants/fashion-wizard';
 import type { VehicleType as VehicleTypeEnum } from '@/lib/constants/vehicles';
 
 // Category slugs (more reliable than hardcoded IDs across environments)
 const REAL_ESTATE_SLUG = 'real-estate';
 const VEHICLES_SLUG = 'vehicles';
 const ELECTRONICS_SLUG = 'electronics';
+const FASHION_SLUGS = ['fashion-clothing', 'fashion'];
 
 export interface PostAdFormData {
   categoryId: number | null;
@@ -83,9 +89,33 @@ export interface ElectronicsFormData {
   price: number | '';
   negotiable: boolean;
   condition: string;
-  location: ElectronicsLocationData;
   media: ElectronicsMediaData;
-  contact: ElectronicsContactData;
+  city: string;
+  sellerType: 'individual' | 'dealer' | '';
+  phone: string;
+  whatsapp: string;
+  email: string;
+  termsAccepted: boolean;
+}
+
+export interface FashionFormData {
+  subcategory: FashionSubcategory | '';
+  title: string;
+  description: string;
+  price: number | '';
+  condition: 'New' | 'Used' | '';
+  brand: string;
+  brandOther: string;
+  sellerType: 'Individual' | 'Dealer' | '';
+  city: string;
+  lat: number | null;
+  lng: number | null;
+  phone: string;
+  whatsapp: string;
+  email: string;
+  termsAccepted: boolean;
+  specs: Record<string, unknown>;
+  media: FashionMediaData;
 }
 
 const INITIAL_FORM_DATA: PostAdFormData = {
@@ -111,7 +141,7 @@ const INITIAL_RE_DATA: RealEstateFormData = {
     balcony: '', buildingAge: '', floor: '', totalFloors: '',
     lift: false, carParking: false, fromWho: '',
   },
-  address: { city: '', district: '', street: '', unit: '', neighborhood: [] },
+  address: { city: '', district: '', street: '', unit: '', neighborhood: [], lat: null, lng: null },
   media: { photos: [], videoUrl: '' },
   contact: { phone: '', whatsapp: '', email: '', termsAccepted: false },
 };
@@ -123,10 +153,10 @@ const INITIAL_VH_DATA: VehiclesFormData = {
   specs: {
     year: '', make: '', customMake: '', model: '', customModel: '',
     engineType: '', wheelDriveType: '', trimLevel: '', customTrim: '',
-    bodyType: '', gearType: '', engineSize: '', enginePower: '',
+    bodyType: '', customBodyType: '', gearType: '', engineSize: '', enginePower: '',
   },
   condition: {
-    price: '', currency: 'AFN', mileage: '', color: '', sellerSource: '',
+    price: '', currency: 'AFN', mileage: '', color: '', customColor: '', sellerSource: '',
     hasDamage: null, exchange: null, hasNumberPlate: null,
     numberPlateCity: '', handDrive: '', damageDetails: '', otherOptions: [],
   },
@@ -143,22 +173,38 @@ const INITIAL_EL_DATA: ElectronicsFormData = {
   price: '',
   negotiable: false,
   condition: '',
-  location: {
-    city: '',
-    area: '',
-    street: '',
-    lat: null,
-    lng: null,
-  },
   media: {
     photos: [],
     videoUrl: '',
   },
-  contact: {
-    phone: '',
-    whatsapp: '',
-    email: '',
-    termsAccepted: false,
+  city: '',
+  sellerType: '',
+  phone: '',
+  whatsapp: '',
+  email: '',
+  termsAccepted: false,
+};
+
+const INITIAL_FA_DATA: FashionFormData = {
+  subcategory: '',
+  title: '',
+  description: '',
+  price: '',
+  condition: '',
+  brand: '',
+  brandOther: '',
+  sellerType: '',
+  city: '',
+  lat: null,
+  lng: null,
+  phone: '',
+  whatsapp: '',
+  email: '',
+  termsAccepted: false,
+  specs: {},
+  media: {
+    images: [],
+    video: '',
   },
 };
 
@@ -169,20 +215,161 @@ const RE_STEPS = ['stepCategory', 'reStepType', 'reStepDetails', 'reStepAddress'
 // Vehicle steps
 const VH_STEPS = ['stepCategory', 'vhStepType', 'vhStepSpecs', 'vhStepCondition', 'vhStepAddress', 'vhStepMedia', 'vhStepContact'] as const;
 // Electronics steps
-const EL_STEPS = ['stepCategory', 'elStepCategory', 'elStepBasic', 'elStepSpecs', 'elStepPrice', 'elStepLocation', 'elStepMedia', 'elStepContact'] as const;
+const EL_STEPS = ['stepCategory', 'elStepBasic', 'elStepSpecs', 'elStepMedia', 'elStepDetails', 'elStepReview'] as const;
+// Fashion & Clothing steps
+const FA_STEPS = ['stepCategory', 'faStepBasic', 'faStepGeneral', 'faStepSpecs', 'faStepMedia', 'faStepContact', 'faStepReview'] as const;
+
+const isFashionSlug = (categorySlug: string | null): boolean => {
+  if (!categorySlug) return false;
+  return FASHION_SLUGS.includes(categorySlug);
+};
 
 const getStepsForCategorySlug = (categorySlug: string | null): readonly string[] => {
   if (categorySlug === REAL_ESTATE_SLUG) return RE_STEPS;
   if (categorySlug === VEHICLES_SLUG) return VH_STEPS;
   if (categorySlug === ELECTRONICS_SLUG) return EL_STEPS;
+  if (isFashionSlug(categorySlug)) return FA_STEPS;
   return DEFAULT_STEPS;
+};
+
+const normalizeStringArray = (value: unknown): string[] =>
+  Array.isArray(value) ? value.map((v) => String(v).trim()).filter(Boolean) : [];
+
+const normalizeWizardConfig = (value: unknown): WizardFormConfig => {
+  if (!value || typeof value !== 'object') return { sections: [], lists: [] };
+
+  const raw = value as Record<string, unknown>;
+  const rawSections = Array.isArray(raw.sections) ? raw.sections : [];
+  const rawLists = Array.isArray(raw.lists) ? raw.lists : [];
+
+  const sections: WizardFormConfig['sections'] = rawSections.map((section, sectionIdx) => {
+    const s = (section && typeof section === 'object' ? section : {}) as Record<string, unknown>;
+    const rawFields = Array.isArray(s.fields) ? s.fields : [];
+
+    return {
+      id: String(s.id || `section_${sectionIdx + 1}`),
+      title: String(s.title || ''),
+      step: s.step ? String(s.step) : undefined,
+      fields: rawFields.map((field, fieldIdx) => {
+        const f = (field && typeof field === 'object' ? field : {}) as Record<string, unknown>;
+        const rawType = String(f.type || 'text');
+        const type = ['text', 'number', 'textarea', 'select', 'checkbox'].includes(rawType)
+          ? (rawType as 'text' | 'number' | 'textarea' | 'select' | 'checkbox')
+          : 'text';
+
+        return {
+          id: String(f.id || `field_${sectionIdx + 1}_${fieldIdx + 1}`),
+          label: String(f.label || ''),
+          type,
+          required: Boolean(f.required),
+          options: normalizeStringArray(f.options),
+        };
+      }),
+    };
+  });
+
+  const lists: WizardFormConfig['lists'] = rawLists.map((list, listIdx) => {
+    const l = (list && typeof list === 'object' ? list : {}) as Record<string, unknown>;
+    const rawSubLists = (Array.isArray(l.sub_lists) ? l.sub_lists : Array.isArray(l.subLists) ? l.subLists : []) as unknown[];
+
+    return {
+      id: String(l.id || `list_${listIdx + 1}`),
+      title: String(l.title || ''),
+      step: l.step ? String(l.step) : undefined,
+      values: normalizeStringArray(l.values),
+      sub_lists: rawSubLists.map((sub, subIdx) => {
+        const s = (sub && typeof sub === 'object' ? sub : {}) as Record<string, unknown>;
+        return {
+          id: String(s.id || `sub_${listIdx + 1}_${subIdx + 1}`),
+          title: String(s.title || ''),
+          values: normalizeStringArray(s.values),
+        };
+      }),
+    };
+  });
+
+  return { sections, lists };
+};
+
+const getConfigForStep = (config: WizardFormConfig, step: string): WizardFormConfig => {
+  const sections = config.sections.filter((section) => !section.step || section.step === step);
+  const lists = config.lists.filter((list) => !list.step || list.step === step);
+  return { sections, lists };
+};
+
+const normalizeElectronicsSpecsForSubmit = (specs: Record<string, string>): Record<string, string> => {
+  const normalized: Record<string, string> = {};
+
+  Object.entries(specs).forEach(([key, value]) => {
+    if (key === 'customMake') return;
+    if (key.startsWith('custom_')) return;
+
+    if (value === 'Other') {
+      const customValue = key === 'make' || key === 'brand'
+        ? (specs.customMake || '').trim()
+        : (specs[`custom_${key}`] || '').trim();
+
+      normalized[key] = customValue || value;
+      return;
+    }
+
+    normalized[key] = value;
+  });
+
+  return normalized;
+};
+
+const normalizeVehicleSpecsForSubmit = (specs: VehicleSpecsData): VehicleSpecsData => {
+  const normalized = { ...specs };
+  if (normalized.bodyType === 'other' && normalized.customBodyType.trim()) {
+    normalized.bodyType = normalized.customBodyType.trim() as VehicleSpecsData['bodyType'];
+  }
+  return normalized;
+};
+
+const normalizeVehicleConditionForSubmit = (condition: VehicleConditionData): VehicleConditionData => {
+  const normalized = { ...condition };
+  if (normalized.color === 'other' && normalized.customColor.trim()) {
+    normalized.color = normalized.customColor.trim() as VehicleConditionData['color'];
+  }
+  return normalized;
+};
+
+const normalizeFashionSpecsForSubmit = (specs: Record<string, unknown>): Record<string, unknown> => {
+  const normalized: Record<string, unknown> = {};
+
+  Object.entries(specs).forEach(([key, value]) => {
+    if (key.endsWith('Other')) return;
+
+    if (typeof value === 'string' && value === 'Other') {
+      const customValue = specs[`${key}Other`];
+      normalized[key] = typeof customValue === 'string' && customValue.trim() ? customValue.trim() : value;
+      return;
+    }
+
+    if (Array.isArray(value) && value.includes('Other')) {
+      const customValue = specs[`${key}Other`];
+      const base = value.filter((item) => item !== 'Other');
+      if (typeof customValue === 'string' && customValue.trim()) {
+        normalized[key] = [...base, customValue.trim()];
+      } else {
+        normalized[key] = base;
+      }
+      return;
+    }
+
+    normalized[key] = value;
+  });
+
+  return normalized;
 };
 
 type StepKey =
   | typeof DEFAULT_STEPS[number]
   | typeof RE_STEPS[number]
   | typeof VH_STEPS[number]
-  | typeof EL_STEPS[number];
+  | typeof EL_STEPS[number]
+  | typeof FA_STEPS[number];
 
 interface PostAdWizardProps {
   locale: Locale;
@@ -204,6 +391,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
   const [reData, setReData] = useState<RealEstateFormData>(INITIAL_RE_DATA);
   const [vhData, setVhData] = useState<VehiclesFormData>(INITIAL_VH_DATA);
   const [elData, setElData] = useState<ElectronicsFormData>(INITIAL_EL_DATA);
+  const [faData, setFaData] = useState<FashionFormData>(INITIAL_FA_DATA);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -217,6 +405,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
   const [selectedCategoryName, setSelectedCategoryName] = useState<string | null>(null);
   const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
   const [loadingDraft, setLoadingDraft] = useState(false);
+  const [submittedListingId, setSubmittedListingId] = useState<string | null>(null);
   const supabase = createClient();
 
   const detailsRef = useRef<StepDetailsHandle>(null);
@@ -238,6 +427,10 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
     setElData((prev) => ({ ...prev, ...updates }));
   }, []);
 
+  const updateFAData = useCallback((updates: Partial<FashionFormData>) => {
+    setFaData((prev) => ({ ...prev, ...updates }));
+  }, []);
+
   const handleCategorySelect = useCallback(
     (categoryId: number, categorySlug?: string, categoryName?: string) => {
       const changingCategory = formData.categoryId !== categoryId;
@@ -249,6 +442,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         setReData(INITIAL_RE_DATA);
         setVhData(INITIAL_VH_DATA);
         setElData(INITIAL_EL_DATA);
+        setFaData(INITIAL_FA_DATA);
         setWizardValues({});
       }
     },
@@ -278,7 +472,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       if (!mounted) return;
 
       const raw = (data?.options_json || {}) as Record<string, unknown>;
-      const wf = (raw.wizard_forms || {}) as Partial<WizardFormConfig>;
+      const wfSource = raw.wizard_forms ?? raw.wizardForms ?? raw.wizard_form ?? raw.wizard;
       setSelectedCategorySlug((data?.slug as string | undefined) || null);
       setSelectedCategoryName(
         data
@@ -289,10 +483,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
               : (data.name_en as string)
           : null
       );
-      setWizardConfig({
-        sections: Array.isArray(wf.sections) ? (wf.sections as WizardFormConfig['sections']) : [],
-        lists: Array.isArray(wf.lists) ? (wf.lists as WizardFormConfig['lists']) : [],
-      });
+      setWizardConfig(normalizeWizardConfig(wfSource));
       setLoadingWizardConfig(false);
     };
 
@@ -326,7 +517,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
             locale === 'en'
               ? 'Draft could not be loaded.'
               : locale === 'ps'
-                ? 'مسوده پورته نه شوه.'
+                ? 'مسوده پورته نه سوه.'
                 : 'پیش‌نویس بارگذاری نشد.'
           );
           setLoadingDraft(false);
@@ -339,6 +530,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       const draftReData = (draftData.reData || {}) as Partial<RealEstateFormData>;
       const draftVhData = (draftData.vhData || {}) as Partial<VehiclesFormData>;
       const draftElData = (draftData.elData || {}) as Partial<ElectronicsFormData>;
+      const draftFaData = (draftData.faData || {}) as Partial<FashionFormData>;
       const categoryId = draftRow.category_id ?? draftFormData.categoryId ?? null;
 
       let categorySlug: string | null = null;
@@ -423,17 +615,22 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
           ...INITIAL_EL_DATA.specs,
           ...((draftElData.specs as Record<string, string> | undefined) || {}),
         },
-        location: {
-          ...INITIAL_EL_DATA.location,
-          ...((draftElData.location as Partial<ElectronicsLocationData> | undefined) || {}),
-        },
         media: {
           ...INITIAL_EL_DATA.media,
           ...((draftElData.media as Partial<ElectronicsMediaData> | undefined) || {}),
         },
-        contact: {
-          ...INITIAL_EL_DATA.contact,
-          ...((draftElData.contact as Partial<ElectronicsContactData> | undefined) || {}),
+      });
+      setFaData({
+        ...INITIAL_FA_DATA,
+        ...draftFaData,
+        subcategory: draftFaData.subcategory ?? INITIAL_FA_DATA.subcategory,
+        specs: {
+          ...INITIAL_FA_DATA.specs,
+          ...((draftFaData.specs as Record<string, unknown> | undefined) || {}),
+        },
+        media: {
+          ...INITIAL_FA_DATA.media,
+          ...((draftFaData.media as Partial<FashionMediaData> | undefined) || {}),
         },
       });
       setWizardValues(((draftData.wizardValues as Record<string, unknown> | undefined) || {}));
@@ -469,7 +666,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
           {locale === 'en'
             ? 'You need to be logged in to post an ad.'
             : locale === 'ps'
-              ? 'د اعلان د خپرولو لپاره تاسو باید ننوتل شوي وئ.'
+              ? 'د اعلان د خپرولو لپاره تاسو باید ننوتل سوي وئ.'
               : 'برای ارسال آگهی باید وارد شوید.'}
         </p>
         <Link
@@ -493,12 +690,12 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
   const isRealEstate = selectedCategorySlug === REAL_ESTATE_SLUG;
   const isVehicles = selectedCategorySlug === VEHICLES_SLUG;
   const isElectronics = selectedCategorySlug === ELECTRONICS_SLUG;
+  const isFashion = isFashionSlug(selectedCategorySlug);
   const steps: readonly string[] = getStepsForCategorySlug(selectedCategorySlug);
 
   const getStepLabel = (step: string): string => {
     switch (step) {
       case 'stepCategory': return t('stepCategory');
-      case 'elStepCategory': return tEL('stepBasic');
       case 'stepDetails': return t('stepDetails');
       case 'stepPhotos': return t('stepPhotos');
       case 'stepContact': return t('stepContact');
@@ -514,31 +711,34 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       case 'vhStepMedia': return tVH('stepMedia');
       case 'vhStepContact': return tVH('stepContact');
       case 'elStepBasic': return tEL('stepBasic');
-      case 'elStepCategory': return tEL('stepBasic');
       case 'elStepSpecs': return tEL('stepSpecs');
-      case 'elStepPrice': return tEL('stepPrice');
-      case 'elStepLocation': return tEL('stepLocation');
       case 'elStepMedia': return tEL('stepMedia');
-      case 'elStepContact': return tEL('stepContact');
+      case 'elStepDetails': return tEL('stepContact');
+      case 'elStepReview': return tEL('stepReview');
+      case 'faStepBasic': return 'Basic Information';
+      case 'faStepGeneral': return 'General Details';
+      case 'faStepSpecs': return 'Specifications';
+      case 'faStepMedia': return 'Media Upload';
+      case 'faStepContact': return 'Contact & Terms';
+      case 'faStepReview': return 'Review & Submit';
       default: return '';
     }
   };
 
   const currentStepKey = steps[currentStep] as StepKey;
 
-  const shouldShowDynamicFields =
-    currentStepKey === 'stepDetails' || currentStepKey === 'reStepDetails' || currentStepKey === 'vhStepSpecs';
-
-  const hasDynamicFields = wizardConfig.sections.length > 0 || wizardConfig.lists.length > 0;
+  const fallbackDynamicSteps = new Set<StepKey>(['stepDetails', 'reStepDetails', 'vhStepSpecs']);
+  const hasStepScopedWizard = wizardConfig.sections.some((s) => !!s.step) || wizardConfig.lists.some((l) => !!l.step);
+  const dynamicConfigForCurrentStep = getConfigForStep(wizardConfig, currentStepKey);
+  const hasDynamicFields = dynamicConfigForCurrentStep.sections.length > 0 || dynamicConfigForCurrentStep.lists.length > 0;
+  const shouldShowDynamicFields = hasStepScopedWizard ? hasDynamicFields : fallbackDynamicSteps.has(currentStepKey);
 
   const canProceed = (): boolean => {
-    const requiredDynamicValid = !shouldShowDynamicFields || !hasDynamicFields || isWizardRequiredFieldsValid(wizardConfig, wizardValues);
+    const requiredDynamicValid = !shouldShowDynamicFields || !hasDynamicFields || isWizardRequiredFieldsValid(dynamicConfigForCurrentStep, wizardValues);
 
     switch (currentStepKey) {
       case 'stepCategory':
         return formData.categoryId !== null;
-      case 'elStepCategory':
-        return elData.subcategory !== '';
       case 'stepDetails':
         return requiredDynamicValid;
       case 'stepPhotos':
@@ -564,17 +764,18 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       case 'vhStepCondition':
         return vhData.condition.price !== '' && vhData.condition.mileage !== '' && vhData.condition.sellerSource !== '';
       case 'vhStepAddress':
-        return vhData.address.city !== '' && vhData.address.lat !== null && vhData.address.lng !== null;
+        return vhData.address.city !== '';
       case 'vhStepMedia':
         return vhData.media.photos.length >= 1;
       case 'vhStepContact':
         return vhData.contact.phone !== '' && vhData.contact.termsAccepted;
       // Electronics steps
-      case 'elStepCategory':
-        return elData.subcategory !== '';
       case 'elStepBasic':
-        return elData.title.trim().length >= 3 && elData.details.trim().length >= 10;
+        return elData.title.trim().length >= 3 && elData.details.trim().length >= 10 && elData.subcategory !== '';
       case 'elStepSpecs': {
+        if (elData.price === '') return false;
+        if (!hasConditionInSpecs(elData.subcategory) && elData.condition.trim() === '') return false;
+
         const fields = getElectronicsSpecsConfig(elData.subcategory);
         const selectedMake = (elData.specs.make || elData.specs.brand || '').trim();
         const isOtherMake = selectedMake === 'Other';
@@ -584,17 +785,55 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
           if (!field.required) return true;
           if (field.id === 'model' && isOtherMake) return true;
           const value = elData.specs[field.id];
-          return !!value && value.trim() !== '';
+          if (!value || value.trim() === '') return false;
+          if (value === 'Other') {
+            if (field.id === 'make' || field.id === 'brand') {
+              return !!(elData.specs.customMake || '').trim();
+            }
+            return !!(elData.specs[`custom_${field.id}`] || '').trim();
+          }
+          return true;
         });
       }
-      case 'elStepPrice':
-        return elData.price !== '' && (!hasConditionInSpecs(elData.subcategory) ? elData.condition.trim() !== '' : true);
-      case 'elStepLocation':
-        return elData.location.city !== '' && elData.location.lat !== null && elData.location.lng !== null;
       case 'elStepMedia':
         return elData.media.photos.length >= 1;
-      case 'elStepContact':
-        return elData.contact.phone.trim() !== '' && elData.contact.termsAccepted;
+      case 'elStepDetails':
+        return elData.city !== '' && elData.phone.trim() !== '' && elData.termsAccepted;
+      case 'elStepReview':
+        return true;
+      // Fashion & Clothing steps
+      case 'faStepBasic':
+        return faData.title.trim().length >= 3 && faData.description.trim().length >= 10 && faData.subcategory !== '';
+      case 'faStepGeneral':
+        return faData.price !== '' && faData.condition !== '' && (faData.brand !== '' && (faData.brand !== 'Other' || faData.brandOther.trim() !== '')) && faData.sellerType !== '';
+      case 'faStepSpecs': {
+        const fields = getFashionSpecsConfig(faData.subcategory);
+        return fields.every((field) => {
+          if (!field.required) return true;
+          const value = faData.specs[field.key];
+          if (field.type === 'multiselect') {
+            return Array.isArray(value) && value.length > 0;
+          }
+          if (field.type === 'checkbox' || field.type === 'toggle') {
+            return typeof value === 'boolean';
+          }
+          if (typeof value === 'string' && value === 'Other') {
+            const custom = faData.specs[`${field.key}Other`];
+            return typeof custom === 'string' && custom.trim().length > 0;
+          }
+          if (Array.isArray(value) && value.includes('Other')) {
+            const custom = faData.specs[`${field.key}Other`];
+            return typeof custom === 'string' && custom.trim().length > 0;
+          }
+          return typeof value === 'string' && value.trim().length > 0;
+        });
+      }
+      case 'faStepMedia':
+        return faData.media.images.length >= 1;
+      case 'faStepContact':
+        return faData.city.trim() !== '' && faData.phone.trim() !== '' && faData.termsAccepted;
+      case 'faStepReview':
+        return true;
       default:
         return false;
     }
@@ -682,10 +921,12 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         photosList = reData.media.photos;
       } else if (isVehicles) {
         const isSourceOwner = vhData.condition.sellerSource === 'owner';
+        const normalizedVehicleSpecs = normalizeVehicleSpecsForSubmit(vhData.specs);
+        const normalizedVehicleCondition = normalizeVehicleConditionForSubmit(vhData.condition);
         metadata = {
           vehicleType: vhData.vehicleType,
-          ...vhData.specs,
-          ...vhData.condition,
+          ...normalizedVehicleSpecs,
+          ...normalizedVehicleCondition,
           wizard_forms: wizardValues,
         };
         fromOwner = isSourceOwner;
@@ -698,35 +939,60 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         condition = 'good';
         photosList = vhData.media.photos;
       } else if (isElectronics) {
-        const specsWithCondition = { ...elData.specs };
+        const specsWithCondition = normalizeElectronicsSpecsForSubmit(elData.specs);
         metadata = {
           subcategory: elData.subcategory,
-          specs: specsWithCondition,
+          ...specsWithCondition,
           negotiable: elData.negotiable,
-          location: {
-            city: elData.location.city,
-            area: elData.location.area,
-            street: elData.location.street,
-            lat: elData.location.lat,
-            lng: elData.location.lng,
-          },
+          sellerType: elData.sellerType,
           media: {
             video: elData.media.videoUrl,
           },
           contact: {
-            phone: elData.contact.phone,
-            whatsapp: elData.contact.whatsapp,
-            email: elData.contact.email,
+            phone: elData.phone,
+            whatsapp: elData.whatsapp,
+            email: elData.email,
           },
           wizard_forms: wizardValues,
         };
         title = elData.title || title;
         description = elData.details || description;
         price = Number(elData.price) || price;
-        city = elData.location.city || city;
-        _phone = elData.contact.phone || _phone;
+        city = elData.city || city;
+        _phone = elData.phone || _phone;
         condition = (elData.specs.condition || elData.condition || condition || 'good') as string;
         photosList = elData.media.photos;
+      } else if (isFashion) {
+        const normalizedFashionSpecs = normalizeFashionSpecsForSubmit(faData.specs);
+        const normalizedBrand = faData.brand === 'Other' ? faData.brandOther.trim() : faData.brand;
+        metadata = {
+          subcategory: faData.subcategory,
+          condition: faData.condition,
+          brand: normalizedBrand,
+          sellerType: faData.sellerType,
+          ...normalizedFashionSpecs,
+          location: {
+            city: faData.city,
+            lat: faData.lat,
+            lng: faData.lng,
+          },
+          contact: {
+            phone: faData.phone,
+            whatsapp: faData.whatsapp,
+            email: faData.email,
+          },
+          media: {
+            video: faData.media.video,
+          },
+          wizard_forms: wizardValues,
+        };
+        title = faData.title || title;
+        description = faData.description || description;
+        price = Number(faData.price) || price;
+        city = faData.city || city;
+        _phone = faData.phone || _phone;
+        condition = (faData.condition || condition || 'good') as string;
+        photosList = faData.media.images;
       } else {
         metadata = {
           ...metadata,
@@ -785,6 +1051,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
           .eq('user_id', user.id);
       }
 
+      setSubmittedListingId(listing.id as string);
       setSubmitted(true);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Failed to submit listing.';
@@ -799,10 +1066,18 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
     setReData(INITIAL_RE_DATA);
     setVhData(INITIAL_VH_DATA);
     setElData(INITIAL_EL_DATA);
+    setFaData(INITIAL_FA_DATA);
     setCurrentStep(0);
     setSubmitted(false);
+    setSubmittedListingId(null);
     setWizardValues({});
     setShowPreview(false);
+  };
+
+  const handleClearFashionForm = () => {
+    setFaData(INITIAL_FA_DATA);
+    setCurrentStep(1);
+    setSubmitError(null);
   };
 
   const handleSaveDraft = async () => {
@@ -823,6 +1098,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       if (isRealEstate) draftData = { ...draftData, reData };
       else if (isVehicles) draftData = { ...draftData, vhData };
       else if (isElectronics) draftData = { ...draftData, elData };
+      else if (isFashion) draftData = { ...draftData, faData };
 
       const { data: savedDraft, error: draftError } = await supabase.from('listing_drafts').upsert({
         user_id: user.id,
@@ -862,7 +1138,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         <p className="text-slate-600 mb-8">{t('success')}</p>
         <div className={`flex items-center justify-center gap-4 ${rtl ? 'flex-row-reverse' : ''}`}>
           <Link
-            href={`/${locale}`}
+            href={submittedListingId ? `/${locale}/listing/${submittedListingId}` : `/${locale}`}
             className="px-6 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition font-medium"
           >
             {t('viewListing')}
@@ -886,14 +1162,6 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
             locale={locale}
             selectedCategory={formData.categoryId}
             onSelect={handleCategorySelect}
-          />
-        );
-      case 'elStepCategory':
-        return (
-          <StepElectronicsCategory
-            locale={locale}
-            subcategory={elData.subcategory}
-            onChange={(subcategory) => updateELData({ subcategory, specs: {}, condition: '' })}
           />
         );
       case 'stepDetails':
@@ -951,6 +1219,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
             ref={reDetailsRef}
             locale={locale}
             purpose={reData.purpose as PropertyPurpose}
+            propertyType={reData.propertyType as PropertyType}
             data={reData.propertyDetails}
             onChange={(data) =>
               setReData((prev) => ({
@@ -1090,20 +1359,19 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
           />
         );
       // Electronics steps
-      case 'elStepCategory':
-        return (
-          <StepElectronicsCategory
-            locale={locale}
-            subcategory={elData.subcategory}
-            onChange={(subcategory) => updateELData({ subcategory, specs: {}, condition: '' })}
-          />
-        );
       case 'elStepBasic':
         return (
           <StepElectronicsBasicInfo
             locale={locale}
-            data={{ title: elData.title, details: elData.details }}
-            onChange={(data) => updateELData(data)}
+            data={{ title: elData.title, details: elData.details, subcategory: elData.subcategory }}
+            onChange={(data) => {
+              if (data.subcategory !== undefined && data.subcategory !== elData.subcategory) {
+                // Reset specs when subcategory changes
+                updateELData({ ...data, specs: {}, condition: '' });
+              } else {
+                updateELData(data);
+              }
+            }}
           />
         );
       case 'elStepSpecs':
@@ -1112,33 +1380,12 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
             locale={locale}
             subcategory={elData.subcategory}
             specs={elData.specs}
-            onChange={(specs) => updateELData({ specs })}
-          />
-        );
-      case 'elStepPrice':
-        return (
-          <StepElectronicsPrice
-            locale={locale}
-            data={{
-              price: elData.price,
-              negotiable: elData.negotiable,
-              condition: elData.condition,
-            }}
+            price={elData.price}
+            negotiable={elData.negotiable}
+            condition={elData.condition}
             requireCondition={!hasConditionInSpecs(elData.subcategory)}
-            onChange={(data) => updateELData(data)}
-          />
-        );
-      case 'elStepLocation':
-        return (
-          <StepElectronicsLocation
-            locale={locale}
-            data={elData.location}
-            onChange={(locationUpdate) =>
-              setElData((prev) => ({
-                ...prev,
-                location: { ...prev.location, ...locationUpdate },
-              }))
-            }
+            onChange={(specs) => updateELData({ specs })}
+            onDetailsChange={(detailsUpdate) => updateELData(detailsUpdate as Partial<ElectronicsFormData>)}
           />
         );
       case 'elStepMedia':
@@ -1154,17 +1401,133 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
             }
           />
         );
-      case 'elStepContact':
+      case 'elStepDetails':
         return (
-          <StepElectronicsContact
+          <StepElectronicsDetails
             locale={locale}
-            data={elData.contact}
-            onChange={(contactUpdate) =>
-              setElData((prev) => ({
-                ...prev,
-                contact: { ...prev.contact, ...contactUpdate },
-              }))
-            }
+            data={{
+              city: elData.city,
+              sellerType: elData.sellerType,
+              phone: elData.phone,
+              whatsapp: elData.whatsapp,
+              email: elData.email,
+              termsAccepted: elData.termsAccepted,
+            }}
+            onChange={(detailsUpdate) => {
+              updateELData(detailsUpdate as Partial<ElectronicsFormData>);
+            }}
+          />
+        );
+      case 'elStepReview':
+        return (
+          <StepElectronicsReview
+            locale={locale}
+            subcategory={elData.subcategory}
+            title={elData.title}
+            details={elData.details}
+            price={elData.price}
+            negotiable={elData.negotiable}
+            condition={elData.condition}
+            contactData={{
+              city: elData.city,
+              sellerType: elData.sellerType,
+              phone: elData.phone,
+              whatsapp: elData.whatsapp,
+              email: elData.email,
+              termsAccepted: elData.termsAccepted,
+            }}
+            specs={elData.specs}
+            media={elData.media}
+            onEdit={(stepIndex) => setCurrentStep(stepIndex)}
+          />
+        );
+      // Fashion & Clothing steps
+      case 'faStepBasic':
+        return (
+          <StepFashionBasicInfo
+            locale={locale}
+            data={{
+              title: faData.title,
+              description: faData.description,
+              subcategory: faData.subcategory,
+            }}
+            onChange={(updates) => {
+              if (updates.subcategory !== undefined && updates.subcategory !== faData.subcategory) {
+                updateFAData({ ...updates, specs: {}, brand: '' });
+                return;
+              }
+              updateFAData(updates);
+            }}
+          />
+        );
+      case 'faStepGeneral':
+        return (
+          <StepFashionGeneralDetails
+            locale={locale}
+            data={{
+              price: faData.price,
+              condition: faData.condition,
+              brand: faData.brand,
+              brandOther: faData.brandOther,
+              sellerType: faData.sellerType,
+            }}
+            brandOptions={faData.subcategory ? FASHION_BRANDS_BY_SUBCATEGORY[faData.subcategory] || [] : []}
+            onChange={(updates) => updateFAData(updates)}
+          />
+        );
+      case 'faStepSpecs':
+        return (
+          <StepFashionSpecs
+            locale={locale}
+            subcategory={faData.subcategory}
+            specs={faData.specs}
+            onChange={(specs) => updateFAData({ specs })}
+          />
+        );
+      case 'faStepMedia':
+        return (
+          <StepFashionMedia
+            locale={locale}
+            data={faData.media}
+            onChange={(updates) => updateFAData({ media: { ...faData.media, ...updates } })}
+          />
+        );
+      case 'faStepReview':
+        return (
+          <StepFashionReview
+            locale={locale}
+            title={faData.title}
+            description={faData.description}
+            subcategory={faData.subcategory}
+            price={faData.price}
+            condition={faData.condition}
+            brand={faData.brand === 'Other' ? faData.brandOther : faData.brand}
+            sellerType={faData.sellerType}
+            city={faData.city}
+            lat={faData.lat}
+            lng={faData.lng}
+            phone={faData.phone}
+            whatsapp={faData.whatsapp}
+            email={faData.email}
+            specs={faData.specs}
+            media={faData.media}
+            onEdit={(stepIndex) => setCurrentStep(stepIndex)}
+          />
+        );
+      case 'faStepContact':
+        return (
+          <StepFashionContact
+            locale={locale}
+            data={{
+              city: faData.city,
+              lat: faData.lat,
+              lng: faData.lng,
+              phone: faData.phone,
+              whatsapp: faData.whatsapp,
+              email: faData.email,
+              termsAccepted: faData.termsAccepted,
+            }}
+            onChange={(updates) => updateFAData(updates)}
           />
         );
       default:
@@ -1226,7 +1589,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         {!loadingWizardConfig && shouldShowDynamicFields && hasDynamicFields && (
           <DynamicWizardFields
             locale={locale}
-            config={wizardConfig}
+            config={dynamicConfigForCurrentStep}
             values={wizardValues}
             onChange={(key, value) => setWizardValues((prev) => ({ ...prev, [key]: value }))}
           />
@@ -1262,6 +1625,15 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
             >
               <Save className="w-4 h-4" />
               {draftSaved ? tCommon('saved') : savingDraft ? tCommon('loading') : t('saveDraft')}
+            </button>
+          )}
+
+          {isFashion && (
+            <button
+              onClick={handleClearFashionForm}
+              className={`px-4 py-2.5 rounded-lg font-medium transition border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 ${rtl ? 'text-right' : 'text-left'}`}
+            >
+              Clear form
             </button>
           )}
 
@@ -1344,13 +1716,22 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
               )}
               {isElectronics && (
                 <>
-                  <div><span className="font-semibold text-slate-700">Subcategory:</span> {elData.subcategory}</div>
-                  <div><span className="font-semibold text-slate-700">{t('stepDetails')}:</span> {elData.title}</div>
+                  <div><span className="font-semibold text-slate-700">{tEL('subcategoryLabel')}:</span> {elData.subcategory}</div>
+                  <div><span className="font-semibold text-slate-700">{tEL('adTitle')}:</span> {elData.title}</div>
                   <div><span className="font-semibold text-slate-700">{tCommon('price')}:</span> {elData.price}</div>
-                  <div><span className="font-semibold text-slate-700">City:</span> {elData.location.city}</div>
+                  <div><span className="font-semibold text-slate-700">{tEL('city')}:</span> {elData.city}</div>
                 </>
               )}
-              {!isVehicles && !isRealEstate && !isElectronics && (
+              {isFashion && (
+                <>
+                  <div><span className="font-semibold text-slate-700">subcategory:</span> {faData.subcategory}</div>
+                  <div><span className="font-semibold text-slate-700">title:</span> {faData.title}</div>
+                  <div><span className="font-semibold text-slate-700">price:</span> {faData.price}</div>
+                  <div><span className="font-semibold text-slate-700">city:</span> {faData.city}</div>
+                  <div><span className="font-semibold text-slate-700">images:</span> {faData.media.images.length}</div>
+                </>
+              )}
+              {!isVehicles && !isRealEstate && !isElectronics && !isFashion && (
                 <>
                   <div><span className="font-semibold text-slate-700">{t('stepDetails')}:</span> {formData.title}</div>
                   <div><span className="font-semibold text-slate-700">{tCommon('price')}:</span> {formData.price} {formData.currency}</div>

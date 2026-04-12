@@ -194,9 +194,7 @@ export const StepVehicleAddress: React.FC<StepVehicleAddressProps> = ({
 
       {/* Map Location */}
       <div>
-        <label className={labelClass}>
-          {t('mapLocation')} <span className="text-red-500">*</span>
-        </label>
+        <label className={labelClass}>{t('mapLocation')}</label>
         <p className={`text-sm text-slate-500 mb-3 ${rtl ? 'text-right' : 'text-left'}`}>
           {t('clickMapToPin')}
         </p>
