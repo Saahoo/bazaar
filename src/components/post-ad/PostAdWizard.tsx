@@ -36,9 +36,17 @@ import { StepFashionSpecs } from './fashion/StepFashionSpecs';
 import { StepFashionMedia, FashionMediaData } from './fashion/StepFashionMedia';
 import { StepFashionContact } from './fashion/StepFashionContact';
 import { StepFashionReview } from './fashion/StepFashionReview';
+import { StepSpareBasicInfo } from './spare-parts/StepSpareBasicInfo';
+import { StepSpareGeneralDetails } from './spare-parts/StepSpareGeneralDetails';
+import { StepSpareCompatibility } from './spare-parts/StepSpareCompatibility';
+import { StepSpareSpecifications } from './spare-parts/StepSpareSpecifications';
+import { StepSpareMedia, SpareMediaData } from './spare-parts/StepSpareMedia';
+import { StepSpareContact } from './spare-parts/StepSpareContact';
+import { StepSpareReview } from './spare-parts/StepSpareReview';
 import { DynamicWizardFields, WizardFormConfig, isWizardRequiredFieldsValid } from './DynamicWizardFields';
 import { ElectronicsSubcategory, getElectronicsSpecsConfig, hasConditionInSpecs } from '@/lib/constants/electronics-wizard';
 import { FashionSubcategory, FASHION_BRANDS_BY_SUBCATEGORY, FASHION_SUBCATEGORY_LABEL_KEYS, getFashionSpecsConfig } from '@/lib/constants/fashion-wizard';
+import { SparePartsSubcategory, VEHICLE_SPARE_SUBCATEGORIES, ELECTRONICS_OR_MACHINERY_SUBCATEGORIES } from '@/lib/constants/spare-parts-wizard';
 import type { VehicleType as VehicleTypeEnum } from '@/lib/constants/vehicles';
 
 // Category slugs (more reliable than hardcoded IDs across environments)
@@ -46,6 +54,7 @@ const REAL_ESTATE_SLUG = 'real-estate';
 const VEHICLES_SLUG = 'vehicles';
 const ELECTRONICS_SLUG = 'electronics';
 const FASHION_SLUGS = ['fashion-clothing', 'fashion'];
+const SPARE_PARTS_SLUG = 'spare-parts';
 
 export interface PostAdFormData {
   categoryId: number | null;
@@ -116,6 +125,38 @@ export interface FashionFormData {
   termsAccepted: boolean;
   specs: Record<string, unknown>;
   media: FashionMediaData;
+}
+
+export interface SparePartsFormData {
+  subcategory: SparePartsSubcategory | '';
+  title: string;
+  description: string;
+  price: number | '';
+  currency: 'AFN' | 'USD' | 'PKR' | '';
+  condition: 'New' | 'Used' | 'Refurbished' | '';
+  brand: string;
+  city: string;
+  seller_type: 'Individual' | 'Dealer' | '';
+  make: string;
+  model: string;
+  year_from: string;
+  year_to: string;
+  engine_type: string;
+  transmission: string;
+  part_compatibility_notes: string;
+  device_type: string;
+  compatible_brand: string;
+  compatible_model: string;
+  version_series: string;
+  technical_compatibility_notes: string;
+  lat: number | null;
+  lng: number | null;
+  phone: string;
+  whatsapp: string;
+  email: string;
+  termsAccepted: boolean;
+  specs: Record<string, unknown>;
+  media: SpareMediaData;
 }
 
 const INITIAL_FORM_DATA: PostAdFormData = {
@@ -208,6 +249,42 @@ const INITIAL_FA_DATA: FashionFormData = {
   },
 };
 
+const INITIAL_SP_DATA: SparePartsFormData = {
+  subcategory: '',
+  title: '',
+  description: '',
+  price: '',
+  currency: 'AFN',
+  condition: '',
+  brand: '',
+  city: '',
+  seller_type: '',
+  make: '',
+  model: '',
+  year_from: '',
+  year_to: '',
+  engine_type: '',
+  transmission: '',
+  part_compatibility_notes: '',
+  device_type: '',
+  compatible_brand: '',
+  compatible_model: '',
+  version_series: '',
+  technical_compatibility_notes: '',
+  lat: null,
+  lng: null,
+  phone: '',
+  whatsapp: '',
+  email: '',
+  termsAccepted: false,
+  specs: {},
+  media: {
+    images: [],
+    has_video: false,
+    video: '',
+  },
+};
+
 // Default steps for non-specialized categories
 const DEFAULT_STEPS = ['stepCategory', 'stepDetails', 'stepPhotos', 'stepContact'] as const;
 // Real estate steps
@@ -218,6 +295,8 @@ const VH_STEPS = ['stepCategory', 'vhStepType', 'vhStepSpecs', 'vhStepCondition'
 const EL_STEPS = ['stepCategory', 'elStepBasic', 'elStepSpecs', 'elStepMedia', 'elStepDetails', 'elStepReview'] as const;
 // Fashion & Clothing steps
 const FA_STEPS = ['stepCategory', 'faStepBasic', 'faStepGeneral', 'faStepSpecs', 'faStepMedia', 'faStepContact', 'faStepReview'] as const;
+// Spare parts steps
+const SP_STEPS = ['stepCategory', 'spStepBasic', 'spStepGeneral', 'spStepCompatibility', 'spStepSpecs', 'spStepMedia', 'spStepContact', 'spStepReview'] as const;
 
 const isFashionSlug = (categorySlug: string | null): boolean => {
   if (!categorySlug) return false;
@@ -229,6 +308,7 @@ const getStepsForCategorySlug = (categorySlug: string | null): readonly string[]
   if (categorySlug === VEHICLES_SLUG) return VH_STEPS;
   if (categorySlug === ELECTRONICS_SLUG) return EL_STEPS;
   if (isFashionSlug(categorySlug)) return FA_STEPS;
+  if (categorySlug === SPARE_PARTS_SLUG) return SP_STEPS;
   return DEFAULT_STEPS;
 };
 
@@ -369,7 +449,8 @@ type StepKey =
   | typeof RE_STEPS[number]
   | typeof VH_STEPS[number]
   | typeof EL_STEPS[number]
-  | typeof FA_STEPS[number];
+  | typeof FA_STEPS[number]
+  | typeof SP_STEPS[number];
 
 interface PostAdWizardProps {
   locale: Locale;
@@ -381,6 +462,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
   const tVH = useTranslations('postAd.vehicles');
   const tEL = useTranslations('postAd.electronics');
   const tFA = useTranslations('postAd.fashion');
+  const tSP = useTranslations('postAd.spareParts');
   const tCommon = useTranslations('common');
   const tAuth = useTranslations('auth');
   const rtl = isRTL(locale);
@@ -393,6 +475,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
   const [vhData, setVhData] = useState<VehiclesFormData>(INITIAL_VH_DATA);
   const [elData, setElData] = useState<ElectronicsFormData>(INITIAL_EL_DATA);
   const [faData, setFaData] = useState<FashionFormData>(INITIAL_FA_DATA);
+  const [spData, setSpData] = useState<SparePartsFormData>(INITIAL_SP_DATA);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -432,6 +515,10 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
     setFaData((prev) => ({ ...prev, ...updates }));
   }, []);
 
+  const updateSPData = useCallback((updates: Partial<SparePartsFormData>) => {
+    setSpData((prev) => ({ ...prev, ...updates }));
+  }, []);
+
   const handleCategorySelect = useCallback(
     (categoryId: number, categorySlug?: string, categoryName?: string) => {
       const changingCategory = formData.categoryId !== categoryId;
@@ -444,6 +531,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         setVhData(INITIAL_VH_DATA);
         setElData(INITIAL_EL_DATA);
         setFaData(INITIAL_FA_DATA);
+        setSpData(INITIAL_SP_DATA);
         setWizardValues({});
       }
     },
@@ -532,6 +620,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       const draftVhData = (draftData.vhData || {}) as Partial<VehiclesFormData>;
       const draftElData = (draftData.elData || {}) as Partial<ElectronicsFormData>;
       const draftFaData = (draftData.faData || {}) as Partial<FashionFormData>;
+      const draftSpData = (draftData.spData || {}) as Partial<SparePartsFormData>;
       const categoryId = draftRow.category_id ?? draftFormData.categoryId ?? null;
 
       let categorySlug: string | null = null;
@@ -634,6 +723,19 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
           ...((draftFaData.media as Partial<FashionMediaData> | undefined) || {}),
         },
       });
+      setSpData({
+        ...INITIAL_SP_DATA,
+        ...draftSpData,
+        subcategory: draftSpData.subcategory ?? INITIAL_SP_DATA.subcategory,
+        specs: {
+          ...INITIAL_SP_DATA.specs,
+          ...((draftSpData.specs as Record<string, unknown> | undefined) || {}),
+        },
+        media: {
+          ...INITIAL_SP_DATA.media,
+          ...((draftSpData.media as Partial<SpareMediaData> | undefined) || {}),
+        },
+      });
       setWizardValues(((draftData.wizardValues as Record<string, unknown> | undefined) || {}));
 
       const savedStep = typeof draftData.currentStep === 'number' ? draftData.currentStep : (categoryId ? 1 : 0);
@@ -692,6 +794,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
   const isVehicles = selectedCategorySlug === VEHICLES_SLUG;
   const isElectronics = selectedCategorySlug === ELECTRONICS_SLUG;
   const isFashion = isFashionSlug(selectedCategorySlug);
+  const isSpareParts = selectedCategorySlug === SPARE_PARTS_SLUG;
   const steps: readonly string[] = getStepsForCategorySlug(selectedCategorySlug);
 
   const getStepLabel = (step: string): string => {
@@ -722,6 +825,13 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       case 'faStepMedia': return tFA('stepMedia');
       case 'faStepContact': return tFA('stepContact');
       case 'faStepReview': return tFA('stepReview');
+      case 'spStepBasic': return tSP('stepBasic');
+      case 'spStepGeneral': return tSP('stepGeneral');
+      case 'spStepCompatibility': return tSP('stepCompatibility');
+      case 'spStepSpecs': return tSP('stepSpecs');
+      case 'spStepMedia': return tSP('stepMedia');
+      case 'spStepContact': return tSP('stepContact');
+      case 'spStepReview': return tSP('stepReview');
       default: return '';
     }
   };
@@ -834,6 +944,48 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       case 'faStepContact':
         return faData.city.trim() !== '' && faData.phone.trim() !== '' && faData.termsAccepted;
       case 'faStepReview':
+        return true;
+      // Spare parts steps
+      case 'spStepBasic':
+        return spData.title.trim().length >= 3 && spData.description.trim().length >= 10 && spData.subcategory !== '';
+      case 'spStepGeneral':
+        return spData.price !== '' && spData.currency !== '' && spData.condition !== '' && spData.brand.trim() !== '' && spData.seller_type !== '';
+      case 'spStepCompatibility': {
+        if (VEHICLE_SPARE_SUBCATEGORIES.includes(spData.subcategory as SparePartsSubcategory)) {
+          return (
+            spData.make.trim() !== ''
+            && spData.model.trim() !== ''
+            && spData.year_from.trim() !== ''
+            && spData.year_to.trim() !== ''
+            && spData.engine_type.trim() !== ''
+            && spData.transmission.trim() !== ''
+          );
+        }
+
+        if (ELECTRONICS_OR_MACHINERY_SUBCATEGORIES.includes(spData.subcategory as SparePartsSubcategory)) {
+          return (
+            spData.device_type.trim() !== ''
+            && spData.compatible_brand.trim() !== ''
+            && spData.compatible_model.trim() !== ''
+          );
+        }
+
+        return true;
+      }
+      case 'spStepSpecs':
+        return typeof spData.specs.part_name === 'string'
+          && (spData.specs.part_name as string).trim().length > 0
+          && typeof spData.specs.part_type === 'string'
+          && (spData.specs.part_type as string).trim().length > 0
+          && typeof spData.specs.oem_aftermarket === 'string'
+          && (spData.specs.oem_aftermarket as string).trim().length > 0
+          && typeof spData.specs.availability === 'string'
+          && (spData.specs.availability as string).trim().length > 0;
+      case 'spStepMedia':
+        return spData.media.images.length >= 1;
+      case 'spStepContact':
+        return spData.city.trim() !== '' && spData.phone.trim() !== '' && spData.termsAccepted;
+      case 'spStepReview':
         return true;
       default:
         return false;
@@ -994,6 +1146,44 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         _phone = faData.phone || _phone;
         condition = (faData.condition || condition || 'good') as string;
         photosList = faData.media.images;
+      } else if (isSpareParts) {
+        metadata = {
+          subcategory: spData.subcategory,
+          condition: spData.condition,
+          brand: spData.brand,
+          city: spData.city,
+          seller_type: spData.seller_type,
+          make: spData.make,
+          model: spData.model,
+          year_from: spData.year_from,
+          year_to: spData.year_to,
+          engine_type: spData.engine_type,
+          transmission: spData.transmission,
+          part_compatibility_notes: spData.part_compatibility_notes,
+          device_type: spData.device_type,
+          compatible_brand: spData.compatible_brand,
+          compatible_model: spData.compatible_model,
+          version_series: spData.version_series,
+          technical_compatibility_notes: spData.technical_compatibility_notes,
+          lat: spData.lat,
+          lng: spData.lng,
+          phone: spData.phone,
+          whatsapp: spData.whatsapp,
+          email: spData.email,
+          ...spData.specs,
+          media: {
+            video: spData.media.video,
+          },
+          wizard_forms: wizardValues,
+        };
+        title = spData.title || title;
+        description = spData.description || description;
+        price = Number(spData.price) || price;
+        currency = spData.currency || currency;
+        city = spData.city || city;
+        _phone = spData.phone || _phone;
+        condition = (spData.condition || condition || 'good') as string;
+        photosList = spData.media.images;
       } else {
         metadata = {
           ...metadata,
@@ -1068,6 +1258,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
     setVhData(INITIAL_VH_DATA);
     setElData(INITIAL_EL_DATA);
     setFaData(INITIAL_FA_DATA);
+    setSpData(INITIAL_SP_DATA);
     setCurrentStep(0);
     setSubmitted(false);
     setSubmittedListingId(null);
@@ -1077,6 +1268,12 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
 
   const handleClearFashionForm = () => {
     setFaData(INITIAL_FA_DATA);
+    setCurrentStep(1);
+    setSubmitError(null);
+  };
+
+  const handleClearSparePartsForm = () => {
+    setSpData(INITIAL_SP_DATA);
     setCurrentStep(1);
     setSubmitError(null);
   };
@@ -1100,6 +1297,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       else if (isVehicles) draftData = { ...draftData, vhData };
       else if (isElectronics) draftData = { ...draftData, elData };
       else if (isFashion) draftData = { ...draftData, faData };
+      else if (isSpareParts) draftData = { ...draftData, spData };
 
       const { data: savedDraft, error: draftError } = await supabase.from('listing_drafts').upsert({
         user_id: user.id,
@@ -1531,6 +1729,159 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
             onChange={(updates) => updateFAData(updates)}
           />
         );
+      // Spare parts steps
+      case 'spStepBasic':
+        return (
+          <StepSpareBasicInfo
+            locale={locale}
+            data={{
+              title: spData.title,
+              description: spData.description,
+              subcategory: spData.subcategory,
+            }}
+            onChange={(updates) => {
+              if (updates.subcategory !== undefined && updates.subcategory !== spData.subcategory) {
+                updateSPData({
+                  ...updates,
+                  make: '',
+                  model: '',
+                  year_from: '',
+                  year_to: '',
+                  engine_type: '',
+                  transmission: '',
+                  part_compatibility_notes: '',
+                  device_type: '',
+                  compatible_brand: '',
+                  compatible_model: '',
+                  version_series: '',
+                  technical_compatibility_notes: '',
+                  city: '',
+                  lat: null,
+                  lng: null,
+                  phone: '',
+                  whatsapp: '',
+                  email: '',
+                  termsAccepted: false,
+                  specs: {},
+                });
+                return;
+              }
+              updateSPData(updates);
+            }}
+          />
+        );
+      case 'spStepGeneral':
+        return (
+          <StepSpareGeneralDetails
+            locale={locale}
+            data={{
+              price: spData.price,
+              currency: spData.currency,
+              condition: spData.condition,
+              brand: spData.brand,
+              seller_type: spData.seller_type,
+            }}
+            onChange={(updates) => updateSPData(updates)}
+          />
+        );
+      case 'spStepCompatibility':
+        return (
+          <StepSpareCompatibility
+            locale={locale}
+            subcategory={spData.subcategory}
+            data={{
+              make: spData.make,
+              model: spData.model,
+              year_from: spData.year_from,
+              year_to: spData.year_to,
+              engine_type: spData.engine_type,
+              transmission: spData.transmission,
+              part_compatibility_notes: spData.part_compatibility_notes,
+              device_type: spData.device_type,
+              compatible_brand: spData.compatible_brand,
+              compatible_model: spData.compatible_model,
+              version_series: spData.version_series,
+              technical_compatibility_notes: spData.technical_compatibility_notes,
+            }}
+            onChange={(updates) => updateSPData(updates)}
+          />
+        );
+      case 'spStepSpecs':
+        return (
+          <StepSpareSpecifications
+            locale={locale}
+            subcategory={spData.subcategory}
+            specs={spData.specs}
+            onChange={(specs) => updateSPData({ specs })}
+          />
+        );
+      case 'spStepMedia':
+        return (
+          <StepSpareMedia
+            locale={locale}
+            data={spData.media}
+            onChange={(updates) => updateSPData({ media: { ...spData.media, ...updates } })}
+          />
+        );
+      case 'spStepContact':
+        return (
+          <StepSpareContact
+            locale={locale}
+            data={{
+              city: spData.city,
+              lat: spData.lat,
+              lng: spData.lng,
+              phone: spData.phone,
+              whatsapp: spData.whatsapp,
+              email: spData.email,
+              termsAccepted: spData.termsAccepted,
+            }}
+            onChange={(updates) => updateSPData(updates)}
+          />
+        );
+      case 'spStepReview':
+        return (
+          <StepSpareReview
+            locale={locale}
+            basic={{
+              title: spData.title,
+              description: spData.description,
+              subcategory: spData.subcategory,
+            }}
+            general={{
+              price: spData.price,
+              currency: spData.currency,
+              condition: spData.condition,
+              brand: spData.brand,
+              seller_type: spData.seller_type,
+            }}
+            contact={{
+              city: spData.city,
+              lat: spData.lat,
+              lng: spData.lng,
+              phone: spData.phone,
+              whatsapp: spData.whatsapp,
+              email: spData.email,
+            }}
+            compatibility={{
+              make: spData.make,
+              model: spData.model,
+              year_from: spData.year_from,
+              year_to: spData.year_to,
+              engine_type: spData.engine_type,
+              transmission: spData.transmission,
+              part_compatibility_notes: spData.part_compatibility_notes,
+              device_type: spData.device_type,
+              compatible_brand: spData.compatible_brand,
+              compatible_model: spData.compatible_model,
+              version_series: spData.version_series,
+              technical_compatibility_notes: spData.technical_compatibility_notes,
+            }}
+            specs={spData.specs}
+            media={spData.media}
+            onEdit={(stepIndex) => setCurrentStep(stepIndex)}
+          />
+        );
       default:
         return null;
     }
@@ -1638,6 +1989,15 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
             </button>
           )}
 
+          {isSpareParts && (
+            <button
+              onClick={handleClearSparePartsForm}
+              className={`px-4 py-2.5 rounded-lg font-medium transition border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 ${rtl ? 'text-right' : 'text-left'}`}
+            >
+              Clear form
+            </button>
+          )}
+
           {currentStep < steps.length - 1 ? (
             <button
               onClick={handleNext}
@@ -1732,7 +2092,17 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
                   <div><span className="font-semibold text-slate-700">{tFA('images')}:</span> {faData.media.images.length}</div>
                 </>
               )}
-              {!isVehicles && !isRealEstate && !isElectronics && !isFashion && (
+              {isSpareParts && (
+                <>
+                  <div><span className="font-semibold text-slate-700">{tSP('subcategory')}:</span> {spData.subcategory || '-'}</div>
+                  <div><span className="font-semibold text-slate-700">{tSP('title')}:</span> {spData.title || '-'}</div>
+                  <div><span className="font-semibold text-slate-700">{tSP('price')}:</span> {spData.price === '' ? '-' : `${spData.price} ${spData.currency || ''}`}</div>
+                  <div><span className="font-semibold text-slate-700">{tSP('city')}:</span> {spData.city || '-'}</div>
+                  <div><span className="font-semibold text-slate-700">{tSP('phone')}:</span> {spData.phone || '-'}</div>
+                  <div><span className="font-semibold text-slate-700">{tSP('images')}:</span> {spData.media.images.length}</div>
+                </>
+              )}
+              {!isVehicles && !isRealEstate && !isElectronics && !isFashion && !isSpareParts && (
                 <>
                   <div><span className="font-semibold text-slate-700">{t('stepDetails')}:</span> {formData.title}</div>
                   <div><span className="font-semibold text-slate-700">{tCommon('price')}:</span> {formData.price} {formData.currency}</div>

@@ -116,6 +116,56 @@ export interface FashionFilters {
   certification?: string;
 }
 
+export interface SparePartsFilters {
+  subcategory?: string;
+  postedDate?: string;
+  seller_type?: string;
+  keyword?: string;
+  condition?: string;
+  brand?: string;
+  make?: string;
+  model?: string;
+  year_from?: string;
+  year_to?: string;
+  engine_type?: string;
+  transmission?: string;
+  device_type?: string;
+  compatible_brand?: string;
+  compatible_model?: string;
+  version_series?: string;
+  part_name?: string;
+  part_type?: string[];
+  part_number?: string;
+  oem_aftermarket?: string;
+  material?: string;
+  color?: string;
+  weight_min?: string;
+  weight_max?: string;
+  dimension_length?: string;
+  dimension_width?: string;
+  dimension_height?: string;
+  warranty?: string;
+  availability?: string;
+  placement?: string;
+  mileage?: string;
+  installation_type?: string;
+  included_components?: string[];
+  certification?: string;
+  voltage?: string;
+  power_rating?: string;
+  connector_type?: string;
+  compatibility_type?: string;
+  safety_certification?: string;
+  machine_type?: string;
+  load_capacity?: string;
+  operating_pressure?: string;
+  temperature_range?: string;
+  industrial_grade?: string;
+  priceMin?: string;
+  priceMax?: string;
+  city?: string;
+}
+
 export interface ListingFilters {
   category?: number | null;
   query?: string;
@@ -131,6 +181,7 @@ export interface ListingFilters {
   realEstateFilters?: RealEstateFilters;
   electronicsFilters?: ElectronicsFilters;
   fashionFilters?: FashionFilters;
+  sparePartsFilters?: SparePartsFilters;
 }
 
 // ─── Engine Power / Capacity helpers ────────────────────────────────────────
@@ -394,6 +445,82 @@ function applyFashionFilters(listings: Listing[], ff?: FashionFilters): Listing[
   });
 }
 
+function applySparePartsFilters(listings: Listing[], sf?: SparePartsFilters): Listing[] {
+  if (!sf) return listings;
+
+  const skipFields = new Set(['subcategory', 'postedDate', 'seller_type', 'keyword', 'priceMin', 'priceMax', 'city']);
+
+  return listings.filter((l) => {
+    const m = l.metadata as Record<string, unknown>;
+
+    if (sf.condition && !matchesLooseToken(m.condition ?? l.condition, sf.condition)) return false;
+
+    if (sf.priceMin) {
+      const min = Number(sf.priceMin);
+      if (!Number.isNaN(min) && Number(l.price) < min) return false;
+    }
+    if (sf.priceMax) {
+      const max = Number(sf.priceMax);
+      if (!Number.isNaN(max) && Number(l.price) > max) return false;
+    }
+    if (sf.city && !matchesLooseToken(l.city, sf.city)) return false;
+
+    const weightRaw = m.weight;
+    const weight = typeof weightRaw === 'number' ? weightRaw : parseFloat(String(weightRaw ?? ''));
+    if (sf.weight_min) {
+      const min = Number(sf.weight_min);
+      if (!Number.isNaN(min) && !Number.isNaN(weight) && weight < min) return false;
+    }
+    if (sf.weight_max) {
+      const max = Number(sf.weight_max);
+      if (!Number.isNaN(max) && !Number.isNaN(weight) && weight > max) return false;
+    }
+
+    for (const [key, rawValue] of Object.entries(sf)) {
+      if (skipFields.has(key) || rawValue === undefined || rawValue === '') continue;
+
+      const metadataValue = m[key];
+
+      if (Array.isArray(rawValue)) {
+        if (rawValue.length === 0) continue;
+
+        if (Array.isArray(metadataValue)) {
+          const selectedTokens = rawValue.map((v) => normalizeToken(v));
+          const metadataTokens = metadataValue.map((v) => normalizeToken(v));
+          if (!selectedTokens.some((token) => metadataTokens.includes(token))) return false;
+        } else {
+          const metadataToken = normalizeToken(metadataValue);
+          if (!rawValue.some((v) => normalizeToken(v) === metadataToken)) return false;
+        }
+        continue;
+      }
+
+      const selectedString = String(rawValue);
+      if (selectedString === 'yes' || selectedString === 'no') {
+        if (normalizeYesNo(metadataValue) !== selectedString) return false;
+        continue;
+      }
+
+      if (key === 'year_from') {
+        const listingYear = Number(m.year_from);
+        const fromYear = Number(selectedString);
+        if (!Number.isNaN(fromYear) && !Number.isNaN(listingYear) && listingYear < fromYear) return false;
+        continue;
+      }
+      if (key === 'year_to') {
+        const listingYear = Number(m.year_to);
+        const toYear = Number(selectedString);
+        if (!Number.isNaN(toYear) && !Number.isNaN(listingYear) && listingYear > toYear) return false;
+        continue;
+      }
+
+      if (!matchesLooseToken(metadataValue, selectedString)) return false;
+    }
+
+    return true;
+  });
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function useListings(filters: ListingFilters = {}) {
@@ -494,6 +621,30 @@ export function useListings(filters: ListingFilters = {}) {
         }
       }
 
+      if (filters.sparePartsFilters?.subcategory) {
+        query = query.contains('metadata', { subcategory: filters.sparePartsFilters.subcategory });
+      }
+      if (filters.sparePartsFilters?.seller_type === 'Individual') {
+        query = query.eq('from_owner', true);
+      }
+      if (filters.sparePartsFilters?.seller_type === 'Dealer') {
+        query = query.eq('from_owner', false);
+      }
+      if (filters.sparePartsFilters?.postedDate) {
+        const now = new Date();
+        const from = new Date(now);
+        if (filters.sparePartsFilters.postedDate === 'today') {
+          from.setHours(0, 0, 0, 0);
+          query = query.gte('created_at', from.toISOString());
+        } else if (filters.sparePartsFilters.postedDate === 'last7') {
+          from.setDate(now.getDate() - 7);
+          query = query.gte('created_at', from.toISOString());
+        } else if (filters.sparePartsFilters.postedDate === 'last30') {
+          from.setDate(now.getDate() - 30);
+          query = query.gte('created_at', from.toISOString());
+        }
+      }
+
       // Vehicle-specific: fromOwner is a direct column
       const vf = filters.vehicleFilters;
       if (vf?.fromOwner !== undefined && vf?.fromOwner !== null) {
@@ -549,7 +700,8 @@ export function useListings(filters: ListingFilters = {}) {
       const realEstateFiltered = applyRealEstateFilters(vehicleFiltered, filters.realEstateFilters);
       const electronicsFiltered = applyElectronicsFilters(realEstateFiltered, filters.electronicsFilters);
       const fashionFiltered = applyFashionFilters(electronicsFiltered, filters.fashionFilters);
-      setListings(fashionFiltered);
+      const sparePartsFiltered = applySparePartsFilters(fashionFiltered, filters.sparePartsFilters);
+      setListings(sparePartsFiltered);
     } catch (err: unknown) {      const message = err instanceof Error ? err.message : 'Failed to load listings.';
       setError(message);
       console.error('Fetch listings error:', err);
@@ -576,6 +728,8 @@ export function useListings(filters: ListingFilters = {}) {
     JSON.stringify(filters.electronicsFilters),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     JSON.stringify(filters.fashionFilters),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    JSON.stringify(filters.sparePartsFilters),
   ]);
 
   // Initial fetch

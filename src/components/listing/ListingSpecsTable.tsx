@@ -15,6 +15,7 @@ const VEHICLES_CATEGORY = 1;
 const REAL_ESTATE_CATEGORY = 2;
 const ELECTRONICS_CATEGORY = 3;
 const FASHION_CATEGORY = 4;
+const SPARE_PARTS_CATEGORY = 5;
 
 interface ListingSpecsTableProps {
   metadata: Record<string, unknown>;
@@ -718,6 +719,53 @@ export const ListingSpecsTable: React.FC<ListingSpecsTableProps> = ({
             </a>
           </div>
         )}
+      </div>
+    );
+  }
+
+  /* ─── SPARE PARTS ───────────────────────────────────────────── */
+  if (categoryId === SPARE_PARTS_CATEGORY) {
+    const excludedKeys = new Set(['wizard_forms']);
+    const entries = Object.entries(metadata).filter(([key, value]) => {
+      if (excludedKeys.has(key)) return false;
+      if (value === null || value === undefined) return false;
+      if (typeof value === 'string') return value.trim() !== '';
+      if (Array.isArray(value)) return value.length > 0;
+      if (typeof value === 'object') return Object.keys(value as Record<string, unknown>).length > 0;
+      return true;
+    });
+
+    if (entries.length === 0) return null;
+
+    const yesLabel = tCommon('yes');
+    const noLabel = tCommon('no');
+
+    return (
+      <div className="mb-6 rounded-lg border border-slate-200 bg-white p-5">
+        <h2 className={`mb-4 text-lg font-semibold text-slate-900 ${rtl ? 'text-right' : 'text-left'}`}>
+          Spare Parts Details
+        </h2>
+
+        <div className="grid grid-cols-1 gap-x-8 sm:grid-cols-2">
+          {entries.map(([key, value]) => {
+            const renderedValue = Array.isArray(value)
+              ? value.join(', ')
+              : typeof value === 'boolean'
+                ? (value ? yesLabel : noLabel)
+                : typeof value === 'object'
+                  ? JSON.stringify(value)
+                  : String(value);
+
+            return (
+              <SpecRow
+                key={key}
+                label={humanize(key)}
+                value={renderedValue}
+                rtl={rtl}
+              />
+            );
+          })}
+        </div>
       </div>
     );
   }

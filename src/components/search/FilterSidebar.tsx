@@ -27,6 +27,13 @@ import {
   getFashionOptionTranslationKey,
   isFashionClothingSubcategory,
 } from '@/lib/constants/fashion-wizard';
+import {
+  SPARE_PARTS_SUBCATEGORIES,
+  SPARE_MAKE_MODELS,
+  VEHICLE_SPARE_SUBCATEGORIES,
+  ELECTRONICS_OR_MACHINERY_SUBCATEGORIES,
+  SparePartsSubcategory,
+} from '@/lib/constants/spare-parts-wizard';
 import { useCities, getManagedCityName } from '@/lib/hooks/useCities';
 
 const ELECTRONICS_SUBCATEGORY_LABEL_KEYS: Record<ElectronicsSubcategory, string> = {
@@ -307,6 +314,100 @@ export const EMPTY_FASHION_FILTERS: FashionFilterState = {
   certification: '',
 };
 
+export interface SparePartsFilterState {
+  subcategory: SparePartsSubcategory | '';
+  postedDate: '' | 'today' | 'last7' | 'last30';
+  seller_type: 'Individual' | 'Dealer' | '';
+  keyword: string;
+  condition: 'New' | 'Used' | 'Refurbished' | '';
+  brand: string;
+  make: string;
+  model: string;
+  year_from: string;
+  year_to: string;
+  engine_type: '' | 'Petrol' | 'Diesel' | 'Hybrid' | 'Electric';
+  transmission: '' | 'Manual' | 'Automatic';
+  device_type: string;
+  compatible_brand: string;
+  compatible_model: string;
+  version_series: string;
+  part_name: string;
+  part_type: string[];
+  part_number: string;
+  oem_aftermarket: '' | 'Original' | 'Aftermarket';
+  material: string;
+  color: string;
+  weight_min: string;
+  weight_max: string;
+  dimension_length: string;
+  dimension_width: string;
+  dimension_height: string;
+  warranty: '' | 'yes' | 'no';
+  availability: '' | 'In Stock' | 'Out of Stock';
+  placement: '' | 'Front' | 'Rear' | 'Left' | 'Right' | 'Universal';
+  mileage: string;
+  installation_type: '' | 'Easy' | 'Professional Required';
+  included_components: string[];
+  certification: string;
+  voltage: string;
+  power_rating: string;
+  connector_type: string;
+  compatibility_type: string;
+  safety_certification: string;
+  machine_type: string;
+  load_capacity: string;
+  operating_pressure: string;
+  temperature_range: string;
+  industrial_grade: '' | 'yes' | 'no';
+}
+
+export const EMPTY_SPARE_PARTS_FILTERS: SparePartsFilterState = {
+  subcategory: '',
+  postedDate: '',
+  seller_type: '',
+  keyword: '',
+  condition: '',
+  brand: '',
+  make: '',
+  model: '',
+  year_from: '',
+  year_to: '',
+  engine_type: '',
+  transmission: '',
+  device_type: '',
+  compatible_brand: '',
+  compatible_model: '',
+  version_series: '',
+  part_name: '',
+  part_type: [],
+  part_number: '',
+  oem_aftermarket: '',
+  material: '',
+  color: '',
+  weight_min: '',
+  weight_max: '',
+  dimension_length: '',
+  dimension_width: '',
+  dimension_height: '',
+  warranty: '',
+  availability: '',
+  placement: '',
+  mileage: '',
+  installation_type: '',
+  included_components: [],
+  certification: '',
+  voltage: '',
+  power_rating: '',
+  connector_type: '',
+  compatibility_type: '',
+  safety_certification: '',
+  machine_type: '',
+  load_capacity: '',
+  operating_pressure: '',
+  temperature_range: '',
+  industrial_grade: '',
+};
+
 const RAM_OPTIONS = ['2GB', '3GB', '4GB', '6GB', '8GB', '12GB', '16GB+'];
 const STORAGE_OPTIONS = ['16GB', '32GB', '64GB', '128GB', '256GB', '512GB', '1TB'];
 const REFRESH_RATE_OPTIONS = ['60Hz', '90Hz', '120Hz+'];
@@ -332,6 +433,14 @@ const SKILL_LEVEL_OPTIONS = ['Beginner', 'Intermediate', 'Professional'];
 const OTHER_FEATURE_OPTIONS = ['Bluetooth', 'Wi-Fi', 'NFC', 'Fast Charging', 'Water Resistant'];
 const FASHION_COLOR_OPTIONS = ['Black', 'White', 'Blue', 'Red', 'Green', 'Grey', 'Brown', 'Beige'];
 const FASHION_SIZE_OPTIONS = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+const SPARE_PART_TYPE_OPTIONS = ['Engine', 'Brake', 'Suspension', 'Electrical', 'Body', 'Interior', 'Other'];
+const SPARE_ENGINE_TYPE_OPTIONS = ['Petrol', 'Diesel', 'Hybrid', 'Electric'];
+const SPARE_TRANSMISSION_OPTIONS = ['Manual', 'Automatic'];
+const SPARE_OEM_OPTIONS = ['Original', 'Aftermarket'];
+const SPARE_AVAILABILITY_OPTIONS = ['In Stock', 'Out of Stock'];
+const SPARE_PLACEMENT_OPTIONS = ['Front', 'Rear', 'Left', 'Right', 'Universal'];
+const SPARE_INSTALLATION_OPTIONS = ['Easy', 'Professional Required'];
+const SPARE_INCLUDED_COMPONENT_OPTIONS = ['Bolts', 'Nuts', 'Wiring', 'Manual', 'Bracket', 'Other'];
 
 const FASHION_CLOTHING_BRANDS = Array.from(
   new Set([
@@ -395,10 +504,14 @@ interface FilterSidebarProps {
   onElectronicsFiltersChange: (filters: ElectronicsFilterState) => void;
   fashionFilters: FashionFilterState;
   onFashionFiltersChange: (filters: FashionFilterState) => void;
+  sparePartsFilters: SparePartsFilterState;
+  onSparePartsFiltersChange: (filters: SparePartsFilterState) => void;
   onElectronicsClear?: () => void;
   onElectronicsSearch?: () => void;
   onFashionClear?: () => void;
   onFashionSearch?: () => void;
+  onSparePartsClear?: () => void;
+  onSparePartsSearch?: () => void;
 }
 
 const CONDITIONS = [
@@ -497,10 +610,14 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
   onElectronicsFiltersChange,
   fashionFilters,
   onFashionFiltersChange,
+  sparePartsFilters,
+  onSparePartsFiltersChange,
   onElectronicsClear,
   onElectronicsSearch,
   onFashionClear,
   onFashionSearch,
+  onSparePartsClear,
+  onSparePartsSearch,
 }) => {
   const t = useTranslations('search');
   const tCommon = useTranslations('common');
@@ -508,6 +625,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
   const tRE = useTranslations('postAd.realEstate');
   const tEL = useTranslations('postAd.electronics');
   const tFA = useTranslations('postAd.fashion');
+  const tSP = useTranslations('postAd.spareParts');
   const isRtl = isRTL(locale);
   const { cities } = useCities();
 
@@ -515,9 +633,13 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
   const isRealEstate = selectedCategory === 2;
   const isElectronics = selectedCategory === 3;
   const isFashion = selectedCategory === 4;
+  const isSpareParts = selectedCategory === 5;
 
   const [fashionGeneralOpen, setFashionGeneralOpen] = React.useState(true);
   const [fashionSpecificOpen, setFashionSpecificOpen] = React.useState(true);
+  const [spareGeneralOpen, setSpareGeneralOpen] = React.useState(true);
+  const [spareCompatibilityOpen, setSpareCompatibilityOpen] = React.useState(true);
+  const [spareSpecsOpen, setSpareSpecsOpen] = React.useState(true);
 
   const setVF = (patch: Partial<VehicleFilterState>) =>
     onVehicleFiltersChange({ ...vehicleFilters, ...patch });
@@ -530,6 +652,9 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
 
   const setFF = (patch: Partial<FashionFilterState>) =>
     onFashionFiltersChange({ ...fashionFilters, ...patch });
+
+  const setSP = (patch: Partial<SparePartsFilterState>) =>
+    onSparePartsFiltersChange({ ...sparePartsFilters, ...patch });
 
   const toggleFashionMulti = (field: 'size' | 'color', value: string) => {
     const current = fashionFilters[field];
@@ -554,6 +679,24 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
     const translationKey = getFashionOptionTranslationKey(option);
     return tFA.has(translationKey as Parameters<typeof tFA>[0])
       ? tFA(translationKey as Parameters<typeof tFA>[0])
+      : option;
+  };
+
+  const getSpareLabel = (key: string, fallback: string) => {
+    return tSP.has(key as Parameters<typeof tSP>[0])
+      ? tSP(key as Parameters<typeof tSP>[0])
+      : fallback;
+  };
+
+  const getSpareOptionLabel = (option: string) => {
+    const normalized = option
+      .toLowerCase()
+      .replace(/\s+/g, '_')
+      .replace(/\//g, '_')
+      .replace(/-/g, '_');
+    const key = `optionLabels.${normalized}`;
+    return tSP.has(key as Parameters<typeof tSP>[0])
+      ? tSP(key as Parameters<typeof tSP>[0])
       : option;
   };
 
@@ -591,6 +734,20 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
   const currentYear = new Date().getFullYear();
   const years: number[] = [];
   for (let y = currentYear + 1; y >= 1980; y--) years.push(y);
+
+  const spareModels = sparePartsFilters.make ? SPARE_MAKE_MODELS[sparePartsFilters.make] || [] : [];
+  const isVehicleSpare = VEHICLE_SPARE_SUBCATEGORIES.includes(sparePartsFilters.subcategory as SparePartsSubcategory);
+  const isDeviceSpare = ELECTRONICS_OR_MACHINERY_SUBCATEGORIES.includes(sparePartsFilters.subcategory as SparePartsSubcategory);
+  const isElectronicsSpare = sparePartsFilters.subcategory === 'electronics-parts';
+  const isMachinerySpare = sparePartsFilters.subcategory === 'machinery-parts';
+
+  const toggleSpareMulti = (field: 'part_type' | 'included_components', value: string) => {
+    const current = sparePartsFilters[field];
+    const next = current.includes(value)
+      ? current.filter((item) => item !== value)
+      : [...current, value];
+    setSP({ [field]: next });
+  };
 
   const renderFashionSelect = (label: string, key: keyof FashionFilterState, options: string[]) => (
     <Section label={getFashionFieldLabel(label)} isRtl={isRtl}>
@@ -655,7 +812,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
       </Section>
 
       {/* Condition (non-vehicle/non-real-estate/non-electronics) */}
-      {!isVehicles && !isRealEstate && !isElectronics && !isFashion && (
+      {!isVehicles && !isRealEstate && !isElectronics && !isFashion && !isSpareParts && (
         <Section label={t('condition')} isRtl={isRtl}>
           <div className="space-y-2">
             {CONDITIONS.map(({ value, translationKey }) => (
@@ -670,7 +827,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
       )}
 
       {/* Wheel drive (non-vehicle/non-real-estate/non-electronics) */}
-      {!isVehicles && !isRealEstate && !isElectronics && !isFashion && (
+      {!isVehicles && !isRealEstate && !isElectronics && !isFashion && !isSpareParts && (
         <Section label={t('wheelDrive')} isRtl={isRtl}>
           <Sel id="wheel-drive-filter" value={selectedWheelDriveType} onChange={onWheelDriveTypeChange} isRtl={isRtl}>
             <option value="">{t('anyWheelDrive')}</option>
@@ -1763,6 +1920,574 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
             <button
               type="button"
               onClick={() => onFashionSearch?.()}
+              className="w-1/2 px-3 py-2 rounded-md border border-primary-600 bg-primary-600 text-sm font-medium text-white hover:bg-primary-700"
+            >
+              {t('applyFilters')}
+            </button>
+          </div>
+        </>
+      )}
+
+      {isSpareParts && (
+        <>
+          <div className="rounded-lg border border-slate-200 bg-slate-50">
+            <button
+              type="button"
+              onClick={() => setSpareGeneralOpen((v) => !v)}
+              className={`w-full px-3 py-2 text-sm font-semibold text-slate-700 ${isRtl ? 'text-right' : 'text-left'}`}
+            >
+              {t('generalFilters')}
+            </button>
+            {spareGeneralOpen && (
+              <div className="space-y-4 px-3 pb-3">
+                <Section label={t('subcategory')} isRtl={isRtl}>
+                  <Sel
+                    value={sparePartsFilters.subcategory}
+                    onChange={(v) => setSP({ ...EMPTY_SPARE_PARTS_FILTERS, subcategory: v as SparePartsSubcategory | '' })}
+                    isRtl={isRtl}
+                  >
+                    <option value="">{tCommon('all')}</option>
+                    {SPARE_PARTS_SUBCATEGORIES.map((sub) => (
+                      <option key={sub.value} value={sub.value}>{getSpareLabel(`subcategories.${sub.value}`, sub.label)}</option>
+                    ))}
+                  </Sel>
+                </Section>
+
+                <Section label={t('keywords')} isRtl={isRtl}>
+                  <input
+                    type="text"
+                    value={sparePartsFilters.keyword}
+                    onChange={(e) => setSP({ keyword: e.target.value })}
+                    placeholder={t('keywords')}
+                    className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                  />
+                </Section>
+
+                <Section label={getSpareLabel('condition', 'Condition')} isRtl={isRtl}>
+                  <Sel
+                    value={sparePartsFilters.condition}
+                    onChange={(v) => setSP({ condition: v as SparePartsFilterState['condition'] })}
+                    isRtl={isRtl}
+                  >
+                    <option value="">{tCommon('all')}</option>
+                    <option value="New">{getSpareOptionLabel('new')}</option>
+                    <option value="Used">{getSpareOptionLabel('used')}</option>
+                    <option value="Refurbished">{getSpareOptionLabel('refurbished')}</option>
+                  </Sel>
+                </Section>
+
+                <Section label={getSpareLabel('brand', 'Brand / Manufacturer')} isRtl={isRtl}>
+                  <input
+                    type="text"
+                    value={sparePartsFilters.brand}
+                    onChange={(e) => setSP({ brand: e.target.value })}
+                    placeholder={getSpareLabel('brand', 'Brand / Manufacturer')}
+                    className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                  />
+                </Section>
+
+                <Section label={t('sellerType')} isRtl={isRtl}>
+                  <Sel
+                    value={sparePartsFilters.seller_type}
+                    onChange={(v) => setSP({ seller_type: v as SparePartsFilterState['seller_type'] })}
+                    isRtl={isRtl}
+                  >
+                    <option value="">{tCommon('all')}</option>
+                    <option value="Individual">{getSpareLabel('sellerTypeIndividual', t('individual'))}</option>
+                    <option value="Dealer">{getSpareLabel('sellerTypeDealer', t('dealer'))}</option>
+                  </Sel>
+                </Section>
+
+                <Section label={t('postedDate')} isRtl={isRtl}>
+                  <Sel
+                    value={sparePartsFilters.postedDate}
+                    onChange={(v) => setSP({ postedDate: v as SparePartsFilterState['postedDate'] })}
+                    isRtl={isRtl}
+                  >
+                    <option value="">{tCommon('all')}</option>
+                    <option value="today">{t('today')}</option>
+                    <option value="last7">{t('last7Days')}</option>
+                    <option value="last30">{t('last30Days')}</option>
+                  </Sel>
+                </Section>
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-lg border border-slate-200 bg-slate-50">
+            <button
+              type="button"
+              onClick={() => setSpareCompatibilityOpen((v) => !v)}
+              className={`w-full px-3 py-2 text-sm font-semibold text-slate-700 ${isRtl ? 'text-right' : 'text-left'}`}
+            >
+              {getSpareLabel('stepCompatibility', 'Compatibility')}
+            </button>
+            {spareCompatibilityOpen && (
+              <div className="space-y-4 px-3 pb-3">
+                {isVehicleSpare && (
+                  <>
+                    <Section label={getSpareLabel('make', 'Make')} isRtl={isRtl}>
+                      <Sel
+                        value={sparePartsFilters.make}
+                        onChange={(v) => setSP({ make: v, model: '' })}
+                        isRtl={isRtl}
+                      >
+                        <option value="">{tCommon('all')}</option>
+                        {Object.keys(SPARE_MAKE_MODELS).map((make) => (
+                          <option key={make} value={make}>{make}</option>
+                        ))}
+                      </Sel>
+                    </Section>
+
+                    <Section label={getSpareLabel('model', 'Model')} isRtl={isRtl}>
+                      <Sel
+                        value={sparePartsFilters.model}
+                        onChange={(v) => setSP({ model: v })}
+                        isRtl={isRtl}
+                      >
+                        <option value="">{tCommon('all')}</option>
+                        {spareModels.map((model) => (
+                          <option key={model} value={model}>{model}</option>
+                        ))}
+                      </Sel>
+                    </Section>
+
+                    <Section label={getSpareLabel('year_from', 'From Year')} isRtl={isRtl}>
+                      <Sel value={sparePartsFilters.year_from} onChange={(v) => setSP({ year_from: v })} isRtl={isRtl}>
+                        <option value="">{tCommon('all')}</option>
+                        {years.map((y) => <option key={`from-${y}`} value={String(y)}>{y}</option>)}
+                      </Sel>
+                    </Section>
+
+                    <Section label={getSpareLabel('year_to', 'To Year')} isRtl={isRtl}>
+                      <Sel value={sparePartsFilters.year_to} onChange={(v) => setSP({ year_to: v })} isRtl={isRtl}>
+                        <option value="">{tCommon('all')}</option>
+                        {years.map((y) => <option key={`to-${y}`} value={String(y)}>{y}</option>)}
+                      </Sel>
+                    </Section>
+
+                    <Section label={getSpareLabel('engine_type', 'Engine Type')} isRtl={isRtl}>
+                      <Sel
+                        value={sparePartsFilters.engine_type}
+                        onChange={(v) => setSP({ engine_type: v as SparePartsFilterState['engine_type'] })}
+                        isRtl={isRtl}
+                      >
+                        <option value="">{tCommon('all')}</option>
+                        {SPARE_ENGINE_TYPE_OPTIONS.map((option) => (
+                          <option key={option} value={option}>{getSpareOptionLabel(option)}</option>
+                        ))}
+                      </Sel>
+                    </Section>
+
+                    <Section label={getSpareLabel('transmission', 'Transmission')} isRtl={isRtl}>
+                      <Sel
+                        value={sparePartsFilters.transmission}
+                        onChange={(v) => setSP({ transmission: v as SparePartsFilterState['transmission'] })}
+                        isRtl={isRtl}
+                      >
+                        <option value="">{tCommon('all')}</option>
+                        {SPARE_TRANSMISSION_OPTIONS.map((option) => (
+                          <option key={option} value={option}>{getSpareOptionLabel(option)}</option>
+                        ))}
+                      </Sel>
+                    </Section>
+                  </>
+                )}
+
+                {isDeviceSpare && (
+                  <>
+                    <Section label={getSpareLabel('device_type', 'Device Type')} isRtl={isRtl}>
+                      <input
+                        type="text"
+                        value={sparePartsFilters.device_type}
+                        onChange={(e) => setSP({ device_type: e.target.value })}
+                        placeholder={getSpareLabel('device_type', 'Device Type')}
+                        className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                      />
+                    </Section>
+                    <Section label={getSpareLabel('compatible_brand', 'Compatible Brand')} isRtl={isRtl}>
+                      <input
+                        type="text"
+                        value={sparePartsFilters.compatible_brand}
+                        onChange={(e) => setSP({ compatible_brand: e.target.value })}
+                        placeholder={getSpareLabel('compatible_brand', 'Compatible Brand')}
+                        className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                      />
+                    </Section>
+                    <Section label={getSpareLabel('compatible_model', 'Compatible Model')} isRtl={isRtl}>
+                      <input
+                        type="text"
+                        value={sparePartsFilters.compatible_model}
+                        onChange={(e) => setSP({ compatible_model: e.target.value })}
+                        placeholder={getSpareLabel('compatible_model', 'Compatible Model')}
+                        className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                      />
+                    </Section>
+                    <Section label={getSpareLabel('version_series', 'Version / Series')} isRtl={isRtl}>
+                      <input
+                        type="text"
+                        value={sparePartsFilters.version_series}
+                        onChange={(e) => setSP({ version_series: e.target.value })}
+                        placeholder={getSpareLabel('version_series', 'Version / Series')}
+                        className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                      />
+                    </Section>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-lg border border-slate-200 bg-slate-50">
+            <button
+              type="button"
+              onClick={() => setSpareSpecsOpen((v) => !v)}
+              className={`w-full px-3 py-2 text-sm font-semibold text-slate-700 ${isRtl ? 'text-right' : 'text-left'}`}
+            >
+              {getSpareLabel('stepSpecs', 'Part Specifications')}
+            </button>
+            {spareSpecsOpen && (
+              <div className="space-y-4 px-3 pb-3">
+                <Section label={getSpareLabel('specFields.part_name', 'Part Name')} isRtl={isRtl}>
+                  <input
+                    type="text"
+                    value={sparePartsFilters.part_name}
+                    onChange={(e) => setSP({ part_name: e.target.value })}
+                    placeholder={getSpareLabel('specFields.part_name', 'Part Name')}
+                    className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                  />
+                </Section>
+
+                <Section label={getSpareLabel('specFields.part_type', 'Part Type')} isRtl={isRtl}>
+                  <MultiCheck
+                    options={SPARE_PART_TYPE_OPTIONS.map((option) => ({ value: option, label: getSpareOptionLabel(option) }))}
+                    selected={sparePartsFilters.part_type}
+                    onToggle={(v) => toggleSpareMulti('part_type', v)}
+                    isRtl={isRtl}
+                  />
+                </Section>
+
+                <Section label={getSpareLabel('specFields.part_number', 'Part Number / SKU')} isRtl={isRtl}>
+                  <input
+                    type="text"
+                    value={sparePartsFilters.part_number}
+                    onChange={(e) => setSP({ part_number: e.target.value })}
+                    placeholder={getSpareLabel('specFields.part_number', 'Part Number / SKU')}
+                    className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                  />
+                </Section>
+
+                <Section label={getSpareLabel('specFields.oem_aftermarket', 'OEM / Aftermarket')} isRtl={isRtl}>
+                  <Sel
+                    value={sparePartsFilters.oem_aftermarket}
+                    onChange={(v) => setSP({ oem_aftermarket: v as SparePartsFilterState['oem_aftermarket'] })}
+                    isRtl={isRtl}
+                  >
+                    <option value="">{tCommon('all')}</option>
+                    {SPARE_OEM_OPTIONS.map((option) => (
+                      <option key={option} value={option}>{getSpareOptionLabel(option)}</option>
+                    ))}
+                  </Sel>
+                </Section>
+
+                <Section label={getSpareLabel('specFields.material', 'Material')} isRtl={isRtl}>
+                  <input
+                    type="text"
+                    value={sparePartsFilters.material}
+                    onChange={(e) => setSP({ material: e.target.value })}
+                    placeholder={getSpareLabel('specFields.material', 'Material')}
+                    className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                  />
+                </Section>
+
+                <Section label={getSpareLabel('specFields.color', 'Color')} isRtl={isRtl}>
+                  <input
+                    type="text"
+                    value={sparePartsFilters.color}
+                    onChange={(e) => setSP({ color: e.target.value })}
+                    placeholder={getSpareLabel('specFields.color', 'Color')}
+                    className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                  />
+                </Section>
+
+                <Section label={getSpareLabel('specFields.weight', 'Weight Range')} isRtl={isRtl}>
+                  <div className={`flex gap-2 ${isRtl ? 'flex-row-reverse' : ''}`}>
+                    <input
+                      type="number"
+                      min="0"
+                      value={sparePartsFilters.weight_min}
+                      onChange={(e) => setSP({ weight_min: e.target.value })}
+                      placeholder={t('minPrice')}
+                      className={`w-1/2 px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                    />
+                    <input
+                      type="number"
+                      min="0"
+                      value={sparePartsFilters.weight_max}
+                      onChange={(e) => setSP({ weight_max: e.target.value })}
+                      placeholder={t('maxPrice')}
+                      className={`w-1/2 px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                    />
+                  </div>
+                </Section>
+
+                <Section label={getSpareLabel('specFields.dimension_length', 'Length')} isRtl={isRtl}>
+                  <input
+                    type="text"
+                    value={sparePartsFilters.dimension_length}
+                    onChange={(e) => setSP({ dimension_length: e.target.value })}
+                    placeholder={getSpareLabel('specFields.dimension_length', 'Length')}
+                    className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                  />
+                </Section>
+
+                <Section label={getSpareLabel('specFields.dimension_width', 'Width')} isRtl={isRtl}>
+                  <input
+                    type="text"
+                    value={sparePartsFilters.dimension_width}
+                    onChange={(e) => setSP({ dimension_width: e.target.value })}
+                    placeholder={getSpareLabel('specFields.dimension_width', 'Width')}
+                    className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                  />
+                </Section>
+
+                <Section label={getSpareLabel('specFields.dimension_height', 'Height')} isRtl={isRtl}>
+                  <input
+                    type="text"
+                    value={sparePartsFilters.dimension_height}
+                    onChange={(e) => setSP({ dimension_height: e.target.value })}
+                    placeholder={getSpareLabel('specFields.dimension_height', 'Height')}
+                    className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                  />
+                </Section>
+
+                <Section label={getSpareLabel('specFields.warranty', 'Warranty')} isRtl={isRtl}>
+                  <Sel
+                    value={sparePartsFilters.warranty}
+                    onChange={(v) => setSP({ warranty: v as SparePartsFilterState['warranty'] })}
+                    isRtl={isRtl}
+                  >
+                    <option value="">{tCommon('all')}</option>
+                    <option value="yes">{tCommon('yes')}</option>
+                    <option value="no">{tCommon('no')}</option>
+                  </Sel>
+                </Section>
+
+                <Section label={getSpareLabel('specFields.availability', 'Availability')} isRtl={isRtl}>
+                  <Sel
+                    value={sparePartsFilters.availability}
+                    onChange={(v) => setSP({ availability: v as SparePartsFilterState['availability'] })}
+                    isRtl={isRtl}
+                  >
+                    <option value="">{tCommon('all')}</option>
+                    {SPARE_AVAILABILITY_OPTIONS.map((option) => (
+                      <option key={option} value={option}>{getSpareOptionLabel(option)}</option>
+                    ))}
+                  </Sel>
+                </Section>
+
+                {isVehicleSpare && (
+                  <>
+                    <Section label={getSpareLabel('specFields.placement', 'Placement')} isRtl={isRtl}>
+                      <Sel
+                        value={sparePartsFilters.placement}
+                        onChange={(v) => setSP({ placement: v as SparePartsFilterState['placement'] })}
+                        isRtl={isRtl}
+                      >
+                        <option value="">{tCommon('all')}</option>
+                        {SPARE_PLACEMENT_OPTIONS.map((option) => (
+                          <option key={option} value={option}>{getSpareOptionLabel(option)}</option>
+                        ))}
+                      </Sel>
+                    </Section>
+                    <Section label={getSpareLabel('specFields.mileage', 'Mileage')} isRtl={isRtl}>
+                      <input
+                        type="number"
+                        min="0"
+                        value={sparePartsFilters.mileage}
+                        onChange={(e) => setSP({ mileage: e.target.value })}
+                        placeholder={getSpareLabel('specFields.mileage', 'Mileage')}
+                        className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                      />
+                    </Section>
+                    <Section label={getSpareLabel('specFields.installation_type', 'Installation Type')} isRtl={isRtl}>
+                      <Sel
+                        value={sparePartsFilters.installation_type}
+                        onChange={(v) => setSP({ installation_type: v as SparePartsFilterState['installation_type'] })}
+                        isRtl={isRtl}
+                      >
+                        <option value="">{tCommon('all')}</option>
+                        {SPARE_INSTALLATION_OPTIONS.map((option) => (
+                          <option key={option} value={option}>{getSpareOptionLabel(option)}</option>
+                        ))}
+                      </Sel>
+                    </Section>
+                    <Section label={getSpareLabel('specFields.included_components', 'Included Components')} isRtl={isRtl}>
+                      <MultiCheck
+                        options={SPARE_INCLUDED_COMPONENT_OPTIONS.map((option) => ({ value: option, label: getSpareOptionLabel(option) }))}
+                        selected={sparePartsFilters.included_components}
+                        onToggle={(v) => toggleSpareMulti('included_components', v)}
+                        isRtl={isRtl}
+                      />
+                    </Section>
+                    <Section label={getSpareLabel('specFields.certification', 'Certification')} isRtl={isRtl}>
+                      <input
+                        type="text"
+                        value={sparePartsFilters.certification}
+                        onChange={(e) => setSP({ certification: e.target.value })}
+                        placeholder={getSpareLabel('specFields.certification', 'Certification')}
+                        className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                      />
+                    </Section>
+                  </>
+                )}
+
+                {isElectronicsSpare && (
+                  <>
+                    <Section label={getSpareLabel('specFields.voltage', 'Voltage')} isRtl={isRtl}>
+                      <input
+                        type="text"
+                        value={sparePartsFilters.voltage}
+                        onChange={(e) => setSP({ voltage: e.target.value })}
+                        placeholder={getSpareLabel('specFields.voltage', 'Voltage')}
+                        className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                      />
+                    </Section>
+                    <Section label={getSpareLabel('specFields.power_rating', 'Power Rating')} isRtl={isRtl}>
+                      <input
+                        type="text"
+                        value={sparePartsFilters.power_rating}
+                        onChange={(e) => setSP({ power_rating: e.target.value })}
+                        placeholder={getSpareLabel('specFields.power_rating', 'Power Rating')}
+                        className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                      />
+                    </Section>
+                    <Section label={getSpareLabel('specFields.connector_type', 'Connector Type')} isRtl={isRtl}>
+                      <input
+                        type="text"
+                        value={sparePartsFilters.connector_type}
+                        onChange={(e) => setSP({ connector_type: e.target.value })}
+                        placeholder={getSpareLabel('specFields.connector_type', 'Connector Type')}
+                        className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                      />
+                    </Section>
+                    <Section label={getSpareLabel('specFields.compatibility_type', 'Compatibility Type')} isRtl={isRtl}>
+                      <input
+                        type="text"
+                        value={sparePartsFilters.compatibility_type}
+                        onChange={(e) => setSP({ compatibility_type: e.target.value })}
+                        placeholder={getSpareLabel('specFields.compatibility_type', 'Compatibility Type')}
+                        className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                      />
+                    </Section>
+                    <Section label={getSpareLabel('specFields.safety_certification', 'Safety Certification')} isRtl={isRtl}>
+                      <input
+                        type="text"
+                        value={sparePartsFilters.safety_certification}
+                        onChange={(e) => setSP({ safety_certification: e.target.value })}
+                        placeholder={getSpareLabel('specFields.safety_certification', 'Safety Certification')}
+                        className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                      />
+                    </Section>
+                  </>
+                )}
+
+                {isMachinerySpare && (
+                  <>
+                    <Section label={getSpareLabel('specFields.machine_type', 'Machine Type')} isRtl={isRtl}>
+                      <input
+                        type="text"
+                        value={sparePartsFilters.machine_type}
+                        onChange={(e) => setSP({ machine_type: e.target.value })}
+                        placeholder={getSpareLabel('specFields.machine_type', 'Machine Type')}
+                        className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                      />
+                    </Section>
+                    <Section label={getSpareLabel('specFields.load_capacity', 'Load Capacity')} isRtl={isRtl}>
+                      <input
+                        type="text"
+                        value={sparePartsFilters.load_capacity}
+                        onChange={(e) => setSP({ load_capacity: e.target.value })}
+                        placeholder={getSpareLabel('specFields.load_capacity', 'Load Capacity')}
+                        className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                      />
+                    </Section>
+                    <Section label={getSpareLabel('specFields.operating_pressure', 'Operating Pressure')} isRtl={isRtl}>
+                      <input
+                        type="text"
+                        value={sparePartsFilters.operating_pressure}
+                        onChange={(e) => setSP({ operating_pressure: e.target.value })}
+                        placeholder={getSpareLabel('specFields.operating_pressure', 'Operating Pressure')}
+                        className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                      />
+                    </Section>
+                    <Section label={getSpareLabel('specFields.temperature_range', 'Temperature Range')} isRtl={isRtl}>
+                      <input
+                        type="text"
+                        value={sparePartsFilters.temperature_range}
+                        onChange={(e) => setSP({ temperature_range: e.target.value })}
+                        placeholder={getSpareLabel('specFields.temperature_range', 'Temperature Range')}
+                        className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                      />
+                    </Section>
+                    <Section label={getSpareLabel('specFields.industrial_grade', 'Industrial Grade')} isRtl={isRtl}>
+                      <Sel
+                        value={sparePartsFilters.industrial_grade}
+                        onChange={(v) => setSP({ industrial_grade: v as SparePartsFilterState['industrial_grade'] })}
+                        isRtl={isRtl}
+                      >
+                        <option value="">{tCommon('all')}</option>
+                        <option value="yes">{tCommon('yes')}</option>
+                        <option value="no">{tCommon('no')}</option>
+                      </Sel>
+                    </Section>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+
+          <Section label={t('priceSlider')} isRtl={isRtl}>
+            <div className="space-y-2">
+              <input
+                type="range"
+                min="0"
+                max="200000"
+                step="100"
+                value={priceMin ? Number(priceMin) : 0}
+                onChange={(e) => onPriceMinChange(e.target.value)}
+                aria-label={t('minPrice')}
+                title={t('minPrice')}
+                className="w-full"
+              />
+              <input
+                type="range"
+                min="0"
+                max="200000"
+                step="100"
+                value={priceMax ? Number(priceMax) : 200000}
+                onChange={(e) => onPriceMaxChange(e.target.value)}
+                aria-label={t('maxPrice')}
+                title={t('maxPrice')}
+                className="w-full"
+              />
+            </div>
+          </Section>
+
+          <div className={`flex gap-2 ${isRtl ? 'flex-row-reverse' : ''}`}>
+            <button
+              type="button"
+              onClick={() => {
+                setSP(EMPTY_SPARE_PARTS_FILTERS);
+                onSparePartsClear?.();
+              }}
+              className="w-1/2 px-3 py-2 rounded-md border border-slate-300 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              {t('clearFilters')}
+            </button>
+            <button
+              type="button"
+              onClick={() => onSparePartsSearch?.()}
               className="w-1/2 px-3 py-2 rounded-md border border-primary-600 bg-primary-600 text-sm font-medium text-white hover:bg-primary-700"
             >
               {t('applyFilters')}

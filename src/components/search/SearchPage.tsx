@@ -16,6 +16,8 @@ import {
   EMPTY_ELECTRONICS_FILTERS,
   FashionFilterState,
   EMPTY_FASHION_FILTERS,
+  SparePartsFilterState,
+  EMPTY_SPARE_PARTS_FILTERS,
 } from './FilterSidebar';
 import { ListingCard } from './ListingCard';
 import { SortDropdown } from './SortDropdown';
@@ -45,6 +47,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory,
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [electronicsSearchTick, setElectronicsSearchTick] = useState(0);
   const [fashionSearchTick, setFashionSearchTick] = useState(0);
+  const [sparePartsSearchTick, setSparePartsSearchTick] = useState(0);
 
   // Vehicle-specific filter group
   const [vehicleFilters, setVehicleFilters] = useState<VehicleFilterState>(EMPTY_VEHICLE_FILTERS);
@@ -54,6 +57,8 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory,
   const [electronicsFilters, setElectronicsFilters] = useState<ElectronicsFilterState>(EMPTY_ELECTRONICS_FILTERS);
   // Fashion-specific filter group
   const [fashionFilters, setFashionFilters] = useState<FashionFilterState>(EMPTY_FASHION_FILTERS);
+  // Spare parts-specific filter group
+  const [sparePartsFilters, setSparePartsFilters] = useState<SparePartsFilterState>(EMPTY_SPARE_PARTS_FILTERS);
 
   // Reset category-specific filters when leaving their category
   const handleCategoryChange = (categoryId: number | null) => {
@@ -62,12 +67,14 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory,
     if (categoryId !== 2) setRealEstateFilters(EMPTY_REAL_ESTATE_FILTERS);
     if (categoryId !== 3) setElectronicsFilters(EMPTY_ELECTRONICS_FILTERS);
     if (categoryId !== 4) setFashionFilters(EMPTY_FASHION_FILTERS);
+    if (categoryId !== 5) setSparePartsFilters(EMPTY_SPARE_PARTS_FILTERS);
   };
 
   const isVehicles = selectedCategory === 1;
   const isRealEstate = selectedCategory === 2;
   const isElectronics = selectedCategory === 3;
   const isFashion = selectedCategory === 4;
+  const isSpareParts = selectedCategory === 5;
 
   // Build filters for the hook
   const filters = useMemo(() => ({
@@ -78,6 +85,8 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory,
         ? electronicsFilters.keywords
         : isFashion
           ? fashionFilters.keywords
+          : isSpareParts
+            ? sparePartsFilters.keyword
           : initialQuery)?.trim() || undefined,
     city: selectedCity || undefined,
     priceMin: priceMin ? Number(priceMin) : undefined,
@@ -85,7 +94,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory,
     conditions: selectedConditions.length > 0 ? selectedConditions : undefined,
     wheelDriveType: (!isVehicles && !isElectronics && selectedWheelDriveType) ? selectedWheelDriveType as 'fwd' | 'rwd' | 'awd' | '4wd' : undefined,
     sortBy: sortBy as 'newest' | 'oldest' | 'priceLow' | 'priceHigh',
-    searchTick: electronicsSearchTick + fashionSearchTick,
+    searchTick: electronicsSearchTick + fashionSearchTick + sparePartsSearchTick,
     vehicleFilters: isVehicles ? {
       vehicleMake: vehicleFilters.make || undefined,
       vehicleModel: vehicleFilters.model || undefined,
@@ -124,9 +133,15 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory,
     fashionFilters: isFashion ? {
       ...fashionFilters,
     } : undefined,
+    sparePartsFilters: isSpareParts ? {
+      ...sparePartsFilters,
+      priceMin: priceMin || undefined,
+      priceMax: priceMax || undefined,
+      city: selectedCity || undefined,
+    } : undefined,
   }), [
     selectedCategory, initialQuery, selectedCity, priceMin, priceMax,
-    selectedConditions, selectedWheelDriveType, sortBy, isVehicles, isRealEstate, isElectronics, isFashion, vehicleFilters, realEstateFilters, electronicsFilters, fashionFilters, electronicsSearchTick, fashionSearchTick,
+    selectedConditions, selectedWheelDriveType, sortBy, isVehicles, isRealEstate, isElectronics, isFashion, isSpareParts, vehicleFilters, realEstateFilters, electronicsFilters, fashionFilters, sparePartsFilters, electronicsSearchTick, fashionSearchTick, sparePartsSearchTick,
   ]);
 
   const { listings, loading, error } = useListings(filters);
@@ -137,6 +152,9 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory,
     }
     if (isFashion) {
       setFashionSearchTick((v) => v + 1);
+    }
+    if (isSpareParts) {
+      setSparePartsSearchTick((v) => v + 1);
     }
     setMobileFiltersOpen(false);
 
@@ -193,6 +211,8 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory,
               onElectronicsFiltersChange={setElectronicsFilters}
               fashionFilters={fashionFilters}
               onFashionFiltersChange={setFashionFilters}
+              sparePartsFilters={sparePartsFilters}
+              onSparePartsFiltersChange={setSparePartsFilters}
               onElectronicsClear={() => {
                 setPriceMin('');
                 setPriceMax('');
@@ -213,6 +233,17 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory,
               }}
               onFashionSearch={() => {
                 setFashionSearchTick((v) => v + 1);
+                setMobileFiltersOpen(false);
+              }}
+              onSparePartsClear={() => {
+                setPriceMin('');
+                setPriceMax('');
+                setSelectedCity('');
+                setSparePartsSearchTick((v) => v + 1);
+                setMobileFiltersOpen(false);
+              }}
+              onSparePartsSearch={() => {
+                setSparePartsSearchTick((v) => v + 1);
                 setMobileFiltersOpen(false);
               }}
             />
