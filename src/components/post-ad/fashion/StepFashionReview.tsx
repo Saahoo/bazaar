@@ -1,9 +1,10 @@
 'use client';
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { Edit2 } from 'lucide-react';
 import { Locale, isRTL } from '@/lib/i18n/config';
-import { FashionSubcategory, FASHION_SUBCATEGORIES } from '@/lib/constants/fashion-wizard';
+import { FashionSubcategory, FASHION_SUBCATEGORIES, FASHION_SUBCATEGORY_LABEL_KEYS, getFashionFieldTranslationKey, getFashionOptionTranslationKey } from '@/lib/constants/fashion-wizard';
 import { FashionMediaData } from './StepFashionMedia';
 
 interface StepFashionReviewProps {
@@ -26,8 +27,6 @@ interface StepFashionReviewProps {
   onEdit: (stepIndex: number) => void;
 }
 
-const humanize = (value: string): string => value.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase());
-
 export const StepFashionReview: React.FC<StepFashionReviewProps> = ({
   locale,
   title,
@@ -47,13 +46,33 @@ export const StepFashionReview: React.FC<StepFashionReviewProps> = ({
   media,
   onEdit,
 }) => {
+  const t = useTranslations('postAd.fashion');
   const rtl = isRTL(locale);
 
-  const subcategoryLabel = FASHION_SUBCATEGORIES.find((option) => option.value === subcategory)?.label || subcategory || '-';
+  const subcategoryLabel = subcategory
+    ? t(FASHION_SUBCATEGORY_LABEL_KEYS[subcategory] as Parameters<typeof t>[0])
+    : FASHION_SUBCATEGORIES.find((option) => option.value === subcategory)?.label || subcategory || '-';
+
+  const getFieldLabel = (key: string) => {
+    const translationKey = getFashionFieldTranslationKey(key);
+    return t.has(translationKey as Parameters<typeof t>[0]) ? t(translationKey as Parameters<typeof t>[0]) : key;
+  };
+
+  const getOptionLabel = (value: string) => {
+    const translationKey = getFashionOptionTranslationKey(value);
+    return t.has(translationKey as Parameters<typeof t>[0]) ? t(translationKey as Parameters<typeof t>[0]) : value;
+  };
+
+  const stringifyValue = (value: unknown): string => {
+    if (Array.isArray(value)) return value.map((item) => getOptionLabel(String(item))).join(', ');
+    if (typeof value === 'boolean') return value ? t('optionLabels.yes') : t('optionLabels.no');
+    if (typeof value === 'string') return getOptionLabel(value);
+    return String(value || '');
+  };
 
   const sections = [
     {
-      name: 'Step 1: Basic Information',
+      name: t('reviewBasicInfo'),
       editStep: 1,
       rows: [
         ['title', title],
@@ -62,35 +81,35 @@ export const StepFashionReview: React.FC<StepFashionReviewProps> = ({
       ],
     },
     {
-      name: 'Step 2: General Details',
+      name: t('reviewGeneralDetails'),
       editStep: 2,
       rows: [
         ['price', price === '' ? '' : `${price}`],
-        ['condition', condition],
-        ['brand', brand],
-        ['sellerType', sellerType],
+        ['condition', stringifyValue(condition)],
+        ['brand', stringifyValue(brand)],
+        ['sellerType', stringifyValue(sellerType)],
       ],
     },
     {
-      name: 'Step 3: Specifications',
+      name: t('reviewSpecs'),
       editStep: 3,
       rows: Object.entries(specs)
         .filter(([key]) => !key.endsWith('Other'))
         .map(([key, value]) => [
           key,
-          Array.isArray(value) ? value.join(', ') : typeof value === 'boolean' ? (value ? 'Yes' : 'No') : String(value || ''),
+          stringifyValue(value),
         ]),
     },
     {
-      name: 'Step 4: Media Upload',
+      name: t('reviewMedia'),
       editStep: 4,
       rows: [
-        ['images', `${media.images.length}`],
+        ['images', t('photosCount', { count: media.images.length })],
         ['video', media.video],
       ],
     },
     {
-      name: 'Step 5: Contact & Terms',
+      name: t('reviewContact'),
       editStep: 5,
       rows: [
         ['city', city],
@@ -104,7 +123,7 @@ export const StepFashionReview: React.FC<StepFashionReviewProps> = ({
 
   return (
     <div className="space-y-5">
-      <h3 className={`text-lg font-bold text-slate-900 ${rtl ? 'text-right' : 'text-left'}`}>Review & Submit</h3>
+      <h3 className={`text-lg font-bold text-slate-900 ${rtl ? 'text-right' : 'text-left'}`}>{t('reviewHeading')}</h3>
 
       {sections.map((section) => (
         <div key={section.name} className="rounded-xl border border-slate-200 bg-slate-50 p-4">
@@ -116,13 +135,13 @@ export const StepFashionReview: React.FC<StepFashionReviewProps> = ({
               className="inline-flex items-center gap-1 text-xs font-semibold text-primary-700 hover:text-primary-800"
             >
               <Edit2 className="h-3.5 w-3.5" />
-              Edit
+              {t('editSection')}
             </button>
           </div>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {section.rows.map(([key, value]) => (
               <div key={`${section.name}-${key}`} className={`text-sm ${rtl ? 'text-right' : 'text-left'}`}>
-                <span className="font-medium text-slate-600">{humanize(key)}:</span>{' '}
+                <span className="font-medium text-slate-600">{getFieldLabel(key)}:</span>{' '}
                 <span className="text-slate-900">{value || '-'}</span>
               </div>
             ))}

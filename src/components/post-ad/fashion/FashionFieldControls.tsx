@@ -2,6 +2,8 @@
 
 import React from 'react';
 
+type Option = string | { value: string; label: string };
+
 interface BaseFieldProps {
   label: string;
   required?: boolean;
@@ -17,14 +19,14 @@ interface InputFieldProps extends BaseFieldProps {
 
 interface SelectFieldProps extends BaseFieldProps {
   value: string;
-  options: string[];
+  options: Option[];
   onChange: (value: string) => void;
   placeholder?: string;
 }
 
 interface MultiSelectFieldProps extends BaseFieldProps {
   value: string[];
-  options: string[];
+  options: Option[];
   onChange: (value: string[]) => void;
 }
 
@@ -36,7 +38,11 @@ interface CheckboxFieldProps extends BaseFieldProps {
 interface ToggleFieldProps extends BaseFieldProps {
   value: boolean;
   onChange: (value: boolean) => void;
+  trueLabel?: string;
+  falseLabel?: string;
 }
+
+const normalizeOption = (option: Option) => (typeof option === 'string' ? { value: option, label: option } : option);
 
 const labelClass = (rtl: boolean) => `block text-sm font-semibold text-slate-700 mb-1.5 ${rtl ? 'text-right' : 'text-left'}`;
 
@@ -73,11 +79,14 @@ export const SelectField: React.FC<SelectFieldProps> = ({ label, required, rtl, 
       title={label}
     >
       <option value="">{placeholder}</option>
-      {options.map((option) => (
-        <option key={option} value={option}>
-          {option}
+      {options.map((option) => {
+        const normalized = normalizeOption(option);
+        return (
+        <option key={normalized.value} value={normalized.value}>
+          {normalized.label}
         </option>
-      ))}
+        );
+      })}
     </select>
   </div>
 );
@@ -89,17 +98,18 @@ export const MultiSelectField: React.FC<MultiSelectFieldProps> = ({ label, requi
     </label>
     <div className="flex flex-wrap gap-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
       {options.map((option) => {
-        const selected = value.includes(option);
+        const normalized = normalizeOption(option);
+        const selected = value.includes(normalized.value);
         return (
           <button
-            key={option}
+            key={normalized.value}
             type="button"
             onClick={() => {
               if (selected) {
-                onChange(value.filter((item) => item !== option));
+                onChange(value.filter((item) => item !== normalized.value));
                 return;
               }
-              onChange([...value, option]);
+              onChange([...value, normalized.value]);
             }}
             className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
               selected
@@ -107,7 +117,7 @@ export const MultiSelectField: React.FC<MultiSelectFieldProps> = ({ label, requi
                 : 'border-slate-300 bg-white text-slate-600 hover:border-primary-300'
             }`}
           >
-            {option}
+            {normalized.label}
           </button>
         );
       })}
@@ -127,7 +137,7 @@ export const CheckboxField: React.FC<CheckboxFieldProps> = ({ label, rtl, checke
   </label>
 );
 
-export const ToggleField: React.FC<ToggleFieldProps> = ({ label, required, rtl, value, onChange }) => (
+export const ToggleField: React.FC<ToggleFieldProps> = ({ label, required, rtl, value, onChange, trueLabel = 'Yes', falseLabel = 'No' }) => (
   <div>
     <p className={labelClass(rtl)}>
       {label} {required && <span className="text-red-500">*</span>}
@@ -140,7 +150,7 @@ export const ToggleField: React.FC<ToggleFieldProps> = ({ label, required, rtl, 
           value ? 'border-primary-500 bg-primary-100 text-primary-700' : 'border-slate-300 bg-white text-slate-700'
         }`}
       >
-        Yes
+        {trueLabel}
       </button>
       <button
         type="button"
@@ -149,7 +159,7 @@ export const ToggleField: React.FC<ToggleFieldProps> = ({ label, required, rtl, 
           !value ? 'border-primary-500 bg-primary-100 text-primary-700' : 'border-slate-300 bg-white text-slate-700'
         }`}
       >
-        No
+        {falseLabel}
       </button>
     </div>
   </div>

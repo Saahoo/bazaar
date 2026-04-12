@@ -21,7 +21,10 @@ import {
 import {
   FashionSubcategory,
   FASHION_BRANDS_BY_SUBCATEGORY,
+  FASHION_SUBCATEGORY_LABEL_KEYS,
   FASHION_SUBCATEGORIES,
+  getFashionFieldTranslationKey,
+  getFashionOptionTranslationKey,
   isFashionClothingSubcategory,
 } from '@/lib/constants/fashion-wizard';
 import { useCities, getManagedCityName } from '@/lib/hooks/useCities';
@@ -420,14 +423,16 @@ const Sel: React.FC<{
 }> = ({ id, label = 'Filter', value, onChange, isRtl, children }) => {
   const fallbackId = React.useId();
   const selectId = id || fallbackId;
+  const labelId = `${selectId}-label`;
 
   return (
     <>
-      <label htmlFor={selectId} className="sr-only">{label}</label>
+      <label id={labelId} htmlFor={selectId} className="sr-only">{label}</label>
       <select
         id={selectId}
-        aria-label="Filter"
-        title="Filter"
+        aria-labelledby={labelId}
+        aria-label={label}
+        title={label}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
@@ -502,6 +507,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
   const tVH = useTranslations('postAd.vehicles');
   const tRE = useTranslations('postAd.realEstate');
   const tEL = useTranslations('postAd.electronics');
+  const tFA = useTranslations('postAd.fashion');
   const isRtl = isRTL(locale);
   const { cities } = useCities();
 
@@ -536,6 +542,20 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
   const selectedFashionBrandOptions = fashionFilters.subcategory
     ? FASHION_BRANDS_BY_FILTER_SUBCATEGORY[fashionFilters.subcategory]
     : [];
+
+  const getFashionFieldLabel = (field: string) => {
+    const translationKey = getFashionFieldTranslationKey(field);
+    return tFA.has(translationKey as Parameters<typeof tFA>[0])
+      ? tFA(translationKey as Parameters<typeof tFA>[0])
+      : field;
+  };
+
+  const getFashionOptionLabel = (option: string) => {
+    const translationKey = getFashionOptionTranslationKey(option);
+    return tFA.has(translationKey as Parameters<typeof tFA>[0])
+      ? tFA(translationKey as Parameters<typeof tFA>[0])
+      : option;
+  };
 
   const toggleMulti = (field: 'fuelTypes' | 'gearTypes' | 'bodyTypes', value: string) => {
     const current = vehicleFilters[field] as string[];
@@ -573,7 +593,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
   for (let y = currentYear + 1; y >= 1980; y--) years.push(y);
 
   const renderFashionSelect = (label: string, key: keyof FashionFilterState, options: string[]) => (
-    <Section label={label} isRtl={isRtl}>
+    <Section label={getFashionFieldLabel(label)} isRtl={isRtl}>
       <Sel
         value={String(fashionFilters[key] || '')}
         onChange={(v) => setFF({ [key]: v } as Partial<FashionFilterState>)}
@@ -581,14 +601,14 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
       >
         <option value="">{tCommon('all')}</option>
         {options.map((option) => (
-          <option key={option} value={option}>{option}</option>
+          <option key={option} value={option}>{getFashionOptionLabel(option)}</option>
         ))}
       </Sel>
     </Section>
   );
 
   const renderFashionYesNo = (label: string, key: keyof FashionFilterState) => (
-    <Section label={label} isRtl={isRtl}>
+    <Section label={getFashionFieldLabel(label)} isRtl={isRtl}>
       <Sel
         value={String(fashionFilters[key] || '')}
         onChange={(v) => setFF({ [key]: v } as Partial<FashionFilterState>)}
@@ -1485,7 +1505,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
               onClick={() => setFashionGeneralOpen((v) => !v)}
               className={`w-full px-3 py-2 text-sm font-semibold text-slate-700 ${isRtl ? 'text-right' : 'text-left'}`}
             >
-              General Filters
+              {t('generalFilters')}
             </button>
             {fashionGeneralOpen && (
               <div className="space-y-4 px-3 pb-3">
@@ -1497,7 +1517,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                   >
                     <option value="">{tCommon('all')}</option>
                     {FASHION_SUBCATEGORIES.map((sub) => (
-                      <option key={sub.value} value={sub.value}>{sub.label}</option>
+                      <option key={sub.value} value={sub.value}>{tFA(FASHION_SUBCATEGORY_LABEL_KEYS[sub.value] as Parameters<typeof tFA>[0])}</option>
                     ))}
                   </Sel>
                 </Section>
@@ -1515,16 +1535,16 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                 <Section label={t('condition')} isRtl={isRtl}>
                   <Sel value={fashionFilters.condition} onChange={(v) => setFF({ condition: v as 'New' | 'Used' | '' })} isRtl={isRtl}>
                     <option value="">{tCommon('all')}</option>
-                    <option value="New">New</option>
-                    <option value="Used">Used</option>
+                    <option value="New">{tFA('optionLabels.new')}</option>
+                    <option value="Used">{tFA('optionLabels.used')}</option>
                   </Sel>
                 </Section>
 
-                <Section label="brand" isRtl={isRtl}>
+                <Section label={tFA('brand')} isRtl={isRtl}>
                   <Sel value={fashionFilters.brand} onChange={(v) => setFF({ brand: v })} isRtl={isRtl}>
                     <option value="">{tCommon('all')}</option>
                     {selectedFashionBrandOptions.map((brand) => (
-                      <option key={brand} value={brand}>{brand}</option>
+                      <option key={brand} value={brand}>{getFashionOptionLabel(brand)}</option>
                     ))}
                   </Sel>
                 </Section>
@@ -1532,8 +1552,8 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                 <Section label={t('sellerType')} isRtl={isRtl}>
                   <Sel value={fashionFilters.sellerType} onChange={(v) => setFF({ sellerType: v as 'Individual' | 'Dealer' | '' })} isRtl={isRtl}>
                     <option value="">{tCommon('all')}</option>
-                    <option value="Individual">Individual</option>
-                    <option value="Dealer">Dealer</option>
+                    <option value="Individual">{tFA('sellerTypeIndividual')}</option>
+                    <option value="Dealer">{tFA('sellerTypeDealer')}</option>
                   </Sel>
                 </Section>
 
@@ -1555,7 +1575,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
               onClick={() => setFashionSpecificOpen((v) => !v)}
               className={`w-full px-3 py-2 text-sm font-semibold text-slate-700 ${isRtl ? 'text-right' : 'text-left'}`}
             >
-              Subcategory Filters
+              {t('subcategoryFilters')}
             </button>
             {fashionSpecificOpen && (
               <div className="space-y-4 px-3 pb-3">
@@ -1563,18 +1583,18 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                   <>
                     {renderFashionSelect('clothingType', 'clothingType', ['T-shirt', 'Shirt', 'Jeans', 'Dress', 'Jacket', 'Hoodie'])}
                     {renderFashionSelect('gender', 'gender', ['Men', 'Women', 'Kids', 'Unisex'])}
-                    <Section label="size" isRtl={isRtl}>
+                    <Section label={getFashionFieldLabel('size')} isRtl={isRtl}>
                       <MultiCheck
-                        options={FASHION_SIZE_OPTIONS.map((v) => ({ value: v, label: v }))}
+                        options={FASHION_SIZE_OPTIONS.map((v) => ({ value: v, label: getFashionOptionLabel(v) }))}
                         selected={fashionFilters.size}
                         onToggle={(v) => toggleFashionMulti('size', v)}
                         isRtl={isRtl}
                       />
                     </Section>
                     {renderFashionSelect('fitType', 'fitType', ['Slim', 'Regular', 'Oversized'])}
-                    <Section label="color" isRtl={isRtl}>
+                    <Section label={getFashionFieldLabel('color')} isRtl={isRtl}>
                       <MultiCheck
-                        options={FASHION_COLOR_OPTIONS.map((v) => ({ value: v, label: v }))}
+                        options={FASHION_COLOR_OPTIONS.map((v) => ({ value: v, label: getFashionOptionLabel(v) }))}
                         selected={fashionFilters.color}
                         onToggle={(v) => toggleFashionMulti('color', v)}
                         isRtl={isRtl}
@@ -1596,7 +1616,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                     {renderFashionSelect('model', 'model', ['Air Max', 'Classic', 'Runner', 'Street'])}
                     {renderFashionSelect('shoeType', 'shoeType', ['Sneakers', 'Formal', 'Boots', 'Sandals', 'Heels', 'Sports'])}
                     {renderFashionSelect('gender', 'gender', ['Men', 'Women', 'Unisex'])}
-                    <Section label="size" isRtl={isRtl}>
+                    <Section label={getFashionFieldLabel('size')} isRtl={isRtl}>
                       <MultiCheck
                         options={['36', '37', '38', '39', '40', '41', '42', '43', '44', '45'].map((v) => ({ value: v, label: v }))}
                         selected={fashionFilters.size}
@@ -1604,9 +1624,9 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                         isRtl={isRtl}
                       />
                     </Section>
-                    <Section label="color" isRtl={isRtl}>
+                    <Section label={getFashionFieldLabel('color')} isRtl={isRtl}>
                       <MultiCheck
-                        options={FASHION_COLOR_OPTIONS.map((v) => ({ value: v, label: v }))}
+                        options={FASHION_COLOR_OPTIONS.map((v) => ({ value: v, label: getFashionOptionLabel(v) }))}
                         selected={fashionFilters.color}
                         onToggle={(v) => toggleFashionMulti('color', v)}
                         isRtl={isRtl}
@@ -1623,17 +1643,17 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                   <>
                     {renderFashionSelect('bagType', 'bagType', ['Handbag', 'Backpack', 'Travel Bag', 'Laptop Bag', 'Wallet'])}
                     {renderFashionSelect('material', 'material', ['Leather', 'Synthetic', 'Canvas', 'Nylon'])}
-                    <Section label="color" isRtl={isRtl}>
+                    <Section label={getFashionFieldLabel('color')} isRtl={isRtl}>
                       <MultiCheck
-                        options={FASHION_COLOR_OPTIONS.map((v) => ({ value: v, label: v }))}
+                        options={FASHION_COLOR_OPTIONS.map((v) => ({ value: v, label: getFashionOptionLabel(v) }))}
                         selected={fashionFilters.color}
                         onToggle={(v) => toggleFashionMulti('color', v)}
                         isRtl={isRtl}
                       />
                     </Section>
-                    <Section label="size" isRtl={isRtl}>
+                    <Section label={getFashionFieldLabel('size')} isRtl={isRtl}>
                       <MultiCheck
-                        options={['Small', 'Medium', 'Large'].map((v) => ({ value: v, label: v }))}
+                        options={['Small', 'Medium', 'Large'].map((v) => ({ value: v, label: getFashionOptionLabel(v) }))}
                         selected={fashionFilters.size}
                         onToggle={(v) => toggleFashionMulti('size', v)}
                         isRtl={isRtl}
@@ -1666,9 +1686,9 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                     {renderFashionSelect('type', 'type', ['Ring', 'Necklace', 'Bracelet', 'Earrings'])}
                     {renderFashionSelect('material', 'material', ['Gold', 'Silver', 'Diamond', 'Platinum', 'Artificial'])}
                     {renderFashionSelect('gender', 'gender', ['Men', 'Women', 'Unisex'])}
-                    <Section label="size" isRtl={isRtl}>
+                    <Section label={getFashionFieldLabel('size')} isRtl={isRtl}>
                       <MultiCheck
-                        options={['XS', 'S', 'M', 'L', 'XL'].map((v) => ({ value: v, label: v }))}
+                        options={['XS', 'S', 'M', 'L', 'XL'].map((v) => ({ value: v, label: getFashionOptionLabel(v) }))}
                         selected={fashionFilters.size}
                         onToggle={(v) => toggleFashionMulti('size', v)}
                         isRtl={isRtl}
@@ -1685,9 +1705,9 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                   <>
                     {renderFashionSelect('type', 'type', ['Belt', 'Hat', 'Sunglasses', 'Scarf'])}
                     {renderFashionSelect('material', 'material', ['Leather', 'Cotton', 'Metal', 'Plastic'])}
-                    <Section label="color" isRtl={isRtl}>
+                    <Section label={getFashionFieldLabel('color')} isRtl={isRtl}>
                       <MultiCheck
-                        options={FASHION_COLOR_OPTIONS.map((v) => ({ value: v, label: v }))}
+                        options={FASHION_COLOR_OPTIONS.map((v) => ({ value: v, label: getFashionOptionLabel(v) }))}
                         selected={fashionFilters.color}
                         onToggle={(v) => toggleFashionMulti('color', v)}
                         isRtl={isRtl}
@@ -1702,7 +1722,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
             )}
           </div>
 
-          <Section label="Price Slider" isRtl={isRtl}>
+          <Section label={t('priceSlider')} isRtl={isRtl}>
             <div className="space-y-2">
               <input
                 type="range"
@@ -1711,8 +1731,8 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                 step="100"
                 value={priceMin ? Number(priceMin) : 0}
                 onChange={(e) => onPriceMinChange(e.target.value)}
-                aria-label="Minimum price"
-                title="Minimum price"
+                aria-label={t('minPrice')}
+                title={t('minPrice')}
                 className="w-full"
               />
               <input
@@ -1722,8 +1742,8 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                 step="100"
                 value={priceMax ? Number(priceMax) : 200000}
                 onChange={(e) => onPriceMaxChange(e.target.value)}
-                aria-label="Maximum price"
-                title="Maximum price"
+                aria-label={t('maxPrice')}
+                title={t('maxPrice')}
                 className="w-full"
               />
             </div>
@@ -1738,14 +1758,14 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
               }}
               className="w-1/2 px-3 py-2 rounded-md border border-slate-300 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50"
             >
-              Clear Filters
+              {t('clearFilters')}
             </button>
             <button
               type="button"
               onClick={() => onFashionSearch?.()}
               className="w-1/2 px-3 py-2 rounded-md border border-primary-600 bg-primary-600 text-sm font-medium text-white hover:bg-primary-700"
             >
-              Apply Filters
+              {t('applyFilters')}
             </button>
           </div>
         </>

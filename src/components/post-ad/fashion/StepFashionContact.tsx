@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -104,6 +105,7 @@ const LocationMap: React.FC<{
 };
 
 export const StepFashionContact: React.FC<StepFashionContactProps> = ({ locale, data, onChange }) => {
+  const t = useTranslations('postAd.fashion');
   const rtl = isRTL(locale);
   const { cities } = useCities();
   const [hasReadLegal, setHasReadLegal] = useState(data.termsAccepted);
@@ -169,21 +171,21 @@ export const StepFashionContact: React.FC<StepFashionContactProps> = ({ locale, 
   return (
     <div className="space-y-6">
       <div className={`rounded-xl border border-slate-200 bg-white p-4 shadow-sm ${rtl ? 'text-right' : 'text-left'}`}>
-        <h3 className="text-lg font-bold text-slate-900">Contact, Location & Terms</h3>
-        <p className="mt-1 text-sm text-slate-600">Add contact details, choose city, optionally pin map location, and accept terms.</p>
+        <h3 className="text-lg font-bold text-slate-900">{t('contactHeading')}</h3>
+        <p className="mt-1 text-sm text-slate-600">{t('contactDescription')}</p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
           <label className={`mb-1.5 block text-sm font-semibold text-slate-700 ${rtl ? 'text-right' : 'text-left'}`}>
-            city <span className="text-red-500">*</span>
+            {t('city')} <span className="text-red-500">*</span>
           </label>
           <select
             className={`${inputClass(!!errors.city)} bg-white`}
             dir={rtl ? 'rtl' : 'ltr'}
             {...register('city')}
           >
-            <option value="">Select city</option>
+            <option value="">{t('selectCity')}</option>
             {cities.map((city) => (
               <option key={city.name_en} value={city.name_en}>
                 {getManagedCityName(city, locale)}
@@ -194,31 +196,31 @@ export const StepFashionContact: React.FC<StepFashionContactProps> = ({ locale, 
 
         <div>
           <label className={`mb-1.5 block text-sm font-semibold text-slate-700 ${rtl ? 'text-right' : 'text-left'}`}>
-            phone <span className="text-red-500">*</span>
+            {t('phone')} <span className="text-red-500">*</span>
           </label>
-          <input type="tel" dir="ltr" className={inputClass(!!errors.phone)} placeholder="07xx..." {...register('phone')} />
+          <input type="tel" dir="ltr" className={inputClass(!!errors.phone)} placeholder={t('phonePlaceholder')} {...register('phone')} />
         </div>
 
         <div>
           <label className={`mb-1.5 block text-sm font-semibold text-slate-700 ${rtl ? 'text-right' : 'text-left'}`}>
-            whatsapp
+            {t('whatsapp')}
           </label>
-          <input type="tel" dir="ltr" className={inputClass(false)} placeholder="Optional" {...register('whatsapp')} />
+          <input type="tel" dir="ltr" className={inputClass(false)} placeholder={t('whatsappPlaceholder')} {...register('whatsapp')} />
         </div>
 
         <div>
           <label className={`mb-1.5 block text-sm font-semibold text-slate-700 ${rtl ? 'text-right' : 'text-left'}`}>
-            email
+            {t('email')}
           </label>
-          <input type="email" dir="ltr" className={inputClass(!!errors.email)} placeholder="Optional" {...register('email')} />
+          <input type="email" dir="ltr" className={inputClass(!!errors.email)} placeholder={t('emailPlaceholder')} {...register('email')} />
         </div>
       </div>
 
       <div>
         <p className={`mb-2 text-sm font-semibold text-slate-700 ${rtl ? 'text-right' : 'text-left'}`}>
-          map location (optional)
+          {t('mapLocation')}
         </p>
-        <p className={`mb-3 text-xs text-slate-500 ${rtl ? 'text-right' : 'text-left'}`}>Click on map to pin exact location.</p>
+        <p className={`mb-3 text-xs text-slate-500 ${rtl ? 'text-right' : 'text-left'}`}>{t('mapHint')}</p>
         <LocationMap
           lat={data.lat}
           lng={data.lng}
@@ -240,7 +242,7 @@ export const StepFashionContact: React.FC<StepFashionContactProps> = ({ locale, 
           disabled={!hasReadLegal}
           {...register('termsAccepted')}
         />
-        I agree to Terms & Conditions
+        {t('terms')}
       </label>
     </div>
   );

@@ -13,6 +13,17 @@ export interface FashionSubcategoryOption {
   label: string;
 }
 
+export const FASHION_SUBCATEGORY_LABEL_KEYS: Record<FashionSubcategory, string> = {
+  'men-clothing': 'subcategoryMenClothing',
+  'women-clothing': 'subcategoryWomenClothing',
+  'kids-clothing': 'subcategoryKidsClothing',
+  shoes: 'subcategoryShoes',
+  bags: 'subcategoryBags',
+  accessories: 'subcategoryAccessories',
+  watches: 'subcategoryWatches',
+  jewelry: 'subcategoryJewelry',
+};
+
 export type FashionSpecFieldType = 'text' | 'select' | 'multiselect' | 'checkbox' | 'toggle';
 
 export interface FashionSpecField {
@@ -141,4 +152,19 @@ export const getDefaultGenderForFashionSubcategory = (subcategory: FashionSubcat
 
 export const isFashionClothingSubcategory = (subcategory: FashionSubcategory | ''): boolean => {
   return subcategory === 'men-clothing' || subcategory === 'women-clothing' || subcategory === 'kids-clothing';
+};
+
+export const getFashionFieldTranslationKey = (fieldKey: string): string => `fields.${fieldKey}`;
+
+export const getFashionOptionTranslationKey = (option: string): string => {
+  const normalized = option
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/\+/g, 'plus')
+    .replace(/\//g, '_')
+    .replace(/[()]/g, '')
+    .replace(/\s+/g, '_')
+    .replace(/[^a-z0-9_]/g, '');
+
+  return `optionLabels.${normalized}`;
 };

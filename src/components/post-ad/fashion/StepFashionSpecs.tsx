@@ -1,10 +1,13 @@
 'use client';
 
 import React, { useMemo, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Locale, isRTL } from '@/lib/i18n/config';
 import {
   FashionSubcategory,
   FashionSpecField,
+  getFashionFieldTranslationKey,
+  getFashionOptionTranslationKey,
   getDefaultGenderForFashionSubcategory,
   getFashionSpecsConfig,
   isFashionClothingSubcategory,
@@ -27,8 +30,23 @@ const withOtherOption = (options: string[] | undefined): string[] => {
 };
 
 export const StepFashionSpecs: React.FC<StepFashionSpecsProps> = ({ locale, subcategory, specs, onChange }) => {
+  const t = useTranslations('postAd.fashion');
   const rtl = isRTL(locale);
   const fields = useMemo(() => getFashionSpecsConfig(subcategory), [subcategory]);
+
+  const getFieldLabel = (field: FashionSpecField | string) => {
+    const fieldKey = typeof field === 'string' ? field : field.key;
+    const fallback = typeof field === 'string' ? field : field.label;
+    const translationKey = getFashionFieldTranslationKey(fieldKey);
+    return t.has(translationKey as Parameters<typeof t>[0]) ? t(translationKey as Parameters<typeof t>[0]) : fallback;
+  };
+
+  const getOptionLabel = (option: string) => {
+    const translationKey = getFashionOptionTranslationKey(option);
+    return t.has(translationKey as Parameters<typeof t>[0]) ? t(translationKey as Parameters<typeof t>[0]) : option;
+  };
+
+  const mapOptions = (options: string[] | undefined) => (options || []).map((option) => ({ value: option, label: getOptionLabel(option) }));
 
   useEffect(() => {
     if (!subcategory || !isFashionClothingSubcategory(subcategory)) return;
@@ -46,16 +64,17 @@ export const StepFashionSpecs: React.FC<StepFashionSpecsProps> = ({ locale, subc
 
   const renderField = (field: FashionSpecField) => {
     const customKey = `${field.key}Other`;
+    const fieldLabel = getFieldLabel(field);
 
     if (field.type === 'text') {
       return (
         <InputField
-          label={field.key}
+          label={fieldLabel}
           required={field.required}
           rtl={rtl}
           value={toStringValue(specs[field.key])}
           onChange={(value) => updateSpec(field.key, value)}
-          placeholder={field.label}
+          placeholder={fieldLabel}
         />
       );
     }
@@ -64,7 +83,7 @@ export const StepFashionSpecs: React.FC<StepFashionSpecsProps> = ({ locale, subc
       return (
         <div className="space-y-3">
           <SelectField
-            label={field.key}
+            label={fieldLabel}
             required={field.required}
             rtl={rtl}
             value={toStringValue(specs[field.key])}
@@ -73,17 +92,17 @@ export const StepFashionSpecs: React.FC<StepFashionSpecsProps> = ({ locale, subc
               if (value !== 'Other') nextSpecs[customKey] = '';
               onChange(nextSpecs);
             }}
-            options={withOtherOption(field.options)}
-            placeholder={`Select ${field.label}`}
+            options={mapOptions(withOtherOption(field.options))}
+            placeholder={t('selectOne')}
           />
           {toStringValue(specs[field.key]) === 'Other' && (
             <InputField
-              label={customKey}
+              label={t('customNameLabel', { field: fieldLabel })}
               required={field.required}
               rtl={rtl}
               value={toStringValue(specs[customKey])}
               onChange={(value) => updateSpec(customKey, value)}
-              placeholder={`Enter ${field.label}`}
+              placeholder={t('customNamePlaceholder', { field: fieldLabel })}
             />
           )}
         </div>
@@ -96,7 +115,7 @@ export const StepFashionSpecs: React.FC<StepFashionSpecsProps> = ({ locale, subc
       return (
         <div className="space-y-3">
           <MultiSelectField
-            label={field.key}
+            label={fieldLabel}
             required={field.required}
             rtl={rtl}
             value={selected}
@@ -105,16 +124,16 @@ export const StepFashionSpecs: React.FC<StepFashionSpecsProps> = ({ locale, subc
               if (!value.includes('Other')) nextSpecs[customKey] = '';
               onChange(nextSpecs);
             }}
-            options={withOtherOption(field.options)}
+            options={mapOptions(withOtherOption(field.options))}
           />
           {hasOther && (
             <InputField
-              label={customKey}
+              label={t('customNameLabel', { field: fieldLabel })}
               required
               rtl={rtl}
               value={toStringValue(specs[customKey])}
               onChange={(value) => updateSpec(customKey, value)}
-              placeholder={`Enter ${field.label}`}
+              placeholder={t('customNamePlaceholder', { field: fieldLabel })}
             />
           )}
         </div>
@@ -124,7 +143,7 @@ export const StepFashionSpecs: React.FC<StepFashionSpecsProps> = ({ locale, subc
     if (field.type === 'checkbox') {
       return (
         <CheckboxField
-          label={field.key}
+          label={fieldLabel}
           required={field.required}
           rtl={rtl}
           checked={toBooleanValue(specs[field.key])}
@@ -135,11 +154,13 @@ export const StepFashionSpecs: React.FC<StepFashionSpecsProps> = ({ locale, subc
 
     return (
       <ToggleField
-        label={field.key}
+        label={fieldLabel}
         required={field.required}
         rtl={rtl}
         value={toBooleanValue(specs[field.key])}
         onChange={(value) => updateSpec(field.key, value)}
+        trueLabel={t('optionLabels.yes')}
+        falseLabel={t('optionLabels.no')}
       />
     );
   };
@@ -147,13 +168,13 @@ export const StepFashionSpecs: React.FC<StepFashionSpecsProps> = ({ locale, subc
   return (
     <div className="space-y-6">
       <div className={`rounded-xl border border-slate-200 bg-white p-4 shadow-sm ${rtl ? 'text-right' : 'text-left'}`}>
-        <h3 className="text-lg font-bold text-slate-900">Product Specifications</h3>
-        <p className="mt-1 text-sm text-slate-600">Fields change automatically by subcategory.</p>
+        <h3 className="text-lg font-bold text-slate-900">{t('specsHeading')}</h3>
+        <p className="mt-1 text-sm text-slate-600">{t('specsDescription')}</p>
       </div>
 
       {!subcategory && (
         <p className={`rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700 ${rtl ? 'text-right' : 'text-left'}`}>
-          Select subcategory in Step 1 first.
+          {t('selectSubcategoryFirst')}
         </p>
       )}
 

@@ -38,7 +38,7 @@ import { StepFashionContact } from './fashion/StepFashionContact';
 import { StepFashionReview } from './fashion/StepFashionReview';
 import { DynamicWizardFields, WizardFormConfig, isWizardRequiredFieldsValid } from './DynamicWizardFields';
 import { ElectronicsSubcategory, getElectronicsSpecsConfig, hasConditionInSpecs } from '@/lib/constants/electronics-wizard';
-import { FashionSubcategory, FASHION_BRANDS_BY_SUBCATEGORY, getFashionSpecsConfig } from '@/lib/constants/fashion-wizard';
+import { FashionSubcategory, FASHION_BRANDS_BY_SUBCATEGORY, FASHION_SUBCATEGORY_LABEL_KEYS, getFashionSpecsConfig } from '@/lib/constants/fashion-wizard';
 import type { VehicleType as VehicleTypeEnum } from '@/lib/constants/vehicles';
 
 // Category slugs (more reliable than hardcoded IDs across environments)
@@ -380,6 +380,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
   const tRE = useTranslations('postAd.realEstate');
   const tVH = useTranslations('postAd.vehicles');
   const tEL = useTranslations('postAd.electronics');
+  const tFA = useTranslations('postAd.fashion');
   const tCommon = useTranslations('common');
   const tAuth = useTranslations('auth');
   const rtl = isRTL(locale);
@@ -715,12 +716,12 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       case 'elStepMedia': return tEL('stepMedia');
       case 'elStepDetails': return tEL('stepContact');
       case 'elStepReview': return tEL('stepReview');
-      case 'faStepBasic': return 'Basic Information';
-      case 'faStepGeneral': return 'General Details';
-      case 'faStepSpecs': return 'Specifications';
-      case 'faStepMedia': return 'Media Upload';
-      case 'faStepContact': return 'Contact & Terms';
-      case 'faStepReview': return 'Review & Submit';
+      case 'faStepBasic': return tFA('stepBasic');
+      case 'faStepGeneral': return tFA('stepGeneral');
+      case 'faStepSpecs': return tFA('stepSpecs');
+      case 'faStepMedia': return tFA('stepMedia');
+      case 'faStepContact': return tFA('stepContact');
+      case 'faStepReview': return tFA('stepReview');
       default: return '';
     }
   };
@@ -1724,11 +1725,11 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
               )}
               {isFashion && (
                 <>
-                  <div><span className="font-semibold text-slate-700">subcategory:</span> {faData.subcategory}</div>
-                  <div><span className="font-semibold text-slate-700">title:</span> {faData.title}</div>
-                  <div><span className="font-semibold text-slate-700">price:</span> {faData.price}</div>
-                  <div><span className="font-semibold text-slate-700">city:</span> {faData.city}</div>
-                  <div><span className="font-semibold text-slate-700">images:</span> {faData.media.images.length}</div>
+                  <div><span className="font-semibold text-slate-700">{tFA('subcategoryLabel')}:</span> {faData.subcategory ? tFA(FASHION_SUBCATEGORY_LABEL_KEYS[faData.subcategory as FashionSubcategory] as Parameters<typeof tFA>[0]) : ''}</div>
+                  <div><span className="font-semibold text-slate-700">{tFA('adTitle')}:</span> {faData.title}</div>
+                  <div><span className="font-semibold text-slate-700">{tFA('price')}:</span> {faData.price}</div>
+                  <div><span className="font-semibold text-slate-700">{tFA('city')}:</span> {faData.city}</div>
+                  <div><span className="font-semibold text-slate-700">{tFA('images')}:</span> {faData.media.images.length}</div>
                 </>
               )}
               {!isVehicles && !isRealEstate && !isElectronics && !isFashion && (
