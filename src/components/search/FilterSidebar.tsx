@@ -850,7 +850,12 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
         .order('sort_order', { ascending: true });
 
       if (!mounted) return;
-      setDbCategories(((data as DbCategory[]) || []).filter((c) => c.slug !== 'mobile-phones' && c.slug !== 'phones'));
+      setDbCategories(
+        ((data as DbCategory[]) || []).filter((c) => {
+          const slug = (c.slug || '').toLowerCase();
+          return slug !== 'mobile-phones' && slug !== 'phones';
+        })
+      );
     };
 
     loadCategories();
@@ -872,7 +877,75 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
     }
   };
 
-  const selectedDbCategory = dbCategories.find((c) => c.id === selectedCategory);
+  const dedupedDbCategories = React.useMemo(() => {
+    if (dbCategories.length === 0) return dbCategories;
+
+    const normalize = (value: string | null | undefined): string =>
+      (value || '')
+        .toLowerCase()
+        .replace(/[&]/g, 'and')
+        .replace(/[\s\-_/\\]+/g, '')
+        .trim();
+
+    const fashionAliases = new Set([
+      'fashion',
+      'fashionclothing',
+      'fashionandclothing',
+      'فیشناوجامې',
+      'فېشناوکالي',
+      'مدولباس',
+    ]);
+
+    const keyFor = (category: DbCategory): string => {
+      const slug = normalize(category.slug);
+      const enName = normalize(category.name_en);
+      const psName = normalize(category.name_ps);
+      const faName = normalize(category.name_fa);
+
+      if (
+        slug === 'fashion' ||
+        slug === 'fashionclothing' ||
+        slug === 'fashionandclothing' ||
+        fashionAliases.has(enName) ||
+        fashionAliases.has(psName) ||
+        fashionAliases.has(faName)
+      ) {
+        return 'fashion-family';
+      }
+
+      if (slug) return `slug-${slug}`;
+      if (enName) return `name-en-${enName}`;
+      if (psName) return `name-ps-${psName}`;
+      if (faName) return `name-fa-${faName}`;
+      return `id-${category.id}`;
+    };
+
+    const bestByKey = new Map<string, DbCategory>();
+
+    for (const category of dbCategories) {
+      const key = keyFor(category);
+      const prev = bestByKey.get(key);
+      if (!prev) {
+        bestByKey.set(key, category);
+        continue;
+      }
+
+      const prevSort = prev.sort_order ?? Number.MAX_SAFE_INTEGER;
+      const nextSort = category.sort_order ?? Number.MAX_SAFE_INTEGER;
+      if (nextSort < prevSort || (nextSort === prevSort && category.id < prev.id)) {
+        bestByKey.set(key, category);
+      }
+    }
+
+    return Array.from(bestByKey.values()).sort((a, b) => {
+      const aSort = a.sort_order ?? Number.MAX_SAFE_INTEGER;
+      const bSort = b.sort_order ?? Number.MAX_SAFE_INTEGER;
+      if (aSort !== bSort) return aSort - bSort;
+      return a.id - b.id;
+    });
+  }, [dbCategories]);
+
+  const selectedDbCategory = dedupedDbCategories.find((c) => c.id === selectedCategory);
   const selectedCategorySlug = (selectedDbCategory?.slug || '').toLowerCase();
 
   const isVehicles = selectedCategory === 1;
@@ -1154,8 +1227,8 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
       <Section label={t('filter')} isRtl={isRtl}>
         <Sel id="category-filter" value={selectedCategory?.toString() ?? ''} onChange={(v) => onCategoryChange(v === '' ? null : Number(v))} isRtl={isRtl}>
           <option value="">{tCommon('all')}</option>
-          {dbCategories.length > 0
-            ? dbCategories.map((cat) => (
+          {dedupedDbCategories.length > 0
+            ? dedupedDbCategories.map((cat) => (
               <option key={cat.id} value={cat.id}>{getLocalizedDbCategoryName(cat)}</option>
             ))
             : MAIN_CATEGORIES.map((cat) => (
