@@ -6,9 +6,21 @@ import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { Locale } from '@/lib/i18n/config';
 import { MAIN_CATEGORIES, getCategoryName } from '@/lib/constants/categories';
+import { createClient } from '@/lib/supabase/client';
 
 interface CategoryGridProps {
   locale: Locale;
+}
+
+interface DbCategory {
+  id: number;
+  name_en: string;
+  name_ps: string;
+  name_fa: string;
+  slug: string | null;
+  icon_name: string | null;
+  parent_id: number | null;
+  sort_order: number | null;
 }
 
 const ICON_MAP: Record<string, React.ReactNode> = {
@@ -196,6 +208,49 @@ const ICON_MAP: Record<string, React.ReactNode> = {
 
 export const CategoryGrid: React.FC<CategoryGridProps> = ({ locale }) => {
   const t = useTranslations('homepage');
+  const [dbCategories, setDbCategories] = React.useState<DbCategory[]>([]);
+
+  React.useEffect(() => {
+    const fetchCategories = async () => {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('categories')
+        .select('id, name_en, name_ps, name_fa, slug, icon_name, parent_id, sort_order')
+        .is('parent_id', null)
+        .order('sort_order', { ascending: true });
+
+      if (!data) return;
+      setDbCategories(
+        ((data as DbCategory[]) || []).filter((c) => c.slug !== 'mobile-phones' && c.slug !== 'phones')
+      );
+    };
+
+    fetchCategories();
+  }, []);
+
+  const getLocalizedDbCategoryName = (category: DbCategory): string => {
+    switch (locale) {
+      case 'ps':
+        return category.name_ps;
+      case 'fa':
+        return category.name_fa;
+      case 'en':
+      default:
+        return category.name_en;
+    }
+  };
+
+  const effectiveCategories = dbCategories.length > 0
+    ? dbCategories.map((c) => ({
+      id: c.id,
+      label: getLocalizedDbCategoryName(c),
+      icon: c.icon_name || 'home',
+    }))
+    : MAIN_CATEGORIES.map((c) => ({
+      id: c.id,
+      label: getCategoryName(c.id, locale),
+      icon: c.icon,
+    }));
 
   return (
     <section className="py-10 md:py-14 bg-white border-t border-slate-100">
@@ -205,7 +260,7 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({ locale }) => {
         </h2>
 
         <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
-          {MAIN_CATEGORIES.map((category) => (
+          {effectiveCategories.map((category) => (
             <Link
               key={category.id}
               href={`/${locale}/search?category=${category.id}`}
@@ -216,7 +271,7 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({ locale }) => {
               </div>
               <div>
                 <h3 className="font-medium text-slate-900 text-xs md:text-sm group-hover:text-primary-600 transition line-clamp-2">
-                  {getCategoryName(category.id, locale)}
+                  {category.label}
                 </h3>
               </div>
             </Link>

@@ -166,6 +166,84 @@ export interface SparePartsFilters {
   city?: string;
 }
 
+export interface HealthBeautyFilters {
+  subcategory?: string;
+  postedDate?: string;
+  sellerType?: string;
+  keywords?: string;
+  condition?: string;
+  brand?: string;
+  product_type?: string;
+  gender?: string;
+  formulation?: string;
+  skin_type?: string;
+  concern?: string;
+  has_spf?: string;
+  organic_natural?: string;
+  dermatologically_tested?: string;
+  hair_type?: string;
+  sulfate_free?: string;
+  organic?: string;
+  finish?: string;
+  coverage?: string;
+  waterproof?: string;
+  fragrance_family?: string;
+  concentration?: string;
+  prescription_required?: string;
+  power_source?: string;
+  usage_area?: string;
+  warranty?: string;
+}
+
+export interface HomeFurnitureFilters {
+  subcategory?: string;
+  postedDate?: string;
+  sellerType?: string;
+  keywords?: string;
+  condition?: string;
+  brand?: string;
+  furniture_type?: string;
+  material?: string;
+  color?: string[];
+  length?: string;
+  width?: string;
+  height?: string;
+  weight?: string;
+  seating_capacity?: string;
+  style?: string;
+  assembly_required?: string;
+  condition_details?: string;
+  usage?: string;
+  warranty?: string;
+  included_items?: string;
+  decor_type?: string;
+  theme?: string;
+  handmade?: string;
+  set_or_single?: string;
+  product_type?: string;
+  capacity?: string;
+  dishwasher_safe?: string;
+  microwave_safe?: string;
+  set_size?: string;
+  lighting_type?: string;
+  power_source?: string;
+  wattage?: string;
+  light_color?: string;
+  smart_lighting?: string;
+  dimmable?: string;
+  installation_type?: string;
+  storage_type?: string;
+  compartments?: string;
+  wall_mounted?: string;
+  lockable?: string;
+  custom_spec_1_key?: string;
+  custom_spec_1_value?: string;
+  custom_spec_2_key?: string;
+  custom_spec_2_value?: string;
+  custom_spec_3_key?: string;
+  custom_spec_3_value?: string;
+}
+
 export interface ListingFilters {
   category?: number | null;
   query?: string;
@@ -182,6 +260,8 @@ export interface ListingFilters {
   electronicsFilters?: ElectronicsFilters;
   fashionFilters?: FashionFilters;
   sparePartsFilters?: SparePartsFilters;
+  healthBeautyFilters?: HealthBeautyFilters;
+  homeFurnitureFilters?: HomeFurnitureFilters;
 }
 
 // ─── Engine Power / Capacity helpers ────────────────────────────────────────
@@ -521,6 +601,79 @@ function applySparePartsFilters(listings: Listing[], sf?: SparePartsFilters): Li
   });
 }
 
+function applyHealthBeautyFilters(listings: Listing[], hbf?: HealthBeautyFilters): Listing[] {
+  if (!hbf) return listings;
+
+  const skipFields = new Set(['subcategory', 'postedDate', 'sellerType', 'keywords']);
+
+  return listings.filter((l) => {
+    const m = l.metadata as Record<string, unknown>;
+
+    if (hbf.condition && !matchesLooseToken(m.condition ?? l.condition, hbf.condition)) return false;
+    if (hbf.brand && !matchesLooseToken(m.brand, hbf.brand)) return false;
+
+    for (const [key, rawValue] of Object.entries(hbf)) {
+      if (skipFields.has(key) || key === 'condition' || key === 'brand') continue;
+      if (rawValue === undefined || rawValue === '') continue;
+
+      const metadataValue = m[key];
+      const selectedString = String(rawValue);
+
+      if (selectedString === 'yes' || selectedString === 'no') {
+        if (normalizeYesNo(metadataValue) !== selectedString) return false;
+        continue;
+      }
+
+      if (!matchesLooseToken(metadataValue, selectedString)) return false;
+    }
+
+    return true;
+  });
+}
+
+function applyHomeFurnitureFilters(listings: Listing[], hff?: HomeFurnitureFilters): Listing[] {
+  if (!hff) return listings;
+
+  const skipFields = new Set(['subcategory', 'postedDate', 'sellerType', 'keywords', 'condition', 'brand']);
+
+  return listings.filter((l) => {
+    const m = l.metadata as Record<string, unknown>;
+
+    if (hff.condition && !matchesLooseToken(m.condition ?? l.condition, hff.condition)) return false;
+    if (hff.brand && !matchesLooseToken(m.brand, hff.brand)) return false;
+
+    for (const [key, rawValue] of Object.entries(hff)) {
+      if (skipFields.has(key) || rawValue === undefined || rawValue === '') continue;
+
+      const metadataValue = m[key];
+
+      if (Array.isArray(rawValue)) {
+        if (rawValue.length === 0) continue;
+
+        if (Array.isArray(metadataValue)) {
+          const selectedTokens = rawValue.map((v) => normalizeToken(v));
+          const metadataTokens = metadataValue.map((v) => normalizeToken(v));
+          if (!selectedTokens.some((token) => metadataTokens.includes(token))) return false;
+        } else {
+          const metadataToken = normalizeToken(metadataValue);
+          if (!rawValue.some((v) => normalizeToken(v) === metadataToken)) return false;
+        }
+        continue;
+      }
+
+      const selectedString = String(rawValue);
+      if (selectedString === 'yes' || selectedString === 'no') {
+        if (normalizeYesNo(metadataValue) !== selectedString) return false;
+        continue;
+      }
+
+      if (!matchesLooseToken(metadataValue, selectedString)) return false;
+    }
+
+    return true;
+  });
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function useListings(filters: ListingFilters = {}) {
@@ -645,6 +798,54 @@ export function useListings(filters: ListingFilters = {}) {
         }
       }
 
+      if (filters.healthBeautyFilters?.subcategory) {
+        query = query.contains('metadata', { subcategory: filters.healthBeautyFilters.subcategory });
+      }
+      if (filters.healthBeautyFilters?.sellerType === 'Individual') {
+        query = query.eq('from_owner', true);
+      }
+      if (filters.healthBeautyFilters?.sellerType === 'Dealer') {
+        query = query.eq('from_owner', false);
+      }
+      if (filters.healthBeautyFilters?.postedDate) {
+        const now = new Date();
+        const from = new Date(now);
+        if (filters.healthBeautyFilters.postedDate === 'today') {
+          from.setHours(0, 0, 0, 0);
+          query = query.gte('created_at', from.toISOString());
+        } else if (filters.healthBeautyFilters.postedDate === 'last7') {
+          from.setDate(now.getDate() - 7);
+          query = query.gte('created_at', from.toISOString());
+        } else if (filters.healthBeautyFilters.postedDate === 'last30') {
+          from.setDate(now.getDate() - 30);
+          query = query.gte('created_at', from.toISOString());
+        }
+      }
+
+      if (filters.homeFurnitureFilters?.subcategory) {
+        query = query.contains('metadata', { subcategory: filters.homeFurnitureFilters.subcategory });
+      }
+      if (filters.homeFurnitureFilters?.sellerType === 'Individual') {
+        query = query.eq('from_owner', true);
+      }
+      if (filters.homeFurnitureFilters?.sellerType === 'Dealer') {
+        query = query.eq('from_owner', false);
+      }
+      if (filters.homeFurnitureFilters?.postedDate) {
+        const now = new Date();
+        const from = new Date(now);
+        if (filters.homeFurnitureFilters.postedDate === 'today') {
+          from.setHours(0, 0, 0, 0);
+          query = query.gte('created_at', from.toISOString());
+        } else if (filters.homeFurnitureFilters.postedDate === 'last7') {
+          from.setDate(now.getDate() - 7);
+          query = query.gte('created_at', from.toISOString());
+        } else if (filters.homeFurnitureFilters.postedDate === 'last30') {
+          from.setDate(now.getDate() - 30);
+          query = query.gte('created_at', from.toISOString());
+        }
+      }
+
       // Vehicle-specific: fromOwner is a direct column
       const vf = filters.vehicleFilters;
       if (vf?.fromOwner !== undefined && vf?.fromOwner !== null) {
@@ -701,7 +902,9 @@ export function useListings(filters: ListingFilters = {}) {
       const electronicsFiltered = applyElectronicsFilters(realEstateFiltered, filters.electronicsFilters);
       const fashionFiltered = applyFashionFilters(electronicsFiltered, filters.fashionFilters);
       const sparePartsFiltered = applySparePartsFilters(fashionFiltered, filters.sparePartsFilters);
-      setListings(sparePartsFiltered);
+      const healthBeautyFiltered = applyHealthBeautyFilters(sparePartsFiltered, filters.healthBeautyFilters);
+      const homeFurnitureFiltered = applyHomeFurnitureFilters(healthBeautyFiltered, filters.homeFurnitureFilters);
+      setListings(homeFurnitureFiltered);
     } catch (err: unknown) {      const message = err instanceof Error ? err.message : 'Failed to load listings.';
       setError(message);
       console.error('Fetch listings error:', err);
@@ -730,6 +933,10 @@ export function useListings(filters: ListingFilters = {}) {
     JSON.stringify(filters.fashionFilters),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     JSON.stringify(filters.sparePartsFilters),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    JSON.stringify(filters.healthBeautyFilters),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    JSON.stringify(filters.homeFurnitureFilters),
   ]);
 
   // Initial fetch

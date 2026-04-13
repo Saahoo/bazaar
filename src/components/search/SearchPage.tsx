@@ -18,6 +18,10 @@ import {
   EMPTY_FASHION_FILTERS,
   SparePartsFilterState,
   EMPTY_SPARE_PARTS_FILTERS,
+  HealthBeautyFilterState,
+  EMPTY_HEALTH_BEAUTY_FILTERS,
+  HomeFurnitureFilterState,
+  EMPTY_HOME_FURNITURE_FILTERS,
 } from './FilterSidebar';
 import { ListingCard } from './ListingCard';
 import { SortDropdown } from './SortDropdown';
@@ -48,6 +52,8 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory,
   const [electronicsSearchTick, setElectronicsSearchTick] = useState(0);
   const [fashionSearchTick, setFashionSearchTick] = useState(0);
   const [sparePartsSearchTick, setSparePartsSearchTick] = useState(0);
+  const [healthBeautySearchTick, setHealthBeautySearchTick] = useState(0);
+  const [homeFurnitureSearchTick, setHomeFurnitureSearchTick] = useState(0);
 
   // Vehicle-specific filter group
   const [vehicleFilters, setVehicleFilters] = useState<VehicleFilterState>(EMPTY_VEHICLE_FILTERS);
@@ -59,6 +65,10 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory,
   const [fashionFilters, setFashionFilters] = useState<FashionFilterState>(EMPTY_FASHION_FILTERS);
   // Spare parts-specific filter group
   const [sparePartsFilters, setSparePartsFilters] = useState<SparePartsFilterState>(EMPTY_SPARE_PARTS_FILTERS);
+  // Health & Beauty-specific filter group
+  const [healthBeautyFilters, setHealthBeautyFilters] = useState<HealthBeautyFilterState>(EMPTY_HEALTH_BEAUTY_FILTERS);
+  // Home & Furniture-specific filter group
+  const [homeFurnitureFilters, setHomeFurnitureFilters] = useState<HomeFurnitureFilterState>(EMPTY_HOME_FURNITURE_FILTERS);
 
   // Reset category-specific filters when leaving their category
   const handleCategoryChange = (categoryId: number | null) => {
@@ -68,6 +78,8 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory,
     if (categoryId !== 3) setElectronicsFilters(EMPTY_ELECTRONICS_FILTERS);
     if (categoryId !== 4) setFashionFilters(EMPTY_FASHION_FILTERS);
     if (categoryId !== 5) setSparePartsFilters(EMPTY_SPARE_PARTS_FILTERS);
+    if (categoryId !== 13 && categoryId !== 18) setHealthBeautyFilters(EMPTY_HEALTH_BEAUTY_FILTERS);
+    if (categoryId !== 6) setHomeFurnitureFilters(EMPTY_HOME_FURNITURE_FILTERS);
   };
 
   const isVehicles = selectedCategory === 1;
@@ -75,6 +87,8 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory,
   const isElectronics = selectedCategory === 3;
   const isFashion = selectedCategory === 4;
   const isSpareParts = selectedCategory === 5;
+  const isHealthBeauty = selectedCategory === 13 || selectedCategory === 18;
+  const isHomeFurniture = selectedCategory === 6;
 
   // Build filters for the hook
   const filters = useMemo(() => ({
@@ -87,14 +101,18 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory,
           ? fashionFilters.keywords
           : isSpareParts
             ? sparePartsFilters.keyword
-          : initialQuery)?.trim() || undefined,
+            : isHealthBeauty
+              ? healthBeautyFilters.keywords
+              : isHomeFurniture
+                ? homeFurnitureFilters.keywords
+            : initialQuery)?.trim() || undefined,
     city: selectedCity || undefined,
     priceMin: priceMin ? Number(priceMin) : undefined,
     priceMax: priceMax ? Number(priceMax) : undefined,
     conditions: selectedConditions.length > 0 ? selectedConditions : undefined,
     wheelDriveType: (!isVehicles && !isElectronics && selectedWheelDriveType) ? selectedWheelDriveType as 'fwd' | 'rwd' | 'awd' | '4wd' : undefined,
     sortBy: sortBy as 'newest' | 'oldest' | 'priceLow' | 'priceHigh',
-    searchTick: electronicsSearchTick + fashionSearchTick + sparePartsSearchTick,
+    searchTick: electronicsSearchTick + fashionSearchTick + sparePartsSearchTick + healthBeautySearchTick + homeFurnitureSearchTick,
     vehicleFilters: isVehicles ? {
       vehicleMake: vehicleFilters.make || undefined,
       vehicleModel: vehicleFilters.model || undefined,
@@ -139,9 +157,15 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory,
       priceMax: priceMax || undefined,
       city: selectedCity || undefined,
     } : undefined,
+    healthBeautyFilters: isHealthBeauty ? {
+      ...healthBeautyFilters,
+    } : undefined,
+    homeFurnitureFilters: isHomeFurniture ? {
+      ...homeFurnitureFilters,
+    } : undefined,
   }), [
     selectedCategory, initialQuery, selectedCity, priceMin, priceMax,
-    selectedConditions, selectedWheelDriveType, sortBy, isVehicles, isRealEstate, isElectronics, isFashion, isSpareParts, vehicleFilters, realEstateFilters, electronicsFilters, fashionFilters, sparePartsFilters, electronicsSearchTick, fashionSearchTick, sparePartsSearchTick,
+    selectedConditions, selectedWheelDriveType, sortBy, isVehicles, isRealEstate, isElectronics, isFashion, isSpareParts, isHealthBeauty, isHomeFurniture, vehicleFilters, realEstateFilters, electronicsFilters, fashionFilters, sparePartsFilters, healthBeautyFilters, homeFurnitureFilters, electronicsSearchTick, fashionSearchTick, sparePartsSearchTick, healthBeautySearchTick, homeFurnitureSearchTick,
   ]);
 
   const { listings, loading, error } = useListings(filters);
@@ -155,6 +179,12 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory,
     }
     if (isSpareParts) {
       setSparePartsSearchTick((v) => v + 1);
+    }
+    if (isHealthBeauty) {
+      setHealthBeautySearchTick((v) => v + 1);
+    }
+    if (isHomeFurniture) {
+      setHomeFurnitureSearchTick((v) => v + 1);
     }
     setMobileFiltersOpen(false);
 
@@ -244,6 +274,32 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory,
               }}
               onSparePartsSearch={() => {
                 setSparePartsSearchTick((v) => v + 1);
+                setMobileFiltersOpen(false);
+              }}
+              healthBeautyFilters={healthBeautyFilters}
+              onHealthBeautyFiltersChange={setHealthBeautyFilters}
+              onHealthBeautyClear={() => {
+                setPriceMin('');
+                setPriceMax('');
+                setSelectedCity('');
+                setHealthBeautySearchTick((v) => v + 1);
+                setMobileFiltersOpen(false);
+              }}
+              onHealthBeautySearch={() => {
+                setHealthBeautySearchTick((v) => v + 1);
+                setMobileFiltersOpen(false);
+              }}
+              homeFurnitureFilters={homeFurnitureFilters}
+              onHomeFurnitureFiltersChange={setHomeFurnitureFilters}
+              onHomeFurnitureClear={() => {
+                setPriceMin('');
+                setPriceMax('');
+                setSelectedCity('');
+                setHomeFurnitureSearchTick((v) => v + 1);
+                setMobileFiltersOpen(false);
+              }}
+              onHomeFurnitureSearch={() => {
+                setHomeFurnitureSearchTick((v) => v + 1);
                 setMobileFiltersOpen(false);
               }}
             />

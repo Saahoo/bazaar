@@ -5,6 +5,7 @@ import React from 'react';
 import { useTranslations } from 'next-intl';
 import { Locale, isRTL } from '@/lib/i18n/config';
 import { MAIN_CATEGORIES, getCategoryName } from '@/lib/constants/categories';
+import { createClient } from '@/lib/supabase/client';
 import {
   WHEEL_DRIVE_TYPES,
   ENGINE_TYPES,
@@ -34,6 +35,21 @@ import {
   ELECTRONICS_OR_MACHINERY_SUBCATEGORIES,
   SparePartsSubcategory,
 } from '@/lib/constants/spare-parts-wizard';
+import {
+  HealthBeautySubcategory,
+  HEALTH_BEAUTY_SUBCATEGORIES,
+  getHealthBeautyFieldTranslationKey,
+  getHealthBeautyOptionTranslationKey,
+} from '@/lib/constants/health-beauty-wizard';
+import {
+  HomeFurnitureSpecField,
+  HomeFurnitureSubcategory,
+  HOME_FURNITURE_SUBCATEGORIES,
+  HOME_FURNITURE_SUBCATEGORY_LABEL_KEYS,
+  getHomeFurnitureSpecsConfig,
+  getHomeFurnitureFieldTranslationKey,
+  getHomeFurnitureOptionTranslationKey,
+} from '@/lib/constants/home-furniture-wizard';
 import { useCities, getManagedCityName } from '@/lib/hooks/useCities';
 
 const ELECTRONICS_SUBCATEGORY_LABEL_KEYS: Record<ElectronicsSubcategory, string> = {
@@ -408,6 +424,169 @@ export const EMPTY_SPARE_PARTS_FILTERS: SparePartsFilterState = {
   industrial_grade: '',
 };
 
+export interface HealthBeautyFilterState {
+  subcategory: HealthBeautySubcategory | '';
+  keywords: string;
+  condition: 'New' | 'Used' | 'Unopened' | '';
+  brand: string;
+  sellerType: 'Individual' | 'Dealer' | '';
+  postedDate: '' | 'today' | 'last7' | 'last30';
+  // cross-subcategory
+  product_type: string;
+  gender: string;
+  formulation: string;
+  // skincare
+  skin_type: string;
+  concern: string;
+  has_spf: '' | 'yes' | 'no';
+  organic_natural: '' | 'yes' | 'no';
+  dermatologically_tested: '' | 'yes' | 'no';
+  // haircare
+  hair_type: string;
+  sulfate_free: '' | 'yes' | 'no';
+  organic: '' | 'yes' | 'no';
+  // makeup
+  finish: string;
+  coverage: string;
+  waterproof: '' | 'yes' | 'no';
+  // fragrance
+  fragrance_family: string;
+  concentration: string;
+  // health care
+  prescription_required: '' | 'yes' | 'no';
+  // beauty tools
+  power_source: string;
+  usage_area: string;
+  warranty: '' | 'yes' | 'no';
+}
+
+export const EMPTY_HEALTH_BEAUTY_FILTERS: HealthBeautyFilterState = {
+  subcategory: '',
+  keywords: '',
+  condition: '',
+  brand: '',
+  sellerType: '',
+  postedDate: '',
+  product_type: '',
+  gender: '',
+  formulation: '',
+  skin_type: '',
+  concern: '',
+  has_spf: '',
+  organic_natural: '',
+  dermatologically_tested: '',
+  hair_type: '',
+  sulfate_free: '',
+  organic: '',
+  finish: '',
+  coverage: '',
+  waterproof: '',
+  fragrance_family: '',
+  concentration: '',
+  prescription_required: '',
+  power_source: '',
+  usage_area: '',
+  warranty: '',
+};
+
+export interface HomeFurnitureFilterState {
+  subcategory: HomeFurnitureSubcategory | '';
+  postedDate: '' | 'today' | 'last7' | 'last30';
+  sellerType: 'Individual' | 'Dealer' | '';
+  keywords: string;
+  condition: 'New' | 'Used' | 'Refurbished' | '';
+  brand: string;
+  furniture_type: string;
+  material: string;
+  color: string[];
+  length: string;
+  width: string;
+  height: string;
+  weight: string;
+  seating_capacity: string;
+  style: string;
+  assembly_required: '' | 'yes' | 'no';
+  condition_details: string;
+  usage: string;
+  warranty: string;
+  included_items: string;
+  decor_type: string;
+  theme: string;
+  handmade: '' | 'yes' | 'no';
+  set_or_single: string;
+  product_type: string;
+  capacity: string;
+  dishwasher_safe: '' | 'yes' | 'no';
+  microwave_safe: '' | 'yes' | 'no';
+  set_size: string;
+  lighting_type: string;
+  power_source: string;
+  wattage: string;
+  light_color: string;
+  smart_lighting: '' | 'yes' | 'no';
+  dimmable: '' | 'yes' | 'no';
+  installation_type: string;
+  storage_type: string;
+  compartments: string;
+  wall_mounted: '' | 'yes' | 'no';
+  lockable: '' | 'yes' | 'no';
+  custom_spec_1_key: string;
+  custom_spec_1_value: string;
+  custom_spec_2_key: string;
+  custom_spec_2_value: string;
+  custom_spec_3_key: string;
+  custom_spec_3_value: string;
+}
+
+export const EMPTY_HOME_FURNITURE_FILTERS: HomeFurnitureFilterState = {
+  subcategory: '',
+  postedDate: '',
+  sellerType: '',
+  keywords: '',
+  condition: '',
+  brand: '',
+  furniture_type: '',
+  material: '',
+  color: [],
+  length: '',
+  width: '',
+  height: '',
+  weight: '',
+  seating_capacity: '',
+  style: '',
+  assembly_required: '',
+  condition_details: '',
+  usage: '',
+  warranty: '',
+  included_items: '',
+  decor_type: '',
+  theme: '',
+  handmade: '',
+  set_or_single: '',
+  product_type: '',
+  capacity: '',
+  dishwasher_safe: '',
+  microwave_safe: '',
+  set_size: '',
+  lighting_type: '',
+  power_source: '',
+  wattage: '',
+  light_color: '',
+  smart_lighting: '',
+  dimmable: '',
+  installation_type: '',
+  storage_type: '',
+  compartments: '',
+  wall_mounted: '',
+  lockable: '',
+  custom_spec_1_key: '',
+  custom_spec_1_value: '',
+  custom_spec_2_key: '',
+  custom_spec_2_value: '',
+  custom_spec_3_key: '',
+  custom_spec_3_value: '',
+};
+
 const RAM_OPTIONS = ['2GB', '3GB', '4GB', '6GB', '8GB', '12GB', '16GB+'];
 const STORAGE_OPTIONS = ['16GB', '32GB', '64GB', '128GB', '256GB', '512GB', '1TB'];
 const REFRESH_RATE_OPTIONS = ['60Hz', '90Hz', '120Hz+'];
@@ -512,6 +691,14 @@ interface FilterSidebarProps {
   onFashionSearch?: () => void;
   onSparePartsClear?: () => void;
   onSparePartsSearch?: () => void;
+  healthBeautyFilters: HealthBeautyFilterState;
+  onHealthBeautyFiltersChange: (filters: HealthBeautyFilterState) => void;
+  onHealthBeautyClear?: () => void;
+  onHealthBeautySearch?: () => void;
+  homeFurnitureFilters: HomeFurnitureFilterState;
+  onHomeFurnitureFiltersChange: (filters: HomeFurnitureFilterState) => void;
+  onHomeFurnitureClear?: () => void;
+  onHomeFurnitureSearch?: () => void;
 }
 
 const CONDITIONS = [
@@ -587,6 +774,16 @@ const RE_PURPOSE_OPTIONS = ['forRent', 'forSale', 'forLease'] as const;
 const RE_PROPERTY_TYPES = ['apartment', 'residence', 'villa', 'farmHouse', 'land'] as const;
 const RE_BUILDING_AGES = ['new', 'age1_5', 'age5_10', 'age10_20', 'age20plus'] as const;
 
+interface DbCategory {
+  id: number;
+  name_en: string;
+  name_ps: string;
+  name_fa: string;
+  slug: string | null;
+  parent_id: number | null;
+  sort_order: number | null;
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 export const FilterSidebar: React.FC<FilterSidebarProps> = ({
   locale,
@@ -618,7 +815,16 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
   onFashionSearch,
   onSparePartsClear,
   onSparePartsSearch,
+  healthBeautyFilters,
+  onHealthBeautyFiltersChange,
+  onHealthBeautyClear,
+  onHealthBeautySearch,
+  homeFurnitureFilters,
+  onHomeFurnitureFiltersChange,
+  onHomeFurnitureClear,
+  onHomeFurnitureSearch,
 }) => {
+  const supabase = createClient();
   const t = useTranslations('search');
   const tCommon = useTranslations('common');
   const tVH = useTranslations('postAd.vehicles');
@@ -626,20 +832,73 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
   const tEL = useTranslations('postAd.electronics');
   const tFA = useTranslations('postAd.fashion');
   const tSP = useTranslations('postAd.spareParts');
+  const tHB = useTranslations('postAd.healthBeauty');
+  const tHF = useTranslations('postAd.homeFurniture');
   const isRtl = isRTL(locale);
   const { cities } = useCities();
+
+  const [dbCategories, setDbCategories] = React.useState<DbCategory[]>([]);
+
+  React.useEffect(() => {
+    let mounted = true;
+
+    const loadCategories = async () => {
+      const { data } = await supabase
+        .from('categories')
+        .select('id, name_en, name_ps, name_fa, slug, parent_id, sort_order')
+        .is('parent_id', null)
+        .order('sort_order', { ascending: true });
+
+      if (!mounted) return;
+      setDbCategories(((data as DbCategory[]) || []).filter((c) => c.slug !== 'mobile-phones' && c.slug !== 'phones'));
+    };
+
+    loadCategories();
+
+    return () => {
+      mounted = false;
+    };
+  }, [supabase]);
+
+  const getLocalizedDbCategoryName = (category: DbCategory): string => {
+    switch (locale) {
+      case 'ps':
+        return category.name_ps;
+      case 'fa':
+        return category.name_fa;
+      case 'en':
+      default:
+        return category.name_en;
+    }
+  };
+
+  const selectedDbCategory = dbCategories.find((c) => c.id === selectedCategory);
+  const selectedCategorySlug = (selectedDbCategory?.slug || '').toLowerCase();
 
   const isVehicles = selectedCategory === 1;
   const isRealEstate = selectedCategory === 2;
   const isElectronics = selectedCategory === 3;
   const isFashion = selectedCategory === 4;
   const isSpareParts = selectedCategory === 5;
+  const isHealthBeauty =
+    selectedCategorySlug === 'health-beauty' ||
+    selectedCategorySlug === 'health-and-beauty' ||
+    selectedCategory === 13 ||
+    selectedCategory === 18;
+  const isHomeFurniture =
+    selectedCategorySlug === 'home-furniture' ||
+    selectedCategorySlug === 'home-and-furniture' ||
+    selectedCategory === 6;
 
   const [fashionGeneralOpen, setFashionGeneralOpen] = React.useState(true);
   const [fashionSpecificOpen, setFashionSpecificOpen] = React.useState(true);
   const [spareGeneralOpen, setSpareGeneralOpen] = React.useState(true);
   const [spareCompatibilityOpen, setSpareCompatibilityOpen] = React.useState(true);
   const [spareSpecsOpen, setSpareSpecsOpen] = React.useState(true);
+  const [hbGeneralOpen, setHbGeneralOpen] = React.useState(true);
+  const [hbSpecificOpen, setHbSpecificOpen] = React.useState(true);
+  const [hfGeneralOpen, setHfGeneralOpen] = React.useState(true);
+  const [hfSpecificOpen, setHfSpecificOpen] = React.useState(true);
 
   const setVF = (patch: Partial<VehicleFilterState>) =>
     onVehicleFiltersChange({ ...vehicleFilters, ...patch });
@@ -655,6 +914,44 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
 
   const setSP = (patch: Partial<SparePartsFilterState>) =>
     onSparePartsFiltersChange({ ...sparePartsFilters, ...patch });
+
+  const setHB = (patch: Partial<HealthBeautyFilterState>) =>
+    onHealthBeautyFiltersChange({ ...healthBeautyFilters, ...patch });
+
+  const setHF = (patch: Partial<HomeFurnitureFilterState>) =>
+    onHomeFurnitureFiltersChange({ ...homeFurnitureFilters, ...patch });
+
+  const getHFFieldLabel = (field: string, fallbackLabel?: string) => {
+    const translationKey = getHomeFurnitureFieldTranslationKey(field);
+    const fullKey = translationKey as Parameters<typeof tHF>[0];
+    return tHF.has(fullKey) ? tHF(fullKey) : (fallbackLabel || field);
+  };
+
+  const getHFOptionLabel = (option: string) => {
+    const translationKey = getHomeFurnitureOptionTranslationKey(option);
+    const fullKey = translationKey as Parameters<typeof tHF>[0];
+    return tHF.has(fullKey) ? tHF(fullKey) : option;
+  };
+
+  const toggleHomeFurnitureMulti = (field: 'color', value: string) => {
+    const current = homeFurnitureFilters[field];
+    const next = current.includes(value)
+      ? current.filter((item) => item !== value)
+      : [...current, value];
+    setHF({ [field]: next } as Partial<HomeFurnitureFilterState>);
+  };
+
+  const getHBFieldLabel = (field: string) => {
+    const translationKey = getHealthBeautyFieldTranslationKey(field);
+    const fullKey = translationKey as Parameters<typeof tHB>[0];
+    return tHB.has(fullKey) ? tHB(fullKey) : field;
+  };
+
+  const getHBOptionLabel = (option: string) => {
+    const translationKey = getHealthBeautyOptionTranslationKey(option);
+    const fullKey = translationKey as Parameters<typeof tHB>[0];
+    return tHB.has(fullKey) ? tHB(fullKey) : option;
+  };
 
   const toggleFashionMulti = (field: 'size' | 'color', value: string) => {
     const current = fashionFilters[field];
@@ -749,6 +1046,78 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
     setSP({ [field]: next });
   };
 
+  const homeFurnitureSpecFields = homeFurnitureFilters.subcategory
+    ? getHomeFurnitureSpecsConfig(homeFurnitureFilters.subcategory)
+    : [];
+
+  const renderHomeFurnitureField = (field: HomeFurnitureSpecField) => {
+    const key = field.key as keyof HomeFurnitureFilterState;
+    const label = getHFFieldLabel(field.key, field.label);
+
+    if (field.type === 'multiselect') {
+      const selected = homeFurnitureFilters[key] as string[];
+      return (
+        <Section key={field.key} label={label} isRtl={isRtl}>
+          <MultiCheck
+            options={(field.options || []).map((option) => ({ value: option, label: getHFOptionLabel(option) }))}
+            selected={selected || []}
+            onToggle={(v) => toggleHomeFurnitureMulti('color', v)}
+            isRtl={isRtl}
+          />
+        </Section>
+      );
+    }
+
+    if (field.type === 'toggle') {
+      const value = String(homeFurnitureFilters[key] || '');
+      return (
+        <Section key={field.key} label={label} isRtl={isRtl}>
+          <Sel
+            value={value}
+            onChange={(v) => setHF({ [key]: v } as Partial<HomeFurnitureFilterState>)}
+            isRtl={isRtl}
+          >
+            <option value="">{tCommon('all')}</option>
+            <option value="yes">{tCommon('yes')}</option>
+            <option value="no">{tCommon('no')}</option>
+          </Sel>
+        </Section>
+      );
+    }
+
+    if (field.type === 'select') {
+      const value = String(homeFurnitureFilters[key] || '');
+      return (
+        <Section key={field.key} label={label} isRtl={isRtl}>
+          <Sel
+            value={value}
+            onChange={(v) => setHF({ [key]: v } as Partial<HomeFurnitureFilterState>)}
+            isRtl={isRtl}
+          >
+            <option value="">{tCommon('all')}</option>
+            {(field.options || []).map((option) => (
+              <option key={option} value={option}>{getHFOptionLabel(option)}</option>
+            ))}
+          </Sel>
+        </Section>
+      );
+    }
+
+    const value = String(homeFurnitureFilters[key] || '');
+    const inputType = field.type === 'number' ? 'number' : 'text';
+    return (
+      <Section key={field.key} label={label} isRtl={isRtl}>
+        <input
+          type={inputType}
+          value={value}
+          onChange={(e) => setHF({ [key]: e.target.value } as Partial<HomeFurnitureFilterState>)}
+          placeholder={label}
+          className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+        />
+      </Section>
+    );
+  };
+
   const renderFashionSelect = (label: string, key: keyof FashionFilterState, options: string[]) => (
     <Section label={getFashionFieldLabel(label)} isRtl={isRtl}>
       <Sel
@@ -785,9 +1154,13 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
       <Section label={t('filter')} isRtl={isRtl}>
         <Sel id="category-filter" value={selectedCategory?.toString() ?? ''} onChange={(v) => onCategoryChange(v === '' ? null : Number(v))} isRtl={isRtl}>
           <option value="">{tCommon('all')}</option>
-          {MAIN_CATEGORIES.map((cat) => (
-            <option key={cat.id} value={cat.id}>{getCategoryName(cat.id, locale)}</option>
-          ))}
+          {dbCategories.length > 0
+            ? dbCategories.map((cat) => (
+              <option key={cat.id} value={cat.id}>{getLocalizedDbCategoryName(cat)}</option>
+            ))
+            : MAIN_CATEGORIES.map((cat) => (
+              <option key={cat.id} value={cat.id}>{getCategoryName(cat.id, locale)}</option>
+            ))}
         </Sel>
       </Section>
 
@@ -812,7 +1185,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
       </Section>
 
       {/* Condition (non-vehicle/non-real-estate/non-electronics) */}
-      {!isVehicles && !isRealEstate && !isElectronics && !isFashion && !isSpareParts && (
+      {!isVehicles && !isRealEstate && !isElectronics && !isFashion && !isSpareParts && !isHealthBeauty && !isHomeFurniture && (
         <Section label={t('condition')} isRtl={isRtl}>
           <div className="space-y-2">
             {CONDITIONS.map(({ value, translationKey }) => (
@@ -827,7 +1200,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
       )}
 
       {/* Wheel drive (non-vehicle/non-real-estate/non-electronics) */}
-      {!isVehicles && !isRealEstate && !isElectronics && !isFashion && !isSpareParts && (
+      {!isVehicles && !isRealEstate && !isElectronics && !isFashion && !isSpareParts && !isHealthBeauty && !isHomeFurniture && (
         <Section label={t('wheelDrive')} isRtl={isRtl}>
           <Sel id="wheel-drive-filter" value={selectedWheelDriveType} onChange={onWheelDriveTypeChange} isRtl={isRtl}>
             <option value="">{t('anyWheelDrive')}</option>
@@ -2488,6 +2861,574 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
             <button
               type="button"
               onClick={() => onSparePartsSearch?.()}
+              className="w-1/2 px-3 py-2 rounded-md border border-primary-600 bg-primary-600 text-sm font-medium text-white hover:bg-primary-700"
+            >
+              {t('applyFilters')}
+            </button>
+          </div>
+        </>
+      )}
+
+      {/* ═══════════════════════════════════════════════════
+          HOME & FURNITURE FILTERS
+         ═══════════════════════════════════════════════════ */}
+      {isHomeFurniture && (
+        <>
+          <div className="rounded-lg border border-slate-200 bg-slate-50">
+            <button
+              type="button"
+              onClick={() => setHfGeneralOpen((v) => !v)}
+              className={`w-full px-3 py-2 text-sm font-semibold text-slate-700 ${isRtl ? 'text-right' : 'text-left'}`}
+            >
+              {t('generalFilters')}
+            </button>
+            {hfGeneralOpen && (
+              <div className="space-y-4 px-3 pb-3">
+                <Section label={t('subcategory')} isRtl={isRtl}>
+                  <Sel
+                    value={homeFurnitureFilters.subcategory}
+                    onChange={(v) => setHF({ ...EMPTY_HOME_FURNITURE_FILTERS, subcategory: v as HomeFurnitureSubcategory | '' })}
+                    isRtl={isRtl}
+                  >
+                    <option value="">{tCommon('all')}</option>
+                    {HOME_FURNITURE_SUBCATEGORIES.map((sub) => (
+                      <option key={sub.value} value={sub.value}>
+                        {tHF(HOME_FURNITURE_SUBCATEGORY_LABEL_KEYS[sub.value] as Parameters<typeof tHF>[0])}
+                      </option>
+                    ))}
+                  </Sel>
+                </Section>
+
+                <Section label={t('keywords')} isRtl={isRtl}>
+                  <input
+                    type="text"
+                    value={homeFurnitureFilters.keywords}
+                    onChange={(e) => setHF({ keywords: e.target.value })}
+                    placeholder={t('keywords')}
+                    className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                  />
+                </Section>
+
+                <Section label={t('condition')} isRtl={isRtl}>
+                  <Sel
+                    value={homeFurnitureFilters.condition}
+                    onChange={(v) => setHF({ condition: v as HomeFurnitureFilterState['condition'] })}
+                    isRtl={isRtl}
+                  >
+                    <option value="">{tCommon('all')}</option>
+                    <option value="New">{getHFOptionLabel('New')}</option>
+                    <option value="Used">{getHFOptionLabel('Used')}</option>
+                    <option value="Refurbished">{getHFOptionLabel('Refurbished')}</option>
+                  </Sel>
+                </Section>
+
+                <Section label={getHFFieldLabel('brand')} isRtl={isRtl}>
+                  <input
+                    type="text"
+                    value={homeFurnitureFilters.brand}
+                    onChange={(e) => setHF({ brand: e.target.value })}
+                    placeholder={getHFFieldLabel('brand')}
+                    className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                  />
+                </Section>
+
+                <Section label={t('sellerType')} isRtl={isRtl}>
+                  <Sel
+                    value={homeFurnitureFilters.sellerType}
+                    onChange={(v) => setHF({ sellerType: v as HomeFurnitureFilterState['sellerType'] })}
+                    isRtl={isRtl}
+                  >
+                    <option value="">{tCommon('all')}</option>
+                    <option value="Individual">{tHF('sellerTypeIndividual')}</option>
+                    <option value="Dealer">{tHF('sellerTypeDealer')}</option>
+                  </Sel>
+                </Section>
+
+                <Section label={t('postedDate')} isRtl={isRtl}>
+                  <Sel
+                    value={homeFurnitureFilters.postedDate}
+                    onChange={(v) => setHF({ postedDate: v as HomeFurnitureFilterState['postedDate'] })}
+                    isRtl={isRtl}
+                  >
+                    <option value="">{tCommon('all')}</option>
+                    <option value="today">{t('today')}</option>
+                    <option value="last7">{t('last7Days')}</option>
+                    <option value="last30">{t('last30Days')}</option>
+                  </Sel>
+                </Section>
+              </div>
+            )}
+          </div>
+
+          {homeFurnitureFilters.subcategory && (
+            <div className="rounded-lg border border-slate-200 bg-slate-50">
+              <button
+                type="button"
+                onClick={() => setHfSpecificOpen((v) => !v)}
+                className={`w-full px-3 py-2 text-sm font-semibold text-slate-700 ${isRtl ? 'text-right' : 'text-left'}`}
+              >
+                {t('subcategoryFilters')}
+              </button>
+              {hfSpecificOpen && (
+                <div className="space-y-4 px-3 pb-3">
+                  {homeFurnitureSpecFields.map((field) => renderHomeFurnitureField(field))}
+                </div>
+              )}
+            </div>
+          )}
+
+          <Section label={t('priceSlider')} isRtl={isRtl}>
+            <div className="space-y-2">
+              <input
+                type="range"
+                min="0"
+                max="200000"
+                step="100"
+                value={priceMin ? Number(priceMin) : 0}
+                onChange={(e) => onPriceMinChange(e.target.value)}
+                aria-label={t('minPrice')}
+                title={t('minPrice')}
+                className="w-full"
+              />
+              <input
+                type="range"
+                min="0"
+                max="200000"
+                step="100"
+                value={priceMax ? Number(priceMax) : 200000}
+                onChange={(e) => onPriceMaxChange(e.target.value)}
+                aria-label={t('maxPrice')}
+                title={t('maxPrice')}
+                className="w-full"
+              />
+            </div>
+          </Section>
+
+          <div className={`flex gap-2 ${isRtl ? 'flex-row-reverse' : ''}`}>
+            <button
+              type="button"
+              onClick={() => {
+                setHF(EMPTY_HOME_FURNITURE_FILTERS);
+                onHomeFurnitureClear?.();
+              }}
+              className="w-1/2 px-3 py-2 rounded-md border border-slate-300 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              {t('clearFilters')}
+            </button>
+            <button
+              type="button"
+              onClick={() => onHomeFurnitureSearch?.()}
+              className="w-1/2 px-3 py-2 rounded-md border border-primary-600 bg-primary-600 text-sm font-medium text-white hover:bg-primary-700"
+            >
+              {t('applyFilters')}
+            </button>
+          </div>
+        </>
+      )}
+
+      {/* ═══════════════════════════════════════════════════
+          HEALTH & BEAUTY FILTERS
+         ═══════════════════════════════════════════════════ */}
+      {isHealthBeauty && (
+        <>
+          {/* General Filters */}
+          <div className="rounded-lg border border-emerald-200 bg-emerald-50">
+            <button
+              type="button"
+              onClick={() => setHbGeneralOpen((v) => !v)}
+              className={`w-full px-3 py-2 text-sm font-semibold text-emerald-800 ${isRtl ? 'text-right' : 'text-left'}`}
+            >
+              {t('generalFilters')}
+            </button>
+            {hbGeneralOpen && (
+              <div className="space-y-4 px-3 pb-3">
+                <Section label={t('subcategory')} isRtl={isRtl}>
+                  <Sel
+                    value={healthBeautyFilters.subcategory}
+                    onChange={(v) => setHB({ ...EMPTY_HEALTH_BEAUTY_FILTERS, subcategory: v as HealthBeautySubcategory | '' })}
+                    isRtl={isRtl}
+                  >
+                    <option value="">{tCommon('all')}</option>
+                    {HEALTH_BEAUTY_SUBCATEGORIES.map((sub) => (
+                      <option key={sub.value} value={sub.value}>
+                        {tHB.has((`subcategories.${sub.value}`) as Parameters<typeof tHB>[0])
+                          ? tHB((`subcategories.${sub.value}`) as Parameters<typeof tHB>[0])
+                          : sub.label}
+                      </option>
+                    ))}
+                  </Sel>
+                </Section>
+
+                <Section label={t('keywords')} isRtl={isRtl}>
+                  <input
+                    type="text"
+                    value={healthBeautyFilters.keywords}
+                    onChange={(e) => setHB({ keywords: e.target.value })}
+                    placeholder={t('keywords')}
+                    className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                  />
+                </Section>
+
+                <Section label={t('condition')} isRtl={isRtl}>
+                  <Sel value={healthBeautyFilters.condition} onChange={(v) => setHB({ condition: v as HealthBeautyFilterState['condition'] })} isRtl={isRtl}>
+                    <option value="">{tCommon('all')}</option>
+                    <option value="New">{getHBOptionLabel('New')}</option>
+                    <option value="Used">{getHBOptionLabel('Used')}</option>
+                    <option value="Unopened">{getHBOptionLabel('Unopened')}</option>
+                  </Sel>
+                </Section>
+
+                <Section label={getHBFieldLabel('brand')} isRtl={isRtl}>
+                  <input
+                    type="text"
+                    value={healthBeautyFilters.brand}
+                    onChange={(e) => setHB({ brand: e.target.value })}
+                    placeholder={getHBFieldLabel('brand')}
+                    className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                  />
+                </Section>
+
+                <Section label={t('sellerType')} isRtl={isRtl}>
+                  <Sel value={healthBeautyFilters.sellerType} onChange={(v) => setHB({ sellerType: v as HealthBeautyFilterState['sellerType'] })} isRtl={isRtl}>
+                    <option value="">{tCommon('all')}</option>
+                    <option value="Individual">{tHB('sellerTypeIndividual')}</option>
+                    <option value="Dealer">{tHB('sellerTypeDealer')}</option>
+                  </Sel>
+                </Section>
+
+                <Section label={t('postedDate')} isRtl={isRtl}>
+                  <Sel value={healthBeautyFilters.postedDate} onChange={(v) => setHB({ postedDate: v as HealthBeautyFilterState['postedDate'] })} isRtl={isRtl}>
+                    <option value="">{tCommon('all')}</option>
+                    <option value="today">{t('today')}</option>
+                    <option value="last7">{t('last7Days')}</option>
+                    <option value="last30">{t('last30Days')}</option>
+                  </Sel>
+                </Section>
+              </div>
+            )}
+          </div>
+
+          {/* Subcategory-specific Filters */}
+          {healthBeautyFilters.subcategory && (
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50">
+              <button
+                type="button"
+                onClick={() => setHbSpecificOpen((v) => !v)}
+                className={`w-full px-3 py-2 text-sm font-semibold text-emerald-800 ${isRtl ? 'text-right' : 'text-left'}`}
+              >
+                {t('subcategoryFilters')}
+              </button>
+              {hbSpecificOpen && (
+                <div className="space-y-4 px-3 pb-3">
+
+                  {/* Skincare */}
+                  {healthBeautyFilters.subcategory === 'skincare' && (
+                    <>
+                      <Section label={getHBFieldLabel('product_type')} isRtl={isRtl}>
+                        <Sel value={healthBeautyFilters.product_type} onChange={(v) => setHB({ product_type: v })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          {['Cleanser', 'Moisturizer', 'Serum', 'Sunscreen', 'Toner', 'Face Mask', 'Exfoliator', 'Other'].map((o) => (
+                            <option key={o} value={o}>{o}</option>
+                          ))}
+                        </Sel>
+                      </Section>
+                      <Section label={getHBFieldLabel('skin_type')} isRtl={isRtl}>
+                        <Sel value={healthBeautyFilters.skin_type} onChange={(v) => setHB({ skin_type: v })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          {['Dry', 'Oily', 'Combination', 'Sensitive', 'All'].map((o) => (
+                            <option key={o} value={o}>{getHBOptionLabel(o)}</option>
+                          ))}
+                        </Sel>
+                      </Section>
+                      <Section label={getHBFieldLabel('concern')} isRtl={isRtl}>
+                        <Sel value={healthBeautyFilters.concern} onChange={(v) => setHB({ concern: v })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          {['Acne', 'Anti-aging', 'Hydration', 'Brightening', 'Pigmentation', 'Pores', 'Redness'].map((o) => (
+                            <option key={o} value={o}>{o}</option>
+                          ))}
+                        </Sel>
+                      </Section>
+                      <Section label={getHBFieldLabel('formulation')} isRtl={isRtl}>
+                        <Sel value={healthBeautyFilters.formulation} onChange={(v) => setHB({ formulation: v })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          {['Gel', 'Cream', 'Liquid', 'Foam', 'Lotion', 'Balm'].map((o) => (
+                            <option key={o} value={o}>{getHBOptionLabel(o)}</option>
+                          ))}
+                        </Sel>
+                      </Section>
+                      <Section label={getHBFieldLabel('gender')} isRtl={isRtl}>
+                        <Sel value={healthBeautyFilters.gender} onChange={(v) => setHB({ gender: v })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          {['Unisex', 'Male', 'Female'].map((o) => (
+                            <option key={o} value={o}>{getHBOptionLabel(o)}</option>
+                          ))}
+                        </Sel>
+                      </Section>
+                      <Section label={getHBFieldLabel('has_spf')} isRtl={isRtl}>
+                        <Sel value={healthBeautyFilters.has_spf} onChange={(v) => setHB({ has_spf: v as HealthBeautyFilterState['has_spf'] })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          <option value="yes">{tCommon('yes')}</option>
+                          <option value="no">{tCommon('no')}</option>
+                        </Sel>
+                      </Section>
+                      <Section label={getHBFieldLabel('organic_natural')} isRtl={isRtl}>
+                        <Sel value={healthBeautyFilters.organic_natural} onChange={(v) => setHB({ organic_natural: v as HealthBeautyFilterState['organic_natural'] })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          <option value="yes">{tCommon('yes')}</option>
+                          <option value="no">{tCommon('no')}</option>
+                        </Sel>
+                      </Section>
+                      <Section label={getHBFieldLabel('dermatologically_tested')} isRtl={isRtl}>
+                        <Sel value={healthBeautyFilters.dermatologically_tested} onChange={(v) => setHB({ dermatologically_tested: v as HealthBeautyFilterState['dermatologically_tested'] })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          <option value="yes">{tCommon('yes')}</option>
+                          <option value="no">{tCommon('no')}</option>
+                        </Sel>
+                      </Section>
+                    </>
+                  )}
+
+                  {/* Haircare */}
+                  {healthBeautyFilters.subcategory === 'haircare' && (
+                    <>
+                      <Section label={getHBFieldLabel('product_type')} isRtl={isRtl}>
+                        <Sel value={healthBeautyFilters.product_type} onChange={(v) => setHB({ product_type: v })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          {['Shampoo', 'Conditioner', 'Hair Oil', 'Serum', 'Mask', 'Leave-in', 'Other'].map((o) => (
+                            <option key={o} value={o}>{o}</option>
+                          ))}
+                        </Sel>
+                      </Section>
+                      <Section label={getHBFieldLabel('hair_type')} isRtl={isRtl}>
+                        <Sel value={healthBeautyFilters.hair_type} onChange={(v) => setHB({ hair_type: v })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          {['Dry', 'Oily', 'Normal', 'Curly', 'Damaged'].map((o) => (
+                            <option key={o} value={o}>{getHBOptionLabel(o)}</option>
+                          ))}
+                        </Sel>
+                      </Section>
+                      <Section label={getHBFieldLabel('concern')} isRtl={isRtl}>
+                        <Sel value={healthBeautyFilters.concern} onChange={(v) => setHB({ concern: v })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          {['Hair Fall', 'Dandruff', 'Growth', 'Repair', 'Frizz Control'].map((o) => (
+                            <option key={o} value={o}>{o}</option>
+                          ))}
+                        </Sel>
+                      </Section>
+                      <Section label={getHBFieldLabel('formulation')} isRtl={isRtl}>
+                        <Sel value={healthBeautyFilters.formulation} onChange={(v) => setHB({ formulation: v })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          {['Liquid', 'Cream', 'Oil', 'Gel', 'Foam'].map((o) => (
+                            <option key={o} value={o}>{getHBOptionLabel(o)}</option>
+                          ))}
+                        </Sel>
+                      </Section>
+                      <Section label={getHBFieldLabel('sulfate_free')} isRtl={isRtl}>
+                        <Sel value={healthBeautyFilters.sulfate_free} onChange={(v) => setHB({ sulfate_free: v as HealthBeautyFilterState['sulfate_free'] })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          <option value="yes">{tCommon('yes')}</option>
+                          <option value="no">{tCommon('no')}</option>
+                        </Sel>
+                      </Section>
+                      <Section label={getHBFieldLabel('organic')} isRtl={isRtl}>
+                        <Sel value={healthBeautyFilters.organic} onChange={(v) => setHB({ organic: v as HealthBeautyFilterState['organic'] })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          <option value="yes">{tCommon('yes')}</option>
+                          <option value="no">{tCommon('no')}</option>
+                        </Sel>
+                      </Section>
+                    </>
+                  )}
+
+                  {/* Makeup */}
+                  {healthBeautyFilters.subcategory === 'makeup' && (
+                    <>
+                      <Section label={getHBFieldLabel('product_type')} isRtl={isRtl}>
+                        <Sel value={healthBeautyFilters.product_type} onChange={(v) => setHB({ product_type: v })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          {['Foundation', 'Lipstick', 'Mascara', 'Concealer', 'Blush', 'Eyeliner', 'Powder', 'Other'].map((o) => (
+                            <option key={o} value={o}>{o}</option>
+                          ))}
+                        </Sel>
+                      </Section>
+                      <Section label={getHBFieldLabel('skin_type')} isRtl={isRtl}>
+                        <Sel value={healthBeautyFilters.skin_type} onChange={(v) => setHB({ skin_type: v })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          {['Dry', 'Oily', 'Combination', 'Sensitive', 'All'].map((o) => (
+                            <option key={o} value={o}>{getHBOptionLabel(o)}</option>
+                          ))}
+                        </Sel>
+                      </Section>
+                      <Section label={getHBFieldLabel('finish')} isRtl={isRtl}>
+                        <Sel value={healthBeautyFilters.finish} onChange={(v) => setHB({ finish: v })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          {['Matte', 'Glossy', 'Natural', 'Dewy'].map((o) => (
+                            <option key={o} value={o}>{getHBOptionLabel(o)}</option>
+                          ))}
+                        </Sel>
+                      </Section>
+                      <Section label={getHBFieldLabel('coverage')} isRtl={isRtl}>
+                        <Sel value={healthBeautyFilters.coverage} onChange={(v) => setHB({ coverage: v })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          {['Light', 'Medium', 'Full'].map((o) => (
+                            <option key={o} value={o}>{getHBOptionLabel(o)}</option>
+                          ))}
+                        </Sel>
+                      </Section>
+                      <Section label={getHBFieldLabel('waterproof')} isRtl={isRtl}>
+                        <Sel value={healthBeautyFilters.waterproof} onChange={(v) => setHB({ waterproof: v as HealthBeautyFilterState['waterproof'] })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          <option value="yes">{tCommon('yes')}</option>
+                          <option value="no">{tCommon('no')}</option>
+                        </Sel>
+                      </Section>
+                    </>
+                  )}
+
+                  {/* Fragrances */}
+                  {healthBeautyFilters.subcategory === 'fragrances' && (
+                    <>
+                      <Section label={getHBFieldLabel('product_type')} isRtl={isRtl}>
+                        <Sel value={healthBeautyFilters.product_type} onChange={(v) => setHB({ product_type: v })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          {['Perfume', 'Body Spray', 'Deodorant'].map((o) => (
+                            <option key={o} value={o}>{o}</option>
+                          ))}
+                        </Sel>
+                      </Section>
+                      <Section label={getHBFieldLabel('gender')} isRtl={isRtl}>
+                        <Sel value={healthBeautyFilters.gender} onChange={(v) => setHB({ gender: v })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          {['Unisex', 'Male', 'Female'].map((o) => (
+                            <option key={o} value={o}>{getHBOptionLabel(o)}</option>
+                          ))}
+                        </Sel>
+                      </Section>
+                      <Section label={getHBFieldLabel('fragrance_family')} isRtl={isRtl}>
+                        <Sel value={healthBeautyFilters.fragrance_family} onChange={(v) => setHB({ fragrance_family: v })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          {['Floral', 'Woody', 'Citrus', 'Oriental', 'Fresh'].map((o) => (
+                            <option key={o} value={o}>{getHBOptionLabel(o)}</option>
+                          ))}
+                        </Sel>
+                      </Section>
+                      <Section label={getHBFieldLabel('concentration')} isRtl={isRtl}>
+                        <Sel value={healthBeautyFilters.concentration} onChange={(v) => setHB({ concentration: v })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          {['EDT', 'EDP', 'Parfum'].map((o) => (
+                            <option key={o} value={o}>{getHBOptionLabel(o)}</option>
+                          ))}
+                        </Sel>
+                      </Section>
+                    </>
+                  )}
+
+                  {/* Personal Care */}
+                  {healthBeautyFilters.subcategory === 'personal-care' && (
+                    <>
+                      <Section label={getHBFieldLabel('product_type')} isRtl={isRtl}>
+                        <Sel value={healthBeautyFilters.product_type} onChange={(v) => setHB({ product_type: v })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          {['Soap', 'Body Wash', 'Toothpaste', 'Shaving', 'Sanitary', 'Other'].map((o) => (
+                            <option key={o} value={o}>{o}</option>
+                          ))}
+                        </Sel>
+                      </Section>
+                      <Section label={getHBFieldLabel('skin_type')} isRtl={isRtl}>
+                        <Sel value={healthBeautyFilters.skin_type} onChange={(v) => setHB({ skin_type: v })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          {['Dry', 'Oily', 'Combination', 'Sensitive', 'All'].map((o) => (
+                            <option key={o} value={o}>{getHBOptionLabel(o)}</option>
+                          ))}
+                        </Sel>
+                      </Section>
+                      <Section label={getHBFieldLabel('organic')} isRtl={isRtl}>
+                        <Sel value={healthBeautyFilters.organic} onChange={(v) => setHB({ organic: v as HealthBeautyFilterState['organic'] })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          <option value="yes">{tCommon('yes')}</option>
+                          <option value="no">{tCommon('no')}</option>
+                        </Sel>
+                      </Section>
+                    </>
+                  )}
+
+                  {/* Health Care Products */}
+                  {healthBeautyFilters.subcategory === 'health-care-products' && (
+                    <>
+                      <Section label={getHBFieldLabel('product_type')} isRtl={isRtl}>
+                        <Sel value={healthBeautyFilters.product_type} onChange={(v) => setHB({ product_type: v })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          {['Vitamins', 'Supplements', 'Medical Items', 'Other'].map((o) => (
+                            <option key={o} value={o}>{o}</option>
+                          ))}
+                        </Sel>
+                      </Section>
+                      <Section label={getHBFieldLabel('prescription_required')} isRtl={isRtl}>
+                        <Sel value={healthBeautyFilters.prescription_required} onChange={(v) => setHB({ prescription_required: v as HealthBeautyFilterState['prescription_required'] })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          <option value="yes">{tCommon('yes')}</option>
+                          <option value="no">{tCommon('no')}</option>
+                        </Sel>
+                      </Section>
+                    </>
+                  )}
+
+                  {/* Beauty Tools & Devices */}
+                  {healthBeautyFilters.subcategory === 'beauty-tools-devices' && (
+                    <>
+                      <Section label={getHBFieldLabel('product_type')} isRtl={isRtl}>
+                        <Sel value={healthBeautyFilters.product_type} onChange={(v) => setHB({ product_type: v })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          {['Hair Dryer', 'Trimmer', 'Facial Device', 'Massager', 'Other'].map((o) => (
+                            <option key={o} value={o}>{o}</option>
+                          ))}
+                        </Sel>
+                      </Section>
+                      <Section label={getHBFieldLabel('power_source')} isRtl={isRtl}>
+                        <Sel value={healthBeautyFilters.power_source} onChange={(v) => setHB({ power_source: v })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          {['Battery', 'Electric'].map((o) => (
+                            <option key={o} value={o}>{getHBOptionLabel(o)}</option>
+                          ))}
+                        </Sel>
+                      </Section>
+                      <Section label={getHBFieldLabel('usage_area')} isRtl={isRtl}>
+                        <Sel value={healthBeautyFilters.usage_area} onChange={(v) => setHB({ usage_area: v })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          {['Face', 'Hair', 'Body'].map((o) => (
+                            <option key={o} value={o}>{getHBOptionLabel(o)}</option>
+                          ))}
+                        </Sel>
+                      </Section>
+                      <Section label={getHBFieldLabel('warranty')} isRtl={isRtl}>
+                        <Sel value={healthBeautyFilters.warranty} onChange={(v) => setHB({ warranty: v as HealthBeautyFilterState['warranty'] })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          <option value="yes">{tCommon('yes')}</option>
+                          <option value="no">{tCommon('no')}</option>
+                        </Sel>
+                      </Section>
+                    </>
+                  )}
+
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className={`flex gap-2 ${isRtl ? 'flex-row-reverse' : ''}`}>
+            <button
+              type="button"
+              onClick={() => {
+                setHB(EMPTY_HEALTH_BEAUTY_FILTERS);
+                onHealthBeautyClear?.();
+              }}
+              className="w-1/2 px-3 py-2 rounded-md border border-slate-300 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              {t('clearFilters')}
+            </button>
+            <button
+              type="button"
+              onClick={() => onHealthBeautySearch?.()}
               className="w-1/2 px-3 py-2 rounded-md border border-primary-600 bg-primary-600 text-sm font-medium text-white hover:bg-primary-700"
             >
               {t('applyFilters')}

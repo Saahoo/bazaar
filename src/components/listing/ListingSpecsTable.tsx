@@ -10,12 +10,21 @@ import {
   ELECTRONICS_SUBCATEGORIES,
   ElectronicsSubcategory,
 } from '@/lib/constants/electronics-wizard';
+import {
+  HOME_FURNITURE_SUBCATEGORIES,
+  HOME_FURNITURE_SUBCATEGORY_LABEL_KEYS,
+  HomeFurnitureSubcategory,
+  getHomeFurnitureSpecsConfig,
+  getHomeFurnitureFieldTranslationKey,
+  getHomeFurnitureOptionTranslationKey,
+} from '@/lib/constants/home-furniture-wizard';
 
 const VEHICLES_CATEGORY = 1;
 const REAL_ESTATE_CATEGORY = 2;
 const ELECTRONICS_CATEGORY = 3;
 const FASHION_CATEGORY = 4;
 const SPARE_PARTS_CATEGORY = 5;
+const HEALTH_BEAUTY_CATEGORY = 13;
 
 interface ListingSpecsTableProps {
   metadata: Record<string, unknown>;
@@ -25,6 +34,9 @@ interface ListingSpecsTableProps {
 
 const isElectronicsSubcategory = (value: string): value is ElectronicsSubcategory =>
   ELECTRONICS_SUBCATEGORIES.some((subcategory) => subcategory.value === value);
+
+const isHomeFurnitureSubcategory = (value: string): value is HomeFurnitureSubcategory =>
+  HOME_FURNITURE_SUBCATEGORIES.some((subcategory) => subcategory.value === value);
 
 function SpecRow({
   label,
@@ -60,6 +72,8 @@ export const ListingSpecsTable: React.FC<ListingSpecsTableProps> = ({
   const tVH = useTranslations('postAd.vehicles');
   const tRE = useTranslations('postAd.realEstate');
   const tEl = useTranslations('postAd.electronics');
+  const tHB = useTranslations('postAd.healthBeauty');
+  const tHF = useTranslations('postAd.homeFurniture');
   const tCommon = useTranslations('common');
   const rtl = isRTL(locale);
 
@@ -724,6 +738,128 @@ export const ListingSpecsTable: React.FC<ListingSpecsTableProps> = ({
   }
 
   /* ─── SPARE PARTS ───────────────────────────────────────────── */
+  {
+    const subcategory = String(metadata.subcategory || '');
+    const looksLikeHomeFurniture = isHomeFurnitureSubcategory(subcategory)
+      && 'sellerType' in metadata
+      && 'location' in metadata;
+
+    if (looksLikeHomeFurniture) {
+      const condition = String(metadata.condition || '');
+      const brand = String(metadata.brand || '');
+      const sellerType = String(metadata.sellerType || '');
+      const location = (metadata.location as Record<string, unknown>) || {};
+      const contact = (metadata.contact as Record<string, unknown>) || {};
+      const media = (metadata.media as Record<string, unknown>) || {};
+
+      const city = String(location.city || '');
+      const lat = typeof location.lat === 'number' ? location.lat : null;
+      const lng = typeof location.lng === 'number' ? location.lng : null;
+      const phone = String(contact.phone || '');
+      const whatsapp = String(contact.whatsapp || '');
+      const email = String(contact.email || '');
+      const video = String(media.video || '');
+
+      const subcategoryKey = HOME_FURNITURE_SUBCATEGORY_LABEL_KEYS[subcategory as HomeFurnitureSubcategory];
+      const subcategoryLabel = subcategoryKey && tHF.has(subcategoryKey as Parameters<typeof tHF>[0])
+        ? tHF(subcategoryKey as Parameters<typeof tHF>[0])
+        : subcategory;
+
+      const getFieldLabel = (fieldKey: string, fallback?: string): string => {
+        const key = getHomeFurnitureFieldTranslationKey(fieldKey);
+        return tHF.has(key as Parameters<typeof tHF>[0])
+          ? tHF(key as Parameters<typeof tHF>[0])
+          : fallback || humanize(fieldKey);
+      };
+
+      const getOptionLabel = (value: string): string => {
+        const key = getHomeFurnitureOptionTranslationKey(value);
+        return tHF.has(key as Parameters<typeof tHF>[0])
+          ? tHF(key as Parameters<typeof tHF>[0])
+          : value;
+      };
+
+      const hasCore = subcategory || condition || brand || sellerType || city || phone;
+
+      const specFields = getHomeFurnitureSpecsConfig(subcategory as HomeFurnitureSubcategory);
+      const specEntries = specFields
+        .map((field) => {
+          const value = metadata[field.key];
+          if (value === null || value === undefined) return null;
+          if (typeof value === 'string' && value.trim() === '') return null;
+          if (Array.isArray(value) && value.length === 0) return null;
+
+          let renderedValue = '';
+          if (Array.isArray(value)) {
+            renderedValue = value.map((item) => getOptionLabel(String(item))).join(', ');
+          } else if (typeof value === 'boolean') {
+            renderedValue = value ? tCommon('yes') : tCommon('no');
+          } else {
+            renderedValue = getOptionLabel(String(value));
+          }
+
+          return {
+            key: field.key,
+            label: getFieldLabel(field.key, field.label),
+            value: renderedValue,
+          };
+        })
+        .filter((entry): entry is { key: string; label: string; value: string } => Boolean(entry));
+
+      if (!hasCore && specEntries.length === 0 && !video) return null;
+
+      return (
+        <div className="mb-6 rounded-lg border border-slate-200 bg-white p-5">
+          <h2 className={`mb-4 text-lg font-semibold text-slate-900 ${rtl ? 'text-right' : 'text-left'}`}>
+            {tHF('stepSpecs')}
+          </h2>
+
+          <div className="grid grid-cols-1 gap-x-8 sm:grid-cols-2">
+            <div>
+              {subcategory && <SpecRow label={tHF('subcategory')} value={subcategoryLabel} rtl={rtl} />}
+              {brand && <SpecRow label={tHF('brand')} value={brand} rtl={rtl} />}
+              {condition && <SpecRow label={tHF('condition')} value={getOptionLabel(condition)} rtl={rtl} />}
+              {sellerType && <SpecRow label={tHF('sellerType')} value={getOptionLabel(sellerType)} rtl={rtl} />}
+            </div>
+            <div>
+              {city && <SpecRow label={tHF('city')} value={city} rtl={rtl} />}
+              {lat !== null && lng !== null && (
+                <SpecRow label={tHF('map')} value={`${lat.toFixed(5)}, ${lng.toFixed(5)}`} rtl={rtl} />
+              )}
+              {phone && <SpecRow label={tHF('phone')} value={phone} rtl={rtl} />}
+              {whatsapp && <SpecRow label={tHF('whatsapp')} value={whatsapp} rtl={rtl} />}
+              {email && <SpecRow label={tHF('email')} value={email} rtl={rtl} />}
+            </div>
+          </div>
+
+          {specEntries.length > 0 && (
+            <div className="mt-4 border-t border-slate-100 pt-4">
+              <p className={`mb-2 text-sm font-medium text-slate-700 ${rtl ? 'text-right' : 'text-left'}`}>
+                {tHF('stepSpecs')}
+              </p>
+              <div className="grid grid-cols-1 gap-x-8 sm:grid-cols-2">
+                {specEntries.map((entry) => (
+                  <SpecRow key={entry.key} label={entry.label} value={entry.value} rtl={rtl} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {video && (
+            <div className="mt-4 border-t border-slate-100 pt-4">
+              <p className={`mb-2 text-sm font-medium text-slate-700 ${rtl ? 'text-right' : 'text-left'}`}>
+                {tHF('video')}
+              </p>
+              <a href={video} target="_blank" rel="noopener noreferrer" className="break-all text-sm text-primary-600 underline hover:text-primary-700">
+                {video}
+              </a>
+            </div>
+          )}
+        </div>
+      );
+    }
+  }
+
   if (categoryId === SPARE_PARTS_CATEGORY) {
     const excludedKeys = new Set(['wizard_forms']);
     const entries = Object.entries(metadata).filter(([key, value]) => {
@@ -766,6 +902,132 @@ export const ListingSpecsTable: React.FC<ListingSpecsTableProps> = ({
             );
           })}
         </div>
+      </div>
+    );
+  }
+
+  /* ─── HEALTH & BEAUTY ───────────────────────────────────────── */
+  if (categoryId === HEALTH_BEAUTY_CATEGORY) {
+    const subcategory = String(metadata.subcategory || '');
+    const condition = String(metadata.condition || '');
+    const brand = String(metadata.brand || '');
+    const sellerType = String(metadata.seller_type || '');
+    const location = (metadata.location as Record<string, unknown>) || {};
+    const contact = (metadata.contact as Record<string, unknown>) || {};
+    const media = (metadata.media as Record<string, unknown>) || {};
+
+    const city = String(location.city || '');
+    const lat = typeof location.lat === 'number' ? location.lat : null;
+    const lng = typeof location.lng === 'number' ? location.lng : null;
+    const phone = String(contact.phone || '');
+    const whatsapp = String(contact.whatsapp || '');
+    const email = String(contact.email || '');
+    const video = String(media.video || '');
+
+    const excludedKeys = new Set([
+      'subcategory',
+      'condition',
+      'brand',
+      'seller_type',
+      'location',
+      'contact',
+      'media',
+      'wizard_forms',
+    ]);
+
+    const getFieldLabel = (key: string): string => {
+      const translationKey = `fields.${key}` as Parameters<typeof tHB>[0];
+      return tHB.has(translationKey) ? tHB(translationKey) : humanize(key);
+    };
+
+    const toOptionKey = (value: string): string =>
+      value
+        .toLowerCase()
+        .replace(/&/g, 'and')
+        .replace(/\+/g, 'plus')
+        .replace(/\//g, '_')
+        .replace(/[()]/g, '')
+        .replace(/\s+/g, '_')
+        .replace(/[^a-z0-9_]/g, '');
+
+    const getOptionLabel = (value: string): string => {
+      const translationKey = `optionLabels.${toOptionKey(value)}` as Parameters<typeof tHB>[0];
+      return tHB.has(translationKey) ? tHB(translationKey) : value;
+    };
+
+    const extraEntries = Object.entries(metadata).filter(([key, value]) => {
+      if (excludedKeys.has(key)) return false;
+      if (value === null || value === undefined) return false;
+      if (typeof value === 'string') return value.trim() !== '';
+      if (Array.isArray(value)) return value.length > 0;
+      return true;
+    });
+
+    if (!subcategory && !brand && !condition && extraEntries.length === 0 && !city && !phone) return null;
+
+    const yesLabel = tCommon('yes');
+    const noLabel = tCommon('no');
+    const subcategoryKey = `subcategories.${subcategory}` as Parameters<typeof tHB>[0];
+    const subcategoryLabel = subcategory && tHB.has(subcategoryKey) ? tHB(subcategoryKey) : subcategory;
+
+    return (
+      <div className="mb-6 rounded-lg border border-slate-200 bg-white p-5">
+        <h2 className={`mb-4 text-lg font-semibold text-slate-900 ${rtl ? 'text-right' : 'text-left'}`}>
+          {tHB('specifications')}
+        </h2>
+
+        <div className="grid grid-cols-1 gap-x-8 sm:grid-cols-2">
+          <div>
+            {subcategory && <SpecRow label={tHB('subcategory')} value={subcategoryLabel} rtl={rtl} />}
+            {brand && <SpecRow label={tHB('brand')} value={brand} rtl={rtl} />}
+            {condition && <SpecRow label={tHB('condition')} value={getOptionLabel(condition)} rtl={rtl} />}
+            {sellerType && <SpecRow label={tHB('seller_type')} value={getOptionLabel(sellerType)} rtl={rtl} />}
+          </div>
+          <div>
+            {city && <SpecRow label={tHB('city')} value={city} rtl={rtl} />}
+            {lat !== null && lng !== null && (
+              <SpecRow label={tHB('map')} value={`${lat.toFixed(5)}, ${lng.toFixed(5)}`} rtl={rtl} />
+            )}
+            {phone && <SpecRow label={tHB('phone')} value={phone} rtl={rtl} />}
+            {whatsapp && <SpecRow label={tHB('whatsapp')} value={whatsapp} rtl={rtl} />}
+            {email && <SpecRow label={tHB('email')} value={email} rtl={rtl} />}
+          </div>
+        </div>
+
+        {extraEntries.length > 0 && (
+          <div className="mt-4 border-t border-slate-100 pt-4">
+            <p className={`mb-2 text-sm font-medium text-slate-700 ${rtl ? 'text-right' : 'text-left'}`}>{tHB('stepSpecs')}</p>
+            <div className="grid grid-cols-1 gap-x-8 sm:grid-cols-2">
+              {extraEntries.map(([key, value]) => {
+                const rendered = Array.isArray(value)
+                  ? value
+                      .map((item) => {
+                        if (item && typeof item === 'object') {
+                          const pair = item as { key?: string; value?: string };
+                          return pair.key && pair.value ? `${pair.key}: ${pair.value}` : '';
+                        }
+                        return getOptionLabel(String(item));
+                      })
+                      .filter(Boolean)
+                      .join(', ')
+                  : typeof value === 'boolean'
+                    ? (value ? yesLabel : noLabel)
+                    : getOptionLabel(String(value));
+
+                return <SpecRow key={key} label={getFieldLabel(key)} value={rendered} rtl={rtl} />;
+              })}
+            </div>
+          </div>
+        )}
+
+        {video && (
+          <div className="mt-4 border-t border-slate-100 pt-4">
+            <p className={`mb-2 text-sm font-medium text-slate-700 ${rtl ? 'text-right' : 'text-left'}`}>{tHB('video')}</p>
+            <a href={video} target="_blank" rel="noopener noreferrer" className="break-all text-sm text-primary-600 underline hover:text-primary-700">
+              {video}
+            </a>
+          </div>
+        )}
       </div>
     );
   }

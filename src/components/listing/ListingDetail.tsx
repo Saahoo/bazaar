@@ -11,6 +11,7 @@ import { SellerCard } from './SellerCard';
 import { ActionButtons } from './ActionButtons';
 import { SimilarListings } from './SimilarListings';
 import { ListingSpecsTable } from './ListingSpecsTable';
+import { ListingAllDetails } from './ListingAllDetails';
 
 export interface ListingData {
   id: string;
@@ -235,11 +236,14 @@ export const ListingDetail: React.FC<ListingDetailProps> = ({ listing, seller, l
             </div>
 
             {listing.metadata && Object.keys(listing.metadata).length > 0 && (
-              <ListingSpecsTable
-                metadata={listing.metadata}
-                categoryId={listing.category_id}
-                locale={locale}
-              />
+              <>
+                <ListingSpecsTable
+                  metadata={listing.metadata}
+                  categoryId={listing.category_id}
+                  locale={locale}
+                />
+                <ListingAllDetails metadata={listing.metadata} locale={locale} categoryId={listing.category_id} />
+              </>
             )}
 
             <div className="rounded-lg border border-slate-200 p-3 mb-4">

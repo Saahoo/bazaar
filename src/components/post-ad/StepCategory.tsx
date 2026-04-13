@@ -220,6 +220,41 @@ export const StepCategory: React.FC<StepCategoryProps> = ({
   React.useEffect(() => {
     let mounted = true;
 
+    const getLocalizedName = (category: DbCategory): string => {
+      const ps = (category.name_ps || '').trim();
+      const fa = (category.name_fa || '').trim();
+      const en = (category.name_en || '').trim();
+
+      if (locale === 'ps') return ps || en || fa;
+      if (locale === 'fa') return fa || en || ps;
+      return en || ps || fa;
+    };
+
+    const getCategoryKey = (category: DbCategory): string => {
+      const slug = (category.slug || '').toLowerCase().trim();
+      if (slug === 'fashion' || slug === 'fashion-clothing') return 'fashion-family';
+      return slug || `id-${category.id}`;
+    };
+
+    const pickBetterCategory = (a: DbCategory, b: DbCategory): DbCategory => {
+      const score = (category: DbCategory): number => {
+        const hasLocalizedName = getLocalizedName(category).length > 0 ? 2 : 0;
+        const hasIcon = category.icon_name ? 1 : 0;
+        const hasSlug = category.slug ? 1 : 0;
+        return hasLocalizedName + hasIcon + hasSlug;
+      };
+
+      const scoreA = score(a);
+      const scoreB = score(b);
+      if (scoreA !== scoreB) return scoreA > scoreB ? a : b;
+
+      const sortA = a.sort_order ?? Number.MAX_SAFE_INTEGER;
+      const sortB = b.sort_order ?? Number.MAX_SAFE_INTEGER;
+      if (sortA !== sortB) return sortA < sortB ? a : b;
+
+      return a.id < b.id ? a : b;
+    };
+
     const loadCategories = async () => {
       const { data } = await supabase
         .from('categories')
@@ -228,17 +263,27 @@ export const StepCategory: React.FC<StepCategoryProps> = ({
         .order('sort_order', { ascending: true });
 
       if (!mounted) return;
-      const seenCategoryNames = new Set<string>();
-      const normalized = ((data as DbCategory[]) || [])
-        .filter((category) => !EXCLUDED_TOP_LEVEL_CATEGORY_SLUGS.has((category.slug || '').toLowerCase()))
-        .filter((category) => {
-          const localizedName = getLocalizedCategoryName(category).trim().toLowerCase();
-          if (seenCategoryNames.has(localizedName)) {
-            return false;
-          }
-          seenCategoryNames.add(localizedName);
-          return true;
-        });
+      const filtered = ((data as DbCategory[]) || [])
+        .filter((category) => !EXCLUDED_TOP_LEVEL_CATEGORY_SLUGS.has((category.slug || '').toLowerCase()));
+
+      const byKey = new Map<string, DbCategory>();
+      for (const category of filtered) {
+        const key = getCategoryKey(category);
+        const existing = byKey.get(key);
+        if (!existing) {
+          byKey.set(key, category);
+          continue;
+        }
+        byKey.set(key, pickBetterCategory(existing, category));
+      }
+
+      const normalized = Array.from(byKey.values()).sort((a, b) => {
+        const aSort = a.sort_order ?? Number.MAX_SAFE_INTEGER;
+        const bSort = b.sort_order ?? Number.MAX_SAFE_INTEGER;
+        if (aSort !== bSort) return aSort - bSort;
+        return a.id - b.id;
+      });
+
       setCategories(normalized);
     };
 
@@ -247,17 +292,21 @@ export const StepCategory: React.FC<StepCategoryProps> = ({
     return () => {
       mounted = false;
     };
-  }, [supabase]);
+  }, [supabase, locale]);
 
   const getLocalizedCategoryName = (category: DbCategory): string => {
+    const ps = (category.name_ps || '').trim();
+    const fa = (category.name_fa || '').trim();
+    const en = (category.name_en || '').trim();
+
     switch (locale) {
       case 'ps':
-        return category.name_ps;
+        return ps || en || fa;
       case 'fa':
-        return category.name_fa;
+        return fa || en || ps;
       case 'en':
       default:
-        return category.name_en;
+        return en || ps || fa;
     }
   };
 

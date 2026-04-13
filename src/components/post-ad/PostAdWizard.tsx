@@ -43,9 +43,23 @@ import { StepSpareSpecifications } from './spare-parts/StepSpareSpecifications';
 import { StepSpareMedia, SpareMediaData } from './spare-parts/StepSpareMedia';
 import { StepSpareContact } from './spare-parts/StepSpareContact';
 import { StepSpareReview } from './spare-parts/StepSpareReview';
+import { StepHealthBasicInfo } from './health-beauty/StepHealthBasicInfo';
+import { StepHealthGeneralDetails } from './health-beauty/StepHealthGeneralDetails';
+import { StepHealthSpecs } from './health-beauty/StepHealthSpecs';
+import { StepHealthMedia, HealthMediaData } from './health-beauty/StepHealthMedia';
+import { StepHealthContact } from './health-beauty/StepHealthContact';
+import { StepHealthReview } from './health-beauty/StepHealthReview';
+import { StepHomeFurnitureBasicInfo } from './home-furniture/StepHomeFurnitureBasicInfo';
+import { StepHomeFurnitureGeneralDetails } from './home-furniture/StepHomeFurnitureGeneralDetails';
+import { StepHomeFurnitureSpecs } from './home-furniture/StepHomeFurnitureSpecs';
+import { StepHomeFurnitureMedia, HomeFurnitureMediaData } from './home-furniture/StepHomeFurnitureMedia';
+import { StepHomeFurnitureContact } from './home-furniture/StepHomeFurnitureContact';
+import { StepHomeFurnitureReview } from './home-furniture/StepHomeFurnitureReview';
 import { DynamicWizardFields, WizardFormConfig, isWizardRequiredFieldsValid } from './DynamicWizardFields';
 import { ElectronicsSubcategory, getElectronicsSpecsConfig, hasConditionInSpecs } from '@/lib/constants/electronics-wizard';
 import { FashionSubcategory, FASHION_BRANDS_BY_SUBCATEGORY, FASHION_SUBCATEGORY_LABEL_KEYS, getFashionSpecsConfig } from '@/lib/constants/fashion-wizard';
+import { getHealthBeautySpecsConfig, HealthBeautySubcategory } from '@/lib/constants/health-beauty-wizard';
+import { HomeFurnitureSubcategory, getHomeFurnitureSpecsConfig } from '@/lib/constants/home-furniture-wizard';
 import { SparePartsSubcategory, VEHICLE_SPARE_SUBCATEGORIES, ELECTRONICS_OR_MACHINERY_SUBCATEGORIES } from '@/lib/constants/spare-parts-wizard';
 import type { VehicleType as VehicleTypeEnum } from '@/lib/constants/vehicles';
 
@@ -55,6 +69,9 @@ const VEHICLES_SLUG = 'vehicles';
 const ELECTRONICS_SLUG = 'electronics';
 const FASHION_SLUGS = ['fashion-clothing', 'fashion'];
 const SPARE_PARTS_SLUG = 'spare-parts';
+const HEALTH_BEAUTY_SLUGS = ['health-beauty', 'health-and-beauty', 'health-beauty-products'];
+const HEALTH_BEAUTY_CATEGORY_ID = 13;
+const HOME_FURNITURE_SLUGS = ['home-furniture', 'home-and-furniture', 'furniture'];
 
 export interface PostAdFormData {
   categoryId: number | null;
@@ -157,6 +174,45 @@ export interface SparePartsFormData {
   termsAccepted: boolean;
   specs: Record<string, unknown>;
   media: SpareMediaData;
+}
+
+export interface HealthBeautyFormData {
+  subcategory: HealthBeautySubcategory | '';
+  title: string;
+  description: string;
+  price: number | '';
+  currency: 'AFN' | 'USD' | 'PKR' | '';
+  condition: 'New' | 'Used' | 'Unopened' | '';
+  brand: string;
+  seller_type: 'Individual' | 'Dealer' | '';
+  city: string;
+  lat: number | null;
+  lng: number | null;
+  phone: string;
+  whatsapp: string;
+  email: string;
+  termsAccepted: boolean;
+  specs: Record<string, unknown>;
+  media: HealthMediaData;
+}
+
+export interface HomeFurnitureFormData {
+  subcategory: HomeFurnitureSubcategory | '';
+  title: string;
+  description: string;
+  price: number | '';
+  condition: 'New' | 'Used' | 'Refurbished' | '';
+  brand: string;
+  sellerType: 'Individual' | 'Dealer' | '';
+  city: string;
+  lat: number | null;
+  lng: number | null;
+  phone: string;
+  whatsapp: string;
+  email: string;
+  termsAccepted: boolean;
+  specs: Record<string, unknown>;
+  media: HomeFurnitureMediaData;
 }
 
 const INITIAL_FORM_DATA: PostAdFormData = {
@@ -285,6 +341,52 @@ const INITIAL_SP_DATA: SparePartsFormData = {
   },
 };
 
+const INITIAL_HB_DATA: HealthBeautyFormData = {
+  subcategory: '',
+  title: '',
+  description: '',
+  price: '',
+  currency: 'AFN',
+  condition: '',
+  brand: '',
+  seller_type: '',
+  city: '',
+  lat: null,
+  lng: null,
+  phone: '',
+  whatsapp: '',
+  email: '',
+  termsAccepted: false,
+  specs: {},
+  media: {
+    images: [],
+    has_video: false,
+    video: '',
+  },
+};
+
+const INITIAL_HF_DATA: HomeFurnitureFormData = {
+  subcategory: '',
+  title: '',
+  description: '',
+  price: '',
+  condition: '',
+  brand: '',
+  sellerType: '',
+  city: '',
+  lat: null,
+  lng: null,
+  phone: '',
+  whatsapp: '',
+  email: '',
+  termsAccepted: false,
+  specs: {},
+  media: {
+    images: [],
+    video: '',
+  },
+};
+
 // Default steps for non-specialized categories
 const DEFAULT_STEPS = ['stepCategory', 'stepDetails', 'stepPhotos', 'stepContact'] as const;
 // Real estate steps
@@ -297,6 +399,10 @@ const EL_STEPS = ['stepCategory', 'elStepBasic', 'elStepSpecs', 'elStepMedia', '
 const FA_STEPS = ['stepCategory', 'faStepBasic', 'faStepGeneral', 'faStepSpecs', 'faStepMedia', 'faStepContact', 'faStepReview'] as const;
 // Spare parts steps
 const SP_STEPS = ['stepCategory', 'spStepBasic', 'spStepGeneral', 'spStepCompatibility', 'spStepSpecs', 'spStepMedia', 'spStepContact', 'spStepReview'] as const;
+// Health & Beauty steps
+const HB_STEPS = ['stepCategory', 'hbStepBasic', 'hbStepGeneral', 'hbStepSpecs', 'hbStepMedia', 'hbStepContact', 'hbStepReview'] as const;
+// Home & Furniture steps
+const HF_STEPS = ['stepCategory', 'hfStepBasic', 'hfStepGeneral', 'hfStepSpecs', 'hfStepMedia', 'hfStepContact', 'hfStepReview'] as const;
 
 const isFashionSlug = (categorySlug: string | null): boolean => {
   if (!categorySlug) return false;
@@ -309,6 +415,8 @@ const getStepsForCategorySlug = (categorySlug: string | null): readonly string[]
   if (categorySlug === ELECTRONICS_SLUG) return EL_STEPS;
   if (isFashionSlug(categorySlug)) return FA_STEPS;
   if (categorySlug === SPARE_PARTS_SLUG) return SP_STEPS;
+  if (categorySlug && HEALTH_BEAUTY_SLUGS.includes(categorySlug)) return HB_STEPS;
+  if (categorySlug && HOME_FURNITURE_SLUGS.includes(categorySlug)) return HF_STEPS;
   return DEFAULT_STEPS;
 };
 
@@ -450,7 +558,9 @@ type StepKey =
   | typeof VH_STEPS[number]
   | typeof EL_STEPS[number]
   | typeof FA_STEPS[number]
-  | typeof SP_STEPS[number];
+  | typeof SP_STEPS[number]
+  | typeof HB_STEPS[number]
+  | typeof HF_STEPS[number];
 
 interface PostAdWizardProps {
   locale: Locale;
@@ -463,6 +573,8 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
   const tEL = useTranslations('postAd.electronics');
   const tFA = useTranslations('postAd.fashion');
   const tSP = useTranslations('postAd.spareParts');
+  const tHB = useTranslations('postAd.healthBeauty');
+  const tHF = useTranslations('postAd.homeFurniture');
   const tCommon = useTranslations('common');
   const tAuth = useTranslations('auth');
   const rtl = isRTL(locale);
@@ -476,6 +588,8 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
   const [elData, setElData] = useState<ElectronicsFormData>(INITIAL_EL_DATA);
   const [faData, setFaData] = useState<FashionFormData>(INITIAL_FA_DATA);
   const [spData, setSpData] = useState<SparePartsFormData>(INITIAL_SP_DATA);
+  const [hbData, setHbData] = useState<HealthBeautyFormData>(INITIAL_HB_DATA);
+  const [hfData, setHfData] = useState<HomeFurnitureFormData>(INITIAL_HF_DATA);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -519,6 +633,14 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
     setSpData((prev) => ({ ...prev, ...updates }));
   }, []);
 
+  const updateHBData = useCallback((updates: Partial<HealthBeautyFormData>) => {
+    setHbData((prev) => ({ ...prev, ...updates }));
+  }, []);
+
+  const updateHFData = useCallback((updates: Partial<HomeFurnitureFormData>) => {
+    setHfData((prev) => ({ ...prev, ...updates }));
+  }, []);
+
   const handleCategorySelect = useCallback(
     (categoryId: number, categorySlug?: string, categoryName?: string) => {
       const changingCategory = formData.categoryId !== categoryId;
@@ -532,6 +654,8 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         setElData(INITIAL_EL_DATA);
         setFaData(INITIAL_FA_DATA);
         setSpData(INITIAL_SP_DATA);
+        setHbData(INITIAL_HB_DATA);
+        setHfData(INITIAL_HF_DATA);
         setWizardValues({});
       }
     },
@@ -621,6 +745,8 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       const draftElData = (draftData.elData || {}) as Partial<ElectronicsFormData>;
       const draftFaData = (draftData.faData || {}) as Partial<FashionFormData>;
       const draftSpData = (draftData.spData || {}) as Partial<SparePartsFormData>;
+      const draftHbData = (draftData.hbData || {}) as Partial<HealthBeautyFormData>;
+      const draftHfData = (draftData.hfData || {}) as Partial<HomeFurnitureFormData>;
       const categoryId = draftRow.category_id ?? draftFormData.categoryId ?? null;
 
       let categorySlug: string | null = null;
@@ -736,6 +862,32 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
           ...((draftSpData.media as Partial<SpareMediaData> | undefined) || {}),
         },
       });
+      setHbData({
+        ...INITIAL_HB_DATA,
+        ...draftHbData,
+        subcategory: draftHbData.subcategory ?? INITIAL_HB_DATA.subcategory,
+        specs: {
+          ...INITIAL_HB_DATA.specs,
+          ...((draftHbData.specs as Record<string, unknown> | undefined) || {}),
+        },
+        media: {
+          ...INITIAL_HB_DATA.media,
+          ...((draftHbData.media as Partial<HealthMediaData> | undefined) || {}),
+        },
+      });
+      setHfData({
+        ...INITIAL_HF_DATA,
+        ...draftHfData,
+        subcategory: draftHfData.subcategory ?? INITIAL_HF_DATA.subcategory,
+        specs: {
+          ...INITIAL_HF_DATA.specs,
+          ...((draftHfData.specs as Record<string, unknown> | undefined) || {}),
+        },
+        media: {
+          ...INITIAL_HF_DATA.media,
+          ...((draftHfData.media as Partial<HomeFurnitureMediaData> | undefined) || {}),
+        },
+      });
       setWizardValues(((draftData.wizardValues as Record<string, unknown> | undefined) || {}));
 
       const savedStep = typeof draftData.currentStep === 'number' ? draftData.currentStep : (categoryId ? 1 : 0);
@@ -795,7 +947,9 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
   const isElectronics = selectedCategorySlug === ELECTRONICS_SLUG;
   const isFashion = isFashionSlug(selectedCategorySlug);
   const isSpareParts = selectedCategorySlug === SPARE_PARTS_SLUG;
-  const steps: readonly string[] = getStepsForCategorySlug(selectedCategorySlug);
+  const isHealthBeauty = (selectedCategorySlug ? HEALTH_BEAUTY_SLUGS.includes(selectedCategorySlug) : false) || formData.categoryId === HEALTH_BEAUTY_CATEGORY_ID;
+  const isHomeFurniture = selectedCategorySlug ? HOME_FURNITURE_SLUGS.includes(selectedCategorySlug) : false;
+  const steps: readonly string[] = isHomeFurniture ? HF_STEPS : isHealthBeauty ? HB_STEPS : getStepsForCategorySlug(selectedCategorySlug);
 
   const getStepLabel = (step: string): string => {
     switch (step) {
@@ -832,6 +986,18 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       case 'spStepMedia': return tSP('stepMedia');
       case 'spStepContact': return tSP('stepContact');
       case 'spStepReview': return tSP('stepReview');
+      case 'hbStepBasic': return tHB('stepBasic');
+      case 'hbStepGeneral': return tHB('stepGeneral');
+      case 'hbStepSpecs': return tHB('stepSpecs');
+      case 'hbStepMedia': return tHB('stepMedia');
+      case 'hbStepContact': return tHB('stepContact');
+      case 'hbStepReview': return tHB('stepReview');
+      case 'hfStepBasic': return tHF('stepBasic');
+      case 'hfStepGeneral': return tHF('stepGeneral');
+      case 'hfStepSpecs': return tHF('stepSpecs');
+      case 'hfStepMedia': return tHF('stepMedia');
+      case 'hfStepContact': return tHF('stepContact');
+      case 'hfStepReview': return tHF('stepReview');
       default: return '';
     }
   };
@@ -986,6 +1152,49 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       case 'spStepContact':
         return spData.city.trim() !== '' && spData.phone.trim() !== '' && spData.termsAccepted;
       case 'spStepReview':
+        return true;
+      // Health & Beauty steps
+      case 'hbStepBasic':
+        return hbData.title.trim().length >= 3 && hbData.description.trim().length >= 10 && hbData.subcategory !== '';
+      case 'hbStepGeneral':
+        return hbData.price !== '' && hbData.currency !== '' && hbData.condition !== '' && hbData.brand.trim() !== '' && hbData.seller_type !== '';
+      case 'hbStepSpecs': {
+        const fields = getHealthBeautySpecsConfig(hbData.subcategory);
+        return fields.every((field) => {
+          const value = hbData.specs[field.key];
+          if (field.key === 'spf_value' && hbData.specs.has_spf !== true) return true;
+          if (!field.required) return true;
+          if (field.type === 'multiselect') return Array.isArray(value) && value.length > 0;
+          if (field.type === 'toggle') return typeof value === 'boolean';
+          return typeof value === 'string' && value.trim().length > 0;
+        });
+      }
+      case 'hbStepMedia':
+        return hbData.media.images.length >= 1;
+      case 'hbStepContact':
+        return hbData.city.trim() !== '' && hbData.phone.trim() !== '' && hbData.termsAccepted;
+      case 'hbStepReview':
+        return true;
+      // Home & Furniture steps
+      case 'hfStepBasic':
+        return hfData.title.trim().length >= 3 && hfData.description.trim().length >= 10 && hfData.subcategory !== '';
+      case 'hfStepGeneral':
+        return hfData.price !== '' && hfData.condition !== '' && hfData.sellerType !== '';
+      case 'hfStepSpecs': {
+        const fields = getHomeFurnitureSpecsConfig(hfData.subcategory);
+        return fields.every((field) => {
+          if (!field.required) return true;
+          const value = hfData.specs[field.key];
+          if (field.type === 'multiselect') return Array.isArray(value) && value.length > 0;
+          if (field.type === 'toggle') return typeof value === 'boolean';
+          return typeof value === 'string' && value.trim().length > 0;
+        });
+      }
+      case 'hfStepMedia':
+        return hfData.media.images.length >= 1;
+      case 'hfStepContact':
+        return hfData.city.trim() !== '' && hfData.phone.trim() !== '' && hfData.termsAccepted;
+      case 'hfStepReview':
         return true;
       default:
         return false;
@@ -1184,6 +1393,65 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         _phone = spData.phone || _phone;
         condition = (spData.condition || condition || 'good') as string;
         photosList = spData.media.images;
+      } else if (isHealthBeauty) {
+        metadata = {
+          subcategory: hbData.subcategory,
+          condition: hbData.condition,
+          brand: hbData.brand,
+          seller_type: hbData.seller_type,
+          ...hbData.specs,
+          location: {
+            city: hbData.city,
+            lat: hbData.lat,
+            lng: hbData.lng,
+          },
+          contact: {
+            phone: hbData.phone,
+            whatsapp: hbData.whatsapp,
+            email: hbData.email,
+          },
+          media: {
+            video: hbData.media.video,
+          },
+          wizard_forms: wizardValues,
+        };
+        title = hbData.title || title;
+        description = hbData.description || description;
+        price = Number(hbData.price) || price;
+        currency = hbData.currency || currency;
+        city = hbData.city || city;
+        _phone = hbData.phone || _phone;
+        condition = (hbData.condition || condition || 'good') as string;
+        photosList = hbData.media.images;
+      } else if (isHomeFurniture) {
+        metadata = {
+          subcategory: hfData.subcategory,
+          condition: hfData.condition,
+          brand: hfData.brand,
+          sellerType: hfData.sellerType,
+          ...hfData.specs,
+          location: {
+            city: hfData.city,
+            lat: hfData.lat,
+            lng: hfData.lng,
+          },
+          contact: {
+            phone: hfData.phone,
+            whatsapp: hfData.whatsapp,
+            email: hfData.email,
+          },
+          media: {
+            video: hfData.media.video,
+          },
+          wizard_forms: wizardValues,
+        };
+        title = hfData.title || title;
+        description = hfData.description || description;
+        price = Number(hfData.price) || price;
+        city = hfData.city || city;
+        _phone = hfData.phone || _phone;
+        condition = (hfData.condition || condition || 'good') as string;
+        photosList = hfData.media.images;
       } else {
         metadata = {
           ...metadata,
@@ -1259,6 +1527,8 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
     setElData(INITIAL_EL_DATA);
     setFaData(INITIAL_FA_DATA);
     setSpData(INITIAL_SP_DATA);
+    setHbData(INITIAL_HB_DATA);
+    setHfData(INITIAL_HF_DATA);
     setCurrentStep(0);
     setSubmitted(false);
     setSubmittedListingId(null);
@@ -1274,6 +1544,18 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
 
   const handleClearSparePartsForm = () => {
     setSpData(INITIAL_SP_DATA);
+    setCurrentStep(1);
+    setSubmitError(null);
+  };
+
+  const handleClearHealthBeautyForm = () => {
+    setHbData(INITIAL_HB_DATA);
+    setCurrentStep(1);
+    setSubmitError(null);
+  };
+
+  const handleClearHomeFurnitureForm = () => {
+    setHfData(INITIAL_HF_DATA);
     setCurrentStep(1);
     setSubmitError(null);
   };
@@ -1298,6 +1580,8 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       else if (isElectronics) draftData = { ...draftData, elData };
       else if (isFashion) draftData = { ...draftData, faData };
       else if (isSpareParts) draftData = { ...draftData, spData };
+      else if (isHealthBeauty) draftData = { ...draftData, hbData };
+      else if (isHomeFurniture) draftData = { ...draftData, hfData };
 
       const { data: savedDraft, error: draftError } = await supabase.from('listing_drafts').upsert({
         user_id: user.id,
@@ -1882,6 +2166,191 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
             onEdit={(stepIndex) => setCurrentStep(stepIndex)}
           />
         );
+      // Health & Beauty steps
+      case 'hbStepBasic':
+        return (
+          <StepHealthBasicInfo
+            locale={locale}
+            data={{
+              title: hbData.title,
+              description: hbData.description,
+              subcategory: hbData.subcategory,
+            }}
+            onChange={(updates) => {
+              if (updates.subcategory !== undefined && updates.subcategory !== hbData.subcategory) {
+                updateHBData({
+                  ...updates,
+                  specs: {},
+                });
+                return;
+              }
+              updateHBData(updates);
+            }}
+          />
+        );
+      case 'hbStepGeneral':
+        return (
+          <StepHealthGeneralDetails
+            locale={locale}
+            data={{
+              price: hbData.price,
+              currency: hbData.currency,
+              condition: hbData.condition,
+              brand: hbData.brand,
+              seller_type: hbData.seller_type,
+            }}
+            onChange={(updates) => updateHBData(updates)}
+          />
+        );
+      case 'hbStepSpecs':
+        return (
+          <StepHealthSpecs
+            locale={locale}
+            subcategory={hbData.subcategory}
+            specs={hbData.specs}
+            onChange={(specs) => updateHBData({ specs })}
+          />
+        );
+      case 'hbStepMedia':
+        return (
+          <StepHealthMedia
+            locale={locale}
+            data={hbData.media}
+            onChange={(updates) => updateHBData({ media: { ...hbData.media, ...updates } })}
+          />
+        );
+      case 'hbStepContact':
+        return (
+          <StepHealthContact
+            locale={locale}
+            data={{
+              city: hbData.city,
+              lat: hbData.lat,
+              lng: hbData.lng,
+              phone: hbData.phone,
+              whatsapp: hbData.whatsapp,
+              email: hbData.email,
+              termsAccepted: hbData.termsAccepted,
+            }}
+            onChange={(updates) => updateHBData(updates)}
+          />
+        );
+      case 'hbStepReview':
+        return (
+          <StepHealthReview
+            locale={locale}
+            basic={{
+              title: hbData.title,
+              description: hbData.description,
+              subcategory: hbData.subcategory,
+            }}
+            general={{
+              price: hbData.price,
+              currency: hbData.currency,
+              condition: hbData.condition,
+              brand: hbData.brand,
+              seller_type: hbData.seller_type,
+            }}
+            specs={hbData.specs}
+            media={hbData.media}
+            contact={{
+              city: hbData.city,
+              lat: hbData.lat,
+              lng: hbData.lng,
+              phone: hbData.phone,
+              whatsapp: hbData.whatsapp,
+              email: hbData.email,
+            }}
+            onEdit={(stepIndex) => setCurrentStep(stepIndex)}
+          />
+        );
+      // Home & Furniture steps
+      case 'hfStepBasic':
+        return (
+          <StepHomeFurnitureBasicInfo
+            locale={locale}
+            data={{
+              title: hfData.title,
+              description: hfData.description,
+              subcategory: hfData.subcategory,
+            }}
+            onChange={(updates) => {
+              if (updates.subcategory !== undefined && updates.subcategory !== hfData.subcategory) {
+                updateHFData({ ...updates, specs: {} });
+                return;
+              }
+              updateHFData(updates);
+            }}
+          />
+        );
+      case 'hfStepGeneral':
+        return (
+          <StepHomeFurnitureGeneralDetails
+            locale={locale}
+            data={{
+              price: hfData.price,
+              condition: hfData.condition,
+              brand: hfData.brand,
+              sellerType: hfData.sellerType,
+            }}
+            onChange={(updates) => updateHFData(updates)}
+          />
+        );
+      case 'hfStepSpecs':
+        return (
+          <StepHomeFurnitureSpecs
+            locale={locale}
+            subcategory={hfData.subcategory}
+            specs={hfData.specs}
+            onChange={(specs) => updateHFData({ specs })}
+          />
+        );
+      case 'hfStepMedia':
+        return (
+          <StepHomeFurnitureMedia
+            locale={locale}
+            data={hfData.media}
+            onChange={(updates) => updateHFData({ media: { ...hfData.media, ...updates } })}
+          />
+        );
+      case 'hfStepContact':
+        return (
+          <StepHomeFurnitureContact
+            locale={locale}
+            data={{
+              city: hfData.city,
+              lat: hfData.lat,
+              lng: hfData.lng,
+              phone: hfData.phone,
+              whatsapp: hfData.whatsapp,
+              email: hfData.email,
+              termsAccepted: hfData.termsAccepted,
+            }}
+            onChange={(updates) => updateHFData(updates)}
+          />
+        );
+      case 'hfStepReview':
+        return (
+          <StepHomeFurnitureReview
+            locale={locale}
+            title={hfData.title}
+            description={hfData.description}
+            subcategory={hfData.subcategory}
+            price={hfData.price}
+            condition={hfData.condition}
+            brand={hfData.brand}
+            sellerType={hfData.sellerType}
+            city={hfData.city}
+            lat={hfData.lat}
+            lng={hfData.lng}
+            phone={hfData.phone}
+            whatsapp={hfData.whatsapp}
+            email={hfData.email}
+            specs={hfData.specs}
+            media={hfData.media}
+            onEdit={(stepIndex) => setCurrentStep(stepIndex)}
+          />
+        );
       default:
         return null;
     }
@@ -1998,6 +2467,24 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
             </button>
           )}
 
+          {isHealthBeauty && (
+            <button
+              onClick={handleClearHealthBeautyForm}
+              className={`px-4 py-2.5 rounded-lg font-medium transition border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 ${rtl ? 'text-right' : 'text-left'}`}
+            >
+              Clear form
+            </button>
+          )}
+
+          {isHomeFurniture && (
+            <button
+              onClick={handleClearHomeFurnitureForm}
+              className={`px-4 py-2.5 rounded-lg font-medium transition border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 ${rtl ? 'text-right' : 'text-left'}`}
+            >
+              {tHF('clearForm')}
+            </button>
+          )}
+
           {currentStep < steps.length - 1 ? (
             <button
               onClick={handleNext}
@@ -2102,7 +2589,17 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
                   <div><span className="font-semibold text-slate-700">{tSP('images')}:</span> {spData.media.images.length}</div>
                 </>
               )}
-              {!isVehicles && !isRealEstate && !isElectronics && !isFashion && !isSpareParts && (
+              {isHealthBeauty && (
+                <>
+                  <div><span className="font-semibold text-slate-700">{tHB('subcategory')}:</span> {hbData.subcategory || '-'}</div>
+                  <div><span className="font-semibold text-slate-700">{tHB('title')}:</span> {hbData.title || '-'}</div>
+                  <div><span className="font-semibold text-slate-700">{tHB('price')}:</span> {hbData.price === '' ? '-' : `${hbData.price} ${hbData.currency || ''}`}</div>
+                  <div><span className="font-semibold text-slate-700">{tHB('city')}:</span> {hbData.city || '-'}</div>
+                  <div><span className="font-semibold text-slate-700">{tHB('phone')}:</span> {hbData.phone || '-'}</div>
+                  <div><span className="font-semibold text-slate-700">{tHB('images')}:</span> {hbData.media.images.length}</div>
+                </>
+              )}
+              {!isVehicles && !isRealEstate && !isElectronics && !isFashion && !isSpareParts && !isHealthBeauty && (
                 <>
                   <div><span className="font-semibold text-slate-700">{t('stepDetails')}:</span> {formData.title}</div>
                   <div><span className="font-semibold text-slate-700">{tCommon('price')}:</span> {formData.price} {formData.currency}</div>

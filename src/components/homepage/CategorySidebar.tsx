@@ -1,7 +1,7 @@
 // src/components/homepage/CategorySidebar.tsx
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { ChevronDown, ChevronUp } from 'lucide-react';
@@ -14,6 +14,16 @@ interface CategorySidebarProps {
   titleOverride?: string;
 }
 
+interface DbCategory {
+  id: number;
+  name_en: string;
+  name_ps: string;
+  name_fa: string;
+  slug: string | null;
+  parent_id: number | null;
+  sort_order: number | null;
+}
+
 const INITIAL_SHOW = 8;
 
 export const CategorySidebar: React.FC<CategorySidebarProps> = ({ locale, titleOverride }) => {
@@ -21,6 +31,37 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({ locale, titleO
   const isRtl = isRTL(locale);
   const [expanded, setExpanded] = useState(false);
   const [counts, setCounts] = useState<Record<number, number>>({});
+  const [dbCategories, setDbCategories] = useState<DbCategory[]>([]);
+
+  const getLocalizedDbCategoryName = (category: DbCategory): string => {
+    switch (locale) {
+      case 'ps':
+        return category.name_ps;
+      case 'fa':
+        return category.name_fa;
+      case 'en':
+      default:
+        return category.name_en;
+    }
+  };
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('categories')
+        .select('id, name_en, name_ps, name_fa, slug, parent_id, sort_order')
+        .is('parent_id', null)
+        .order('sort_order', { ascending: true });
+
+      if (!data) return;
+      setDbCategories(
+        ((data as DbCategory[]) || []).filter((c) => c.slug !== 'mobile-phones' && c.slug !== 'phones')
+      );
+    };
+
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     const fetchCounts = async () => {
@@ -40,8 +81,56 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({ locale, titleO
     fetchCounts();
   }, []);
 
-  const visible = expanded ? MAIN_CATEGORIES : MAIN_CATEGORIES.slice(0, INITIAL_SHOW);
-  const hasMore = MAIN_CATEGORIES.length > INITIAL_SHOW;
+  const dedupedDbCategories = useMemo(() => {
+    if (dbCategories.length === 0) return dbCategories;
+
+    const keyFor = (category: DbCategory): string => {
+      const slug = (category.slug || '').toLowerCase();
+      if (slug === 'fashion' || slug === 'fashion-clothing') return 'fashion-family';
+      return slug || `id-${category.id}`;
+    };
+
+    const bestByKey = new Map<string, DbCategory>();
+
+    for (const category of dbCategories) {
+      const key = keyFor(category);
+      const prev = bestByKey.get(key);
+      if (!prev) {
+        bestByKey.set(key, category);
+        continue;
+      }
+
+      const prevCount = counts[prev.id] || 0;
+      const nextCount = counts[category.id] || 0;
+
+      if (nextCount > prevCount) {
+        bestByKey.set(key, category);
+        continue;
+      }
+
+      if (nextCount === prevCount) {
+        const prevSort = prev.sort_order ?? Number.MAX_SAFE_INTEGER;
+        const nextSort = category.sort_order ?? Number.MAX_SAFE_INTEGER;
+        if (nextSort < prevSort) {
+          bestByKey.set(key, category);
+        }
+      }
+    }
+
+    return Array.from(bestByKey.values()).sort((a, b) => {
+      const aSort = a.sort_order ?? Number.MAX_SAFE_INTEGER;
+      const bSort = b.sort_order ?? Number.MAX_SAFE_INTEGER;
+      if (aSort !== bSort) return aSort - bSort;
+      return a.id - b.id;
+    });
+  }, [dbCategories, counts]);
+
+  const effectiveCategories = dedupedDbCategories.length > 0
+    ? dedupedDbCategories.map((c) => ({ id: c.id, label: getLocalizedDbCategoryName(c) }))
+    : MAIN_CATEGORIES.map((c) => ({ id: c.id, label: getCategoryName(c.id, locale) }));
+
+  const visible = expanded ? effectiveCategories : effectiveCategories.slice(0, INITIAL_SHOW);
+  const hasMore = effectiveCategories.length > INITIAL_SHOW;
 
   return (
     <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
@@ -62,7 +151,7 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({ locale, titleO
                 <svg className={`w-3 h-3 text-slate-400 group-hover:text-primary-500 flex-shrink-0 ${isRtl ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
-                <span className="flex-1 truncate">{getCategoryName(category.id, locale)}</span>
+                <span className="flex-1 truncate">{category.label}</span>
                 {counts[category.id] !== undefined && (
                   <span className="text-xs text-slate-400 bg-slate-100 rounded px-1.5 py-0.5 min-w-[24px] text-center">
                     {counts[category.id]}
