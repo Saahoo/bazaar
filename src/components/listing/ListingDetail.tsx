@@ -366,7 +366,7 @@ export const ListingDetail: React.FC<ListingDetailProps> = ({ listing, seller, l
                   e.stopPropagation();
                   showPrevPhoto();
                 }}
-                className="absolute left-2 md:left-6 top-1/2 -translate-y-1/2 h-11 w-11 rounded-full bg-black/45 hover:bg-black/60 text-white text-2xl leading-none flex items-center justify-center"
+                className="absolute left-2 md:left-6 top-1/2 -translate-y-1/2 h-12 w-12 rounded-full bg-black/50 hover:bg-black/70 text-white text-2xl leading-none flex items-center justify-center transition-all duration-200 hover:scale-110 z-30 pointer-events-auto cursor-pointer"
                 aria-label={locale === 'en' ? 'Previous image' : locale === 'ps' ? 'مخکینی انځور' : 'تصویر قبلی'}
               >
                 {isRtl ? '›' : '‹'}
@@ -377,7 +377,7 @@ export const ListingDetail: React.FC<ListingDetailProps> = ({ listing, seller, l
                   e.stopPropagation();
                   showNextPhoto();
                 }}
-                className="absolute right-2 md:right-6 top-1/2 -translate-y-1/2 h-11 w-11 rounded-full bg-black/45 hover:bg-black/60 text-white text-2xl leading-none flex items-center justify-center"
+                className="absolute right-2 md:right-6 top-1/2 -translate-y-1/2 h-12 w-12 rounded-full bg-black/50 hover:bg-black/70 text-white text-2xl leading-none flex items-center justify-center transition-all duration-200 hover:scale-110 z-30 pointer-events-auto cursor-pointer"
                 aria-label={locale === 'en' ? 'Next image' : locale === 'ps' ? 'راتلونکی انځور' : 'تصویر بعدی'}
               >
                 {isRtl ? '‹' : '›'}
