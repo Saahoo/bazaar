@@ -4,6 +4,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
+import Image from 'next/image';
+import { motion } from 'framer-motion';
 import { Send, ArrowLeft, ArrowRight } from 'lucide-react';
 import { Locale, isRTL } from '@/lib/i18n/config';
 import { useAuth } from '@/lib/context/AuthContext';
@@ -146,18 +148,18 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ locale, conversation, on
   const BackArrow = isRtl ? ArrowRight : ArrowLeft;
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Chat Header */}
-      <div className={`flex items-center gap-3 p-3 border-b border-slate-200 bg-white ${isRtl ? 'flex-row-reverse' : ''}`}>
+    <div className="flex h-full flex-col">
+      <div className={`flex items-center gap-3 border-b border-slate-200 bg-white/90 p-3 backdrop-blur ${isRtl ? 'flex-row-reverse' : ''}`}>
         <button
           onClick={onBack}
           className="md:hidden w-8 h-8 flex items-center justify-center text-slate-500 hover:text-slate-700 rounded-lg hover:bg-slate-100"
+          title={locale === 'en' ? 'Back' : locale === 'ps' ? 'شاته' : 'بازگشت'}
         >
           <BackArrow className="w-5 h-5" />
         </button>
-        <div className="w-9 h-9 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center font-semibold text-sm flex-shrink-0 overflow-hidden">
+        <div className="relative w-9 h-9 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center font-semibold text-sm flex-shrink-0 overflow-hidden">
           {conversation.other_user_avatar ? (
-            <img src={conversation.other_user_avatar} alt={conversation.other_user_name || 'User'} className="w-full h-full object-cover" />
+            <Image src={conversation.other_user_avatar} alt={conversation.other_user_name || 'User'} fill unoptimized sizes="36px" className="object-cover" />
           ) : (
             (conversation.other_user_name || 'U').charAt(0).toUpperCase()
           )}
@@ -189,8 +191,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ locale, conversation, on
         </button>
       </div>
 
-      {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50">
+      <div className="flex-1 overflow-y-auto bg-gradient-to-b from-slate-50 to-white p-4 space-y-4">
         {loading ? (
           <div className="flex items-center justify-center h-full">
             <div className="w-6 h-6 border-2 border-slate-300 border-t-primary-500 rounded-full animate-spin" />
@@ -212,11 +213,14 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ locale, conversation, on
               </div>
 
               {/* Messages */}
-              {group.msgs.map((msg) => {
+              {group.msgs.map((msg, idx) => {
                 const isMine = user?.id === msg.sender_id;
                 return (
-                  <div
+                  <motion.div
                     key={msg.id}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2, delay: idx * 0.015 }}
                     className={`flex mb-2 ${isMine ? (isRtl ? 'justify-start' : 'justify-end') : (isRtl ? 'justify-end' : 'justify-start')}`}
                   >
                     <div
@@ -231,7 +235,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ locale, conversation, on
                         {formatTime(msg.created_at)}
                       </p>
                     </div>
-                  </div>
+                  </motion.div>
                 );
               })}
             </div>
@@ -240,8 +244,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ locale, conversation, on
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Message Input */}
-      <div className={`p-3 border-t border-slate-200 bg-white ${isRtl ? 'flex-row-reverse' : ''}`}>
+      <div className={`border-t border-slate-200 bg-white/95 p-3 backdrop-blur ${isRtl ? 'flex-row-reverse' : ''}`}>
         <div className={`flex items-center gap-2 ${isRtl ? 'flex-row-reverse' : ''}`}>
           <input
             ref={inputRef}
@@ -250,13 +253,14 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ locale, conversation, on
             onChange={(e) => setNewText(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={t('typeMessage')}
-            className={`flex-1 px-4 py-2.5 bg-slate-100 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-primary-300 ${isRtl ? 'text-right' : 'text-left'}`}
+            className={`flex-1 rounded-full border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-300 ${isRtl ? 'text-right' : 'text-left'}`}
             dir={isRtl ? 'rtl' : 'ltr'}
             disabled={sending}
           />
           <button
             onClick={handleSend}
             disabled={!newText.trim() || sending}
+            title={locale === 'en' ? 'Send message' : locale === 'ps' ? 'پیغام ولېږئ' : 'ارسال پیام'}
             className={`w-10 h-10 rounded-full flex items-center justify-center transition ${
               newText.trim() && !sending
                 ? 'bg-primary-500 text-white hover:bg-primary-600'

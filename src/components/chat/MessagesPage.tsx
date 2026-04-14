@@ -3,6 +3,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslations } from 'next-intl';
+import { motion } from 'framer-motion';
 import { MessageCircle } from 'lucide-react';
 import { Locale, isRTL } from '@/lib/i18n/config';
 import { useAuth } from '@/lib/context/AuthContext';
@@ -90,7 +91,7 @@ export const MessagesPage: React.FC<MessagesPageProps> = ({ locale, conversation
   if (!authLoading && !user) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="text-center">
+        <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
           <MessageCircle className="w-12 h-12 mx-auto mb-3 text-slate-300" />
           <p className="text-slate-500 mb-4">{t('loginRequired')}</p>
           <a
@@ -105,14 +106,22 @@ export const MessagesPage: React.FC<MessagesPageProps> = ({ locale, conversation
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-6">
-      <h1 className={`text-xl font-bold text-slate-900 mb-4 ${isRtl ? 'text-right' : 'text-left'}`}>
-        {t('message')}
-      </h1>
+    <div className="marketplace-shell rounded-3xl max-w-6xl mx-auto px-4 py-6 md:py-8">
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2 }}
+      >
+        <h1 className={`text-xl md:text-2xl font-bold text-slate-900 ${isRtl ? 'text-right' : 'text-left'}`}>
+          {t('message')}
+        </h1>
+        <p className={`mt-1 text-sm text-slate-500 ${isRtl ? 'text-right' : 'text-left'}`}>
+          {locale === 'en' ? 'Stay connected with buyers and sellers in real time.' : locale === 'ps' ? 'له پېرودونکو او پلورونکو سره په ریښتیني وخت کې اړیکه وساتئ.' : 'با خریداران و فروشندگان در لحظه در ارتباط بمانید.'}
+        </p>
+      </motion.div>
 
-      <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm" style={{ height: 'calc(100vh - 200px)', minHeight: '500px' }}>
+      <div className="glass-panel mt-4 h-[calc(100vh-220px)] min-h-[560px] overflow-hidden rounded-3xl border border-slate-200 shadow-sm">
         <div className={`flex h-full ${isRtl ? 'flex-row-reverse' : ''}`}>
-          {/* Conversation List — hidden on mobile when a chat is open */}
           <div className={`
             w-full md:w-80 lg:w-96 border-slate-200 overflow-y-auto flex-shrink-0
             ${isRtl ? 'md:border-l' : 'md:border-r'}
@@ -128,7 +137,6 @@ export const MessagesPage: React.FC<MessagesPageProps> = ({ locale, conversation
             />
           </div>
 
-          {/* Chat Window */}
           <div className={`flex-1 ${!activeConv ? 'hidden md:flex' : 'flex'}`}>
             {activeConv ? (
               <div className="w-full h-full">
@@ -141,7 +149,7 @@ export const MessagesPage: React.FC<MessagesPageProps> = ({ locale, conversation
               </div>
             ) : (
               <div className="flex-1 flex items-center justify-center text-slate-400">
-                <div className="text-center">
+                <div className="text-center px-6">
                   <MessageCircle className="w-16 h-16 mx-auto mb-3 text-slate-200" />
                   <p className="text-sm">{t('selectConversation')}</p>
                 </div>

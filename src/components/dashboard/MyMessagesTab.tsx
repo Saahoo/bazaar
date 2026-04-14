@@ -3,10 +3,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
+import { motion } from 'framer-motion';
 import { MessageCircle, ExternalLink } from 'lucide-react';
 import { Locale, isRTL } from '@/lib/i18n/config';
 import { useAuth } from '@/lib/context/AuthContext';
 import { Conversation, fetchConversations } from '@/lib/chat/actions';
+import { Skeleton } from '@/components/common/Skeleton';
 
 interface MyMessagesTabProps {
   locale: Locale;
@@ -51,15 +53,25 @@ export const MyMessagesTab: React.FC<MyMessagesTabProps> = ({ locale }) => {
 
   if (loading) {
     return (
-      <div className="text-center py-12 text-slate-400">
-        <div className="w-6 h-6 border-2 border-slate-300 border-t-primary-500 rounded-full animate-spin mx-auto mb-2" />
+      <div className="space-y-3">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <div key={index} className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-10 w-10 rounded-xl" />
+              <div className="space-y-2 flex-1">
+                <Skeleton className="h-4 w-1/3" />
+                <Skeleton className="h-3 w-2/3" />
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     );
   }
 
   if (conversations.length === 0) {
     return (
-      <div className="text-center py-12 text-slate-500">
+      <div className="rounded-2xl border border-slate-200 bg-white py-12 text-center text-slate-500 shadow-sm">
         <MessageCircle className="w-12 h-12 mx-auto mb-3 text-slate-300" />
         <p>{tCommon('noMessages')}</p>
       </div>
@@ -79,7 +91,7 @@ export const MyMessagesTab: React.FC<MyMessagesTabProps> = ({ locale }) => {
         </a>
       </div>
 
-      <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         {conversations.slice(0, 5).map((conv, index) => {
           const initial = (conv.other_user_name || 'U').charAt(0).toUpperCase();
           const timeAgo = formatMessageTime(conv.last_message_at, locale);
@@ -87,9 +99,12 @@ export const MyMessagesTab: React.FC<MyMessagesTabProps> = ({ locale }) => {
           const hasUnread = (conv.unread_count || 0) > 0;
 
           return (
-            <a
+            <motion.a
               key={conv.id}
               href={`/${locale}/messages?conv=${conv.id}`}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2, delay: index * 0.03 }}
               className={`
                 block w-full p-4 transition-colors
                 ${isRtl ? 'text-right' : 'text-left'}
@@ -119,7 +134,7 @@ export const MyMessagesTab: React.FC<MyMessagesTabProps> = ({ locale }) => {
                   </div>
                 </div>
               </div>
-            </a>
+            </motion.a>
           );
         })}
       </div>

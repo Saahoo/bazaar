@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
+import Image from 'next/image';
 import { User, Mail, Phone, MapPin, Camera, Edit3, ShieldCheck, Package, Heart, MessageSquare, Loader2, Building2, Briefcase, Globe, BadgeInfo } from 'lucide-react';
 import { isRTL, Locale } from '@/lib/i18n/config';
 import { useAuth } from '@/lib/context/AuthContext';
@@ -253,9 +254,9 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ locale }) => {
         <div className="px-6 pb-6">
           <div className={`flex items-end gap-4 -mt-12 mb-6 ${rtl ? 'flex-row-reverse' : ''}`}>
             <div className="relative">
-              <div className="w-24 h-24 rounded-2xl bg-white border-4 border-white shadow-md flex items-center justify-center bg-slate-100 overflow-hidden">
+              <div className="relative w-24 h-24 rounded-2xl bg-white border-4 border-white shadow-md flex items-center justify-center bg-slate-100 overflow-hidden">
                 {avatarUrl ? (
-                  <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                  <Image src={avatarUrl} alt="Avatar" fill unoptimized sizes="96px" className="object-cover" />
                 ) : (
                   <User className="w-10 h-10 text-slate-400" />
                 )}

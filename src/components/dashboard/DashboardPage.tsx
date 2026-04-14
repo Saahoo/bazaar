@@ -3,6 +3,7 @@
 
 import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { AnimatePresence, motion } from 'framer-motion';
 import { LayoutGrid, Heart, MessageCircle, User } from 'lucide-react';
 import { Locale, isRTL } from '@/lib/i18n/config';
 import { StatsCards } from './StatsCards';
@@ -51,14 +52,14 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ locale }) => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      {/* Stats Cards - always visible */}
+    <div className="container mx-auto px-4 py-6 md:py-8">
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-primary-100/60 to-transparent" />
+
       <StatsCards locale={locale} />
 
-      {/* Tab Navigation */}
-      <div className="mt-6 border-b border-slate-200">
+      <div className="mt-6 sticky top-[72px] z-20">
         <nav
-          className={`flex gap-1 sm:gap-2 overflow-x-auto ${isRtl ? 'flex-row-reverse' : ''}`}
+          className={`flex gap-1 sm:gap-2 overflow-x-auto rounded-2xl border border-slate-200 bg-white/90 p-1 shadow-sm backdrop-blur ${isRtl ? 'flex-row-reverse' : ''}`}
           role="tablist"
         >
           {tabs.map((tab) => {
@@ -67,16 +68,15 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ locale }) => {
               <button
                 key={tab.key}
                 role="tab"
-                aria-selected={isActive}
                 onClick={() => setActiveTab(tab.key)}
                 className={`
-                  flex items-center gap-2 px-3 sm:px-4 py-3 text-sm font-medium whitespace-nowrap
-                  border-b-2 transition-colors duration-200
+                  flex items-center gap-2 rounded-xl px-3 sm:px-4 py-2.5 text-sm font-medium whitespace-nowrap
+                  transition-all duration-200
                   ${isRtl ? 'flex-row-reverse' : ''}
                   ${
                     isActive
-                      ? 'border-primary-600 text-primary-600'
-                      : 'border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300'
+                      ? 'bg-primary-500 text-white shadow-sm'
+                      : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
                   }
                 `}
               >
@@ -88,9 +88,18 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ locale }) => {
         </nav>
       </div>
 
-      {/* Tab Content */}
       <div className="mt-6">
-        {renderTabContent()}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.2 }}
+          >
+            {renderTabContent()}
+          </motion.div>
+        </AnimatePresence>
       </div>
     </div>
   );

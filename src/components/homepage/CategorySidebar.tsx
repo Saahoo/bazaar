@@ -4,10 +4,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { Locale, isRTL } from '@/lib/i18n/config';
 import { MAIN_CATEGORIES, getCategoryName } from '@/lib/constants/categories';
 import { createClient } from '@/lib/supabase/client';
+import { AnimatedCategoryIcon, getIconNameFromSlug } from '@/lib/utils/category-icons';
+import { cn } from '@/lib/utils/cn';
 
 interface CategorySidebarProps {
   locale: Locale;
@@ -20,6 +23,7 @@ interface DbCategory {
   name_ps: string;
   name_fa: string;
   slug: string | null;
+  icon_name: string | null;
   parent_id: number | null;
   sort_order: number | null;
 }
@@ -50,7 +54,7 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({ locale, titleO
       const supabase = createClient();
       const { data } = await supabase
         .from('categories')
-        .select('id, name_en, name_ps, name_fa, slug, parent_id, sort_order')
+        .select('id, name_en, name_ps, name_fa, slug, icon_name, parent_id, sort_order')
         .is('parent_id', null)
         .order('sort_order', { ascending: true });
 
@@ -160,38 +164,52 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({ locale, titleO
   }, [dbCategories, counts]);
 
   const effectiveCategories = dedupedDbCategories.length > 0
-    ? dedupedDbCategories.map((c) => ({ id: c.id, label: getLocalizedDbCategoryName(c) }))
-    : MAIN_CATEGORIES.map((c) => ({ id: c.id, label: getCategoryName(c.id, locale) }));
+    ? dedupedDbCategories.map((c) => ({ 
+        id: c.id, 
+        label: getLocalizedDbCategoryName(c), 
+        icon: c.icon_name || getIconNameFromSlug(c.slug) 
+      }))
+    : MAIN_CATEGORIES.map((c) => ({ id: c.id, label: getCategoryName(c.id, locale), icon: c.icon }));
 
   const visible = expanded ? effectiveCategories : effectiveCategories.slice(0, INITIAL_SHOW);
   const hasMore = effectiveCategories.length > INITIAL_SHOW;
 
   return (
-    <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+    <div className="overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white shadow-[0_20px_55px_rgba(15,23,42,0.06)]">
       {/* Header */}
-      <div className={`px-4 py-3 border-b border-slate-200 ${isRtl ? 'text-right' : 'text-left'}`}>
-        <h3 className="text-sm font-bold text-slate-800">{titleOverride || t('categories')}</h3>
+      <div className={cn('border-b border-slate-200 px-5 py-4', isRtl ? 'text-right' : 'text-left')}>
+        <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">
+          {locale === 'en' ? 'Browse' : locale === 'ps' ? 'وګورئ' : 'مرور'}
+        </p>
+        <h3 className="text-base font-bold text-slate-900">{titleOverride || t('categories')}</h3>
       </div>
 
       {/* Category list */}
-      <nav>
-        <ul>
+      <nav className="p-3">
+        <ul className="space-y-1.5">
           {visible.map((category) => (
             <li key={category.id}>
-              <Link
+              <motion.div whileHover={{ x: isRtl ? -4 : 4 }} transition={{ type: 'spring', stiffness: 260, damping: 18 }}>
+                <Link
                 href={`/${locale}/search?category=${category.id}`}
-                className={`flex items-center gap-2 px-4 py-2 text-[13px] text-slate-600 hover:bg-primary-50 hover:text-primary-600 transition-colors group ${isRtl ? 'flex-row-reverse' : ''}`}
-              >
-                <svg className={`w-3 h-3 text-slate-400 group-hover:text-primary-500 flex-shrink-0 ${isRtl ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                className={cn('group flex items-center gap-3 rounded-2xl px-3 py-3 text-[13px] text-slate-600 transition-all duration-300 hover:bg-slate-50 hover:text-primary-700 hover:shadow-sm', isRtl ? 'flex-row-reverse' : '')}
+                >
+                  <AnimatedCategoryIcon
+                    iconName={category.icon}
+                    className="h-11 w-11 rounded-xl border-slate-100 bg-slate-50 text-primary-600 group-hover:border-primary-100 group-hover:bg-primary-50"
+                    iconClassName="h-4.5 w-4.5"
+                  />
+                  <span className="flex-1 truncate text-sm font-medium">{category.label}</span>
+                  <svg className={`w-3 h-3 text-slate-400 group-hover:text-primary-500 flex-shrink-0 ${isRtl ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-                <span className="flex-1 truncate">{category.label}</span>
-                {counts[category.id] !== undefined && (
-                  <span className="text-xs text-slate-400 bg-slate-100 rounded px-1.5 py-0.5 min-w-[24px] text-center">
+                  </svg>
+                  {counts[category.id] !== undefined && (
+                    <span className="min-w-[28px] rounded-full bg-slate-100 px-2 py-1 text-center text-[11px] font-semibold text-slate-500">
                     {counts[category.id]}
-                  </span>
-                )}
-              </Link>
+                    </span>
+                  )}
+                </Link>
+              </motion.div>
             </li>
           ))}
         </ul>
@@ -201,7 +219,7 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({ locale, titleO
       {hasMore && (
         <button
           onClick={() => setExpanded(!expanded)}
-          className={`w-full flex items-center gap-1 px-4 py-2.5 text-xs font-medium text-primary-600 hover:text-primary-700 hover:bg-primary-50 transition-colors border-t border-slate-100 ${isRtl ? 'flex-row-reverse justify-end' : ''}`}
+          className={`w-full flex items-center gap-1 px-5 py-3 text-xs font-medium text-primary-600 hover:text-primary-700 hover:bg-primary-50 transition-colors border-t border-slate-100 ${isRtl ? 'flex-row-reverse justify-end' : ''}`}
         >
           {expanded ? (
             <>

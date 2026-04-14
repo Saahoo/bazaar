@@ -3,6 +3,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import Image from 'next/image';
 import { User, Star, CheckCircle, Mail, Phone, Calendar, Building2, MapPin } from 'lucide-react';
 import { Locale, isRTL } from '@/lib/i18n/config';
 import { useAuth } from '@/lib/context/AuthContext';
@@ -80,9 +81,9 @@ export const MyProfileTab: React.FC<MyProfileTabProps> = ({ locale }) => {
       <div className="bg-white rounded-lg border border-slate-200 p-6 sm:p-8 w-full max-w-lg">
         {/* Avatar & Name */}
         <div className="flex flex-col items-center text-center">
-          <div className="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+          <div className="relative w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center mb-4 overflow-hidden">
             {profile.avatar_url ? (
-              <img src={profile.avatar_url} alt={profile.display_name || 'User'} className="w-full h-full rounded-full object-cover" />
+              <Image src={profile.avatar_url} alt={profile.display_name || 'User'} fill unoptimized sizes="80px" className="rounded-full object-cover" />
             ) : (
               <User className="w-10 h-10 text-slate-400" />
             )}

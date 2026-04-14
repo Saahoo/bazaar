@@ -3,6 +3,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { User, CheckCircle, Phone, Eye, EyeOff, Star, Building2 } from 'lucide-react';
 import { Locale, isRTL } from '@/lib/i18n/config';
@@ -37,9 +38,9 @@ export const SellerCard: React.FC<SellerCardProps> = ({ seller, locale }) => {
         className={`flex items-center gap-3 p-4 border-b border-slate-100 hover:bg-slate-50 transition ${isRtl ? 'flex-row-reverse' : ''}`}
       >
         {/* Avatar */}
-        <div className="w-14 h-14 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0 overflow-hidden border border-slate-200">
+        <div className="relative w-14 h-14 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0 overflow-hidden border border-slate-200">
           {seller.avatar_url ? (
-            <img src={seller.avatar_url} alt={seller.display_name} className="w-full h-full object-cover" />
+            <Image src={seller.avatar_url} alt={seller.display_name} fill unoptimized sizes="56px" className="object-cover" />
           ) : (
             <User className="w-7 h-7 text-slate-400" />
           )}

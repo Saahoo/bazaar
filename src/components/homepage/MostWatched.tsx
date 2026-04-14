@@ -2,10 +2,13 @@
 
 import React from 'react';
 import { useTranslations } from 'next-intl';
-import { Heart, Loader2 } from 'lucide-react';
+import { motion } from 'framer-motion';
+import Image from 'next/image';
+import { Heart } from 'lucide-react';
 import Link from 'next/link';
 import { Locale, isRTL } from '@/lib/i18n/config';
 import { useListings } from '@/lib/hooks/useListings';
+import { ListingCardSkeleton } from '@/components/common/Skeleton';
 
 interface MostWatchedProps {
   locale: Locale;
@@ -36,8 +39,10 @@ export const MostWatched: React.FC<MostWatchedProps> = ({ locale, titleOverride 
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-8">
-          <Loader2 className="w-6 h-6 text-primary-600 animate-spin" />
+        <div className="grid grid-flow-col auto-cols-[9rem] gap-3 overflow-hidden py-2">
+          {Array.from({ length: 5 }).map((_, index) => (
+            <ListingCardSkeleton key={index} compact />
+          ))}
         </div>
       ) : listings.length === 0 ? (
         <p className="text-slate-400 text-sm text-center py-8">{titleOverride || t('mostWatched')}</p>
@@ -45,19 +50,23 @@ export const MostWatched: React.FC<MostWatchedProps> = ({ locale, titleOverride 
         <div
           className={`flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${isRtl ? 'flex-row-reverse' : ''}`}
         >
-          {listings.map((listing) => (
-            <Link
+          {listings.map((listing, index) => (
+            <motion.div key={listing.id} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(index * 0.03, 0.15), duration: 0.2 }}>
+              <Link
               key={listing.id}
               href={`/${locale}/listing/${listing.id}`}
               className="group flex-shrink-0 w-36 snap-start"
             >
               <div className="border border-slate-200 rounded-md overflow-hidden bg-white hover:border-rose-300 hover:shadow-md transition">
-                <div className="aspect-[4/3] bg-slate-100 overflow-hidden relative">
+                <div className="relative aspect-[4/3] bg-slate-100 overflow-hidden">
                   {listing.photos?.[0] ? (
-                    <img
+                    <Image
                       src={listing.photos[0]}
                       alt={listing.title}
-                      className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-300"
+                      fill
+                      unoptimized
+                      sizes="144px"
+                      className="object-cover group-hover:scale-[1.04] transition-transform duration-300"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-slate-100">
@@ -86,7 +95,8 @@ export const MostWatched: React.FC<MostWatchedProps> = ({ locale, titleOverride 
                   </p>
                 </div>
               </div>
-            </Link>
+              </Link>
+            </motion.div>
           ))}
         </div>
       )}

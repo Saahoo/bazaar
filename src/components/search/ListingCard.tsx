@@ -3,8 +3,10 @@
 
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 import { Eye, MapPin, Clock, ImageIcon, MessageCircle, Share2, Heart, Flag, Phone, UserPlus } from 'lucide-react';
 import { Locale, isRTL } from '@/lib/i18n/config';
 import { formatCurrency } from '@/lib/constants/currencies';
@@ -13,6 +15,8 @@ import type { Listing } from '@/lib/hooks/useListings';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/context/AuthContext';
 import { getOrCreateConversation } from '@/lib/chat/actions';
+import { useToast } from '@/components/common/ToastProvider';
+import { cn } from '@/lib/utils/cn';
 
 interface ListingCardProps {
   listing: Listing;
@@ -91,6 +95,8 @@ export const ListingCard: React.FC<ListingCardProps> = ({ listing, locale }) => 
   const [isFavorite, setIsFavorite] = React.useState(false);
   const [favoriteLoading, setFavoriteLoading] = React.useState(false);
   const [chatLoading, setChatLoading] = React.useState(false);
+  const [imageLoaded, setImageLoaded] = React.useState(false);
+  const { showToast } = useToast();
 
   React.useEffect(() => {
     if (!user) {
@@ -180,7 +186,10 @@ export const ListingCard: React.FC<ListingCardProps> = ({ listing, locale }) => 
     }
     try {
       await navigator.clipboard.writeText(url);
-      alert('Link copied');
+      showToast(
+        locale === 'en' ? 'Link copied to clipboard.' : locale === 'ps' ? 'لینک کاپي شو.' : 'لینک کپی شد.',
+        'success',
+      );
     } catch {
       window.prompt('Copy this link:', url);
     }
@@ -196,79 +205,87 @@ export const ListingCard: React.FC<ListingCardProps> = ({ listing, locale }) => 
   const handleCall = () => {
     const phone = listing.phone_visible ? listing.seller_phone : null;
     if (!phone) {
-      alert('Phone number is not available.');
+      showToast(
+        locale === 'en' ? 'Phone number is not available.' : locale === 'ps' ? 'د تلیفون شمېره نشته.' : 'شماره تلفن موجود نیست.',
+        'info',
+      );
       return;
     }
     window.location.href = `tel:${phone}`;
   };
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200 overflow-hidden hover:shadow-md transition-shadow duration-200 group">
+    <motion.div
+      whileHover={{ y: -6 }}
+      transition={{ type: 'spring', stiffness: 280, damping: 18 }}
+      className="group overflow-hidden rounded-[1.6rem] border border-slate-200 bg-white shadow-sm transition-shadow duration-300 hover:shadow-[0_24px_60px_rgba(15,23,42,0.10)]"
+    >
       <Link href={`/${locale}/listing/${listing.id}`} className="block">
-        {/* Thumbnail */}
-        <div className="relative aspect-[4/3] bg-slate-100 flex items-center justify-center">
+        <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-slate-100">
+          {!imageLoaded && photos.length > 0 && <div className="absolute inset-0 animate-pulse bg-slate-200" />}
           {photos.length > 0 ? (
-            <img
+            <Image
               src={photos[0]}
               alt={title}
-              className="w-full h-full object-cover"
+              fill
+              unoptimized
+              sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw"
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+              onLoad={() => setImageLoaded(true)}
             />
           ) : (
             <ImageIcon className="w-12 h-12 text-slate-300" />
           )}
-          {/* Condition badge */}
           <span
-            className={`absolute top-2 ${isRtl ? 'right-2' : 'left-2'} px-2 py-0.5 text-xs font-medium rounded-full ${conditionColor}`}
+            className={`absolute top-3 ${isRtl ? 'right-3' : 'left-3'} rounded-full px-2.5 py-1 text-[11px] font-medium shadow-sm ${conditionColor}`}
           >
             {conditionLabel}
           </span>
+          <div className={cn('absolute bottom-3 flex items-center gap-1 rounded-full bg-slate-950/55 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur-sm', isRtl ? 'right-3 flex-row-reverse' : 'left-3')}>
+            <Eye className="h-3.5 w-3.5" />
+            {listing.view_count}
+          </div>
         </div>
 
-        {/* Content */}
-        <div className="p-3">
-          {/* Title */}
+        <div className="space-y-3 p-4">
           <h3
-            className={`text-sm font-semibold text-slate-900 line-clamp-2 mb-1.5 group-hover:text-primary-600 transition-colors ${isRtl ? 'text-right' : 'text-left'}`}
+            className={`mb-1.5 line-clamp-2 text-base font-semibold text-slate-900 transition-colors group-hover:text-primary-600 ${isRtl ? 'text-right' : 'text-left'}`}
           >
             {title}
           </h3>
 
-          {/* Price */}
-          <p className={`text-base font-bold text-primary-600 mb-2 ${isRtl ? 'text-right' : 'text-left'}`}>
+          <p className={`text-lg font-bold text-primary-600 ${isRtl ? 'text-right' : 'text-left'}`}>
             {formatCurrency(listing.price, listing.currency)}
           </p>
 
-          {/* Meta info */}
           <div className={`flex items-center gap-3 text-xs text-slate-500 ${isRtl ? 'flex-row-reverse' : ''}`}>
-            {/* City */}
             <span className={`flex items-center gap-1 ${isRtl ? 'flex-row-reverse' : ''}`}>
               <MapPin className="w-3.5 h-3.5" />
               {getCityName(listing.city, locale)}
             </span>
 
-            {/* Views */}
-            <span className={`flex items-center gap-1 ${isRtl ? 'flex-row-reverse' : ''}`}>
-              <Eye className="w-3.5 h-3.5" />
-              {listing.view_count}
-            </span>
-
-            {/* Time */}
             <span className={`flex items-center gap-1 ${isRtl ? 'flex-row-reverse' : ''} ml-auto ${isRtl ? 'ml-0 mr-auto' : ''}`}>
               <Clock className="w-3.5 h-3.5" />
               {timeAgo}
             </span>
           </div>
+
+          <div className={cn('flex items-center gap-2 text-xs text-slate-500', isRtl && 'flex-row-reverse')}>
+            <span className="rounded-full bg-slate-100 px-2.5 py-1 font-medium text-slate-600">
+              {listing.negotiable ? (locale === 'en' ? 'Negotiable' : locale === 'ps' ? 'د خبرو وړ' : 'قابل مذاکره') : conditionLabel}
+            </span>
+            {listing.urgent && <span className="rounded-full bg-red-50 px-2.5 py-1 font-medium text-red-600">URGENT</span>}
+          </div>
         </div>
 
       </Link>
 
-      {/* Quick actions */}
-      <div className={`grid grid-cols-3 gap-2 p-3 border-t border-slate-100 ${isRtl ? 'text-right' : ''}`}>
+      <div className={`grid grid-cols-2 gap-2 border-t border-slate-100 p-3 sm:grid-cols-3 ${isRtl ? 'text-right' : ''}`}>
         <button
           type="button"
           onClick={handleChat}
           disabled={chatLoading || user?.id === listing.user_id}
-          className="flex items-center justify-center gap-1.5 px-2 py-2 rounded-md text-xs font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+          className="flex items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-xs font-medium text-slate-700 transition hover:scale-[1.02] hover:bg-slate-100 disabled:opacity-50"
         >
           <MessageCircle className="w-3.5 h-3.5" />
           {tCommon('chat')}
@@ -277,7 +294,7 @@ export const ListingCard: React.FC<ListingCardProps> = ({ listing, locale }) => 
         <button
           type="button"
           onClick={handleShare}
-          className="flex items-center justify-center gap-1.5 px-2 py-2 rounded-md text-xs font-medium text-slate-700 hover:bg-slate-100"
+          className="flex items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-xs font-medium text-slate-700 transition hover:scale-[1.02] hover:bg-slate-100"
         >
           <Share2 className="w-3.5 h-3.5" />
           {tCommon('share')}
@@ -287,7 +304,7 @@ export const ListingCard: React.FC<ListingCardProps> = ({ listing, locale }) => 
           type="button"
           onClick={handleFavorite}
           disabled={favoriteLoading}
-          className={`flex items-center justify-center gap-1.5 px-2 py-2 rounded-md text-xs font-medium hover:bg-slate-100 disabled:opacity-50 ${
+          className={`flex items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-xs font-medium transition hover:scale-[1.02] hover:bg-slate-100 disabled:opacity-50 ${
             isFavorite ? 'text-red-600' : 'text-slate-700'
           }`}
         >
@@ -298,7 +315,7 @@ export const ListingCard: React.FC<ListingCardProps> = ({ listing, locale }) => 
         <button
           type="button"
           onClick={handleReport}
-          className="flex items-center justify-center gap-1.5 px-2 py-2 rounded-md text-xs font-medium text-slate-700 hover:bg-slate-100"
+          className="flex items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-xs font-medium text-slate-700 transition hover:scale-[1.02] hover:bg-slate-100"
         >
           <Flag className="w-3.5 h-3.5" />
           {tCommon('report')}
@@ -307,7 +324,7 @@ export const ListingCard: React.FC<ListingCardProps> = ({ listing, locale }) => 
         <button
           type="button"
           onClick={handleCall}
-          className="flex items-center justify-center gap-1.5 px-2 py-2 rounded-md text-xs font-medium text-slate-700 hover:bg-slate-100"
+          className="flex items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-xs font-medium text-slate-700 transition hover:scale-[1.02] hover:bg-slate-100"
         >
           <Phone className="w-3.5 h-3.5" />
           {tCommon('call')}
@@ -317,12 +334,12 @@ export const ListingCard: React.FC<ListingCardProps> = ({ listing, locale }) => 
           type="button"
           onClick={handleAddUser}
           disabled={chatLoading || user?.id === listing.user_id}
-          className="flex items-center justify-center gap-1.5 px-2 py-2 rounded-md text-xs font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-50"
+          className="flex items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-xs font-medium text-slate-700 transition hover:scale-[1.02] hover:bg-slate-100 disabled:opacity-50"
         >
           <UserPlus className="w-3.5 h-3.5" />
-          Add User
+          {locale === 'en' ? 'Add User' : locale === 'ps' ? 'کاروونکی زیات کړئ' : 'افزودن کاربر'}
         </button>
       </div>
-    </div>
+    </motion.div>
   );
 };

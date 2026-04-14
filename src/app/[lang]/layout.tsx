@@ -6,6 +6,9 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getDir, isRTL, LOCALES, Locale } from '@/lib/i18n/config';
 import { getMessages } from '@/lib/i18n/request';
 import { AuthProvider } from '@/lib/context/AuthContext';
+import { ThemeProvider } from '@/lib/context/ThemeContext';
+import { ToastProvider } from '@/components/common/ToastProvider';
+import { PageTransition } from '@/components/common/PageTransition';
 import '@/styles/globals.css';
 import '@/styles/rtl.css';
 
@@ -71,13 +74,15 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
 
   return (
     <html lang={locale} dir={dir} className={isRtl ? 'rtl' : 'ltr'} suppressHydrationWarning>
-      <body className="bg-white text-slate-900">
+      <body className="text-slate-900 antialiased">
         <NextIntlClientProvider locale={locale} messages={messages}>
-          <AuthProvider>
-            <div className="flex flex-col min-h-screen">
-              {children}
-            </div>
-          </AuthProvider>
+          <ThemeProvider>
+            <ToastProvider>
+              <AuthProvider>
+                <PageTransition>{children}</PageTransition>
+              </AuthProvider>
+            </ToastProvider>
+          </ThemeProvider>
         </NextIntlClientProvider>
       </body>
     </html>

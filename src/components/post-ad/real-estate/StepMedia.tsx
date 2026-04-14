@@ -9,6 +9,7 @@ import { ImageUploader, UploadedPhoto } from '../ImageUploader';
 export interface MediaData {
   photos: UploadedPhoto[];
   videoUrl: string;
+  floorPlanUrl: string;
 }
 
 interface StepMediaProps {
@@ -64,6 +65,21 @@ export const StepMedia: React.FC<StepMediaProps> = ({ locale, data, onChange }) 
         <p className={`mt-1.5 text-xs text-slate-400 ${rtl ? 'text-right' : 'text-left'}`}>
           {t('videoUrl')}
         </p>
+      </div>
+
+      {/* Floor Plan */}
+      <div>
+        <h3 className={`text-lg font-semibold text-slate-900 mb-4 ${rtl ? 'text-right' : 'text-left'}`}>
+          {t('floorPlanUrl')}
+        </h3>
+        <input
+          type="url"
+          value={data.floorPlanUrl}
+          onChange={(e) => onChange({ floorPlanUrl: e.target.value })}
+          placeholder={t('enterFloorPlanUrl')}
+          className={inputClass}
+          dir={rtl ? 'rtl' : 'ltr'}
+        />
       </div>
     </div>
   );

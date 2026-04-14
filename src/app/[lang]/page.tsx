@@ -1,5 +1,6 @@
 // src/app/[lang]/page.tsx
 import { HeroSection } from '@/components/homepage/HeroSection';
+import { CategoryGrid } from '@/components/homepage/CategoryGrid';
 import { CategorySidebar } from '@/components/homepage/CategorySidebar';
 import { FeaturedListings } from '@/components/homepage/FeaturedListings';
 import { TrendingItems } from '@/components/homepage/TrendingItems';
@@ -43,17 +44,21 @@ export default async function HomePage({ params }: PageProps) {
   return (
     <>
       <Header locale={locale as Locale} />
-      <main className="flex-1 bg-slate-50">
-        <div className="container mx-auto px-4 py-6">
+      <main className="marketplace-shell flex-1">
+        <div className="container mx-auto px-4 py-6 md:py-8">
           {/* Top banner */}
           <div className="mb-6">
             <HeroSection locale={locale as Locale} config={homepageConfig.header} />
           </div>
 
+          <div className="mb-6 lg:hidden">
+            <CategoryGrid locale={locale as Locale} />
+          </div>
+
           {/* Marketplace body */}
-          <div className="flex flex-col lg:flex-row gap-5">
+          <div className="flex flex-col gap-5 lg:flex-row">
             {homepageConfig.blocks.categorySidebar.enabled && (
-              <aside className="w-full lg:w-60 flex-shrink-0">
+              <aside className="hidden w-full flex-shrink-0 lg:block lg:w-72">
                 <CategorySidebar
                   locale={locale as Locale}
                   titleOverride={pickLocalized(homepageConfig.blocks.categorySidebar.title, locale as Locale)}
@@ -62,7 +67,7 @@ export default async function HomePage({ params }: PageProps) {
             )}
 
             {homepageConfig.blocks.showcase.enabled && (
-              <section className="flex-1 min-w-0 bg-white border border-slate-200 rounded-lg p-3 md:p-4">
+              <section className="flex-1 min-w-0 rounded-[1.75rem] border border-slate-200 bg-white p-4 shadow-[0_24px_60px_rgba(15,23,42,0.06)] md:p-5">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-base md:text-lg font-semibold text-slate-900">
                     {pickLocalized(homepageConfig.blocks.showcase.title, locale as Locale)}

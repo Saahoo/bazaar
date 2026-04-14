@@ -1,9 +1,10 @@
 // src/components/search/SearchPage.tsx
 'use client';
 
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useCallback, useDeferredValue, useMemo, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { SlidersHorizontal, X, Loader2 } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { SearchCheck, SlidersHorizontal } from 'lucide-react';
 import { Locale, isRTL } from '@/lib/i18n/config';
 import { useListings } from '@/lib/hooks/useListings';
 import {
@@ -25,6 +26,9 @@ import {
 } from './FilterSidebar';
 import { ListingCard } from './ListingCard';
 import { SortDropdown } from './SortDropdown';
+import { BottomSheet } from '@/components/common/BottomSheet';
+import { ListingCardSkeleton } from '@/components/common/Skeleton';
+import { cn } from '@/lib/utils/cn';
 
 interface SearchPageProps {
   locale: Locale;
@@ -71,7 +75,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory,
   const [homeFurnitureFilters, setHomeFurnitureFilters] = useState<HomeFurnitureFilterState>(EMPTY_HOME_FURNITURE_FILTERS);
 
   // Reset category-specific filters when leaving their category
-  const handleCategoryChange = (categoryId: number | null) => {
+  const handleCategoryChange = useCallback((categoryId: number | null) => {
     setSelectedCategory(categoryId);
     if (categoryId !== 1) setVehicleFilters(EMPTY_VEHICLE_FILTERS);
     if (categoryId !== 2) setRealEstateFilters(EMPTY_REAL_ESTATE_FILTERS);
@@ -80,7 +84,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory,
     if (categoryId !== 5) setSparePartsFilters(EMPTY_SPARE_PARTS_FILTERS);
     if (categoryId !== 13 && categoryId !== 18) setHealthBeautyFilters(EMPTY_HEALTH_BEAUTY_FILTERS);
     if (categoryId !== 6) setHomeFurnitureFilters(EMPTY_HOME_FURNITURE_FILTERS);
-  };
+  }, []);
 
   const isVehicles = selectedCategory === 1;
   const isRealEstate = selectedCategory === 2;
@@ -133,17 +137,35 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory,
     realEstateFilters: isRealEstate ? {
       purpose: realEstateFilters.purpose || undefined,
       propertyType: realEstateFilters.propertyType || undefined,
-      areaGrossMin: realEstateFilters.areaGrossMin ? Number(realEstateFilters.areaGrossMin) : undefined,
-      areaGrossMax: realEstateFilters.areaGrossMax ? Number(realEstateFilters.areaGrossMax) : undefined,
-      areaNetMin: realEstateFilters.areaNetMin ? Number(realEstateFilters.areaNetMin) : undefined,
-      areaNetMax: realEstateFilters.areaNetMax ? Number(realEstateFilters.areaNetMax) : undefined,
-      rooms: realEstateFilters.rooms === '__manual__'
-        ? (realEstateFilters.roomsManual ? Number(realEstateFilters.roomsManual) : undefined)
-        : (realEstateFilters.rooms ? Number(realEstateFilters.rooms) : undefined),
-      balcony: realEstateFilters.balcony ? Number(realEstateFilters.balcony) : undefined,
-      buildingAge: realEstateFilters.buildingAge === '__manual__'
-        ? (realEstateFilters.buildingAgeManual || undefined)
-        : (realEstateFilters.buildingAge || undefined),
+      city: realEstateFilters.city || undefined,
+      area: realEstateFilters.area || undefined,
+      priceMin: realEstateFilters.priceMin ? Number(realEstateFilters.priceMin) : undefined,
+      priceMax: realEstateFilters.priceMax ? Number(realEstateFilters.priceMax) : undefined,
+      currency: realEstateFilters.currency || undefined,
+      bedroomsMin: realEstateFilters.bedroomsMin ? Number(realEstateFilters.bedroomsMin) : undefined,
+      bedroomsMax: realEstateFilters.bedroomsMax ? Number(realEstateFilters.bedroomsMax) : undefined,
+      bathroomsMin: realEstateFilters.bathroomsMin ? Number(realEstateFilters.bathroomsMin) : undefined,
+      bathroomsMax: realEstateFilters.bathroomsMax ? Number(realEstateFilters.bathroomsMax) : undefined,
+      areaSizeMin: realEstateFilters.areaSizeMin ? Number(realEstateFilters.areaSizeMin) : undefined,
+      areaSizeMax: realEstateFilters.areaSizeMax ? Number(realEstateFilters.areaSizeMax) : undefined,
+      floorNumber: realEstateFilters.floorNumber ? Number(realEstateFilters.floorNumber) : undefined,
+      yearBuiltMin: realEstateFilters.yearBuiltMin ? Number(realEstateFilters.yearBuiltMin) : undefined,
+      yearBuiltMax: realEstateFilters.yearBuiltMax ? Number(realEstateFilters.yearBuiltMax) : undefined,
+      parkingSpaces: realEstateFilters.parkingSpaces ? Number(realEstateFilters.parkingSpaces) : undefined,
+      balcony: realEstateFilters.balcony === 'yes' ? true : realEstateFilters.balcony === 'no' ? false : undefined,
+      elevator: realEstateFilters.elevator === 'yes' ? true : realEstateFilters.elevator === 'no' ? false : undefined,
+      furnishing: realEstateFilters.furnishing || undefined,
+      condition: realEstateFilters.condition || undefined,
+      kitchenType: realEstateFilters.kitchenType || undefined,
+      commercialType: realEstateFilters.commercialType || undefined,
+      meetingRooms: realEstateFilters.meetingRooms ? Number(realEstateFilters.meetingRooms) : undefined,
+      washrooms: realEstateFilters.washrooms ? Number(realEstateFilters.washrooms) : undefined,
+      landType: realEstateFilters.landType || undefined,
+      roadAccess: realEstateFilters.roadAccess === 'yes' ? true : realEstateFilters.roadAccess === 'no' ? false : undefined,
+      cornerPlot: realEstateFilters.cornerPlot === 'yes' ? true : realEstateFilters.cornerPlot === 'no' ? false : undefined,
+      industrialType: realEstateFilters.industrialType || undefined,
+      ceilingHeight: realEstateFilters.ceilingHeight || undefined,
+      loadingDocks: realEstateFilters.loadingDocks || undefined,
     } : undefined,
     electronicsFilters: isElectronics ? {
       ...electronicsFilters,
@@ -168,193 +190,218 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory,
     selectedConditions, selectedWheelDriveType, sortBy, isVehicles, isRealEstate, isElectronics, isFashion, isSpareParts, isHealthBeauty, isHomeFurniture, vehicleFilters, realEstateFilters, electronicsFilters, fashionFilters, sparePartsFilters, healthBeautyFilters, homeFurnitureFilters, electronicsSearchTick, fashionSearchTick, sparePartsSearchTick, healthBeautySearchTick, homeFurnitureSearchTick,
   ]);
 
-  const { listings, loading, error } = useListings(filters);
+  const deferredFilters = useDeferredValue(filters);
+  const { listings, loading, error } = useListings(deferredFilters);
 
-  const handleMobileApplyFilters = () => {
-    if (isElectronics) {
-      setElectronicsSearchTick((v) => v + 1);
-    }
-    if (isFashion) {
-      setFashionSearchTick((v) => v + 1);
-    }
-    if (isSpareParts) {
-      setSparePartsSearchTick((v) => v + 1);
-    }
-    if (isHealthBeauty) {
-      setHealthBeautySearchTick((v) => v + 1);
-    }
-    if (isHomeFurniture) {
-      setHomeFurnitureSearchTick((v) => v + 1);
-    }
+  const triggerCategorySearch = useCallback(() => {
+    if (isElectronics) setElectronicsSearchTick((value) => value + 1);
+    if (isFashion) setFashionSearchTick((value) => value + 1);
+    if (isSpareParts) setSparePartsSearchTick((value) => value + 1);
+    if (isHealthBeauty) setHealthBeautySearchTick((value) => value + 1);
+    if (isHomeFurniture) setHomeFurnitureSearchTick((value) => value + 1);
+  }, [isElectronics, isFashion, isHealthBeauty, isHomeFurniture, isSpareParts]);
+
+  const activeFilterCount = useMemo(() => {
+    return [selectedCategory, priceMin, priceMax, selectedCity, selectedWheelDriveType]
+      .filter(Boolean)
+      .length + selectedConditions.length;
+  }, [priceMax, priceMin, selectedCategory, selectedCity, selectedConditions.length, selectedWheelDriveType]);
+
+  const handleMobileApplyFilters = useCallback(() => {
+    triggerCategorySearch();
     setMobileFiltersOpen(false);
 
-    // Wait for panel collapse, then jump user to results section.
     requestAnimationFrame(() => {
       resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
-  };
+  }, [triggerCategorySearch]);
+
+  const filterSidebar = (
+    <FilterSidebar
+      locale={locale}
+      selectedCategory={selectedCategory}
+      onCategoryChange={handleCategoryChange}
+      priceMin={priceMin}
+      onPriceMinChange={setPriceMin}
+      priceMax={priceMax}
+      onPriceMaxChange={setPriceMax}
+      selectedConditions={selectedConditions}
+      onConditionsChange={setSelectedConditions}
+      selectedCity={selectedCity}
+      onCityChange={setSelectedCity}
+      selectedWheelDriveType={selectedWheelDriveType}
+      onWheelDriveTypeChange={setSelectedWheelDriveType}
+      vehicleFilters={vehicleFilters}
+      onVehicleFiltersChange={setVehicleFilters}
+      realEstateFilters={realEstateFilters}
+      onRealEstateFiltersChange={setRealEstateFilters}
+      electronicsFilters={electronicsFilters}
+      onElectronicsFiltersChange={setElectronicsFilters}
+      fashionFilters={fashionFilters}
+      onFashionFiltersChange={setFashionFilters}
+      sparePartsFilters={sparePartsFilters}
+      onSparePartsFiltersChange={setSparePartsFilters}
+      onElectronicsClear={() => {
+        setPriceMin('');
+        setPriceMax('');
+        setSelectedCity('');
+        setElectronicsSearchTick((value) => value + 1);
+        setMobileFiltersOpen(false);
+      }}
+      onElectronicsSearch={() => {
+        setElectronicsSearchTick((value) => value + 1);
+        setMobileFiltersOpen(false);
+      }}
+      onFashionClear={() => {
+        setPriceMin('');
+        setPriceMax('');
+        setSelectedCity('');
+        setFashionSearchTick((value) => value + 1);
+        setMobileFiltersOpen(false);
+      }}
+      onFashionSearch={() => {
+        setFashionSearchTick((value) => value + 1);
+        setMobileFiltersOpen(false);
+      }}
+      onSparePartsClear={() => {
+        setPriceMin('');
+        setPriceMax('');
+        setSelectedCity('');
+        setSparePartsSearchTick((value) => value + 1);
+        setMobileFiltersOpen(false);
+      }}
+      onSparePartsSearch={() => {
+        setSparePartsSearchTick((value) => value + 1);
+        setMobileFiltersOpen(false);
+      }}
+      healthBeautyFilters={healthBeautyFilters}
+      onHealthBeautyFiltersChange={setHealthBeautyFilters}
+      onHealthBeautyClear={() => {
+        setPriceMin('');
+        setPriceMax('');
+        setSelectedCity('');
+        setHealthBeautySearchTick((value) => value + 1);
+        setMobileFiltersOpen(false);
+      }}
+      onHealthBeautySearch={() => {
+        setHealthBeautySearchTick((value) => value + 1);
+        setMobileFiltersOpen(false);
+      }}
+      homeFurnitureFilters={homeFurnitureFilters}
+      onHomeFurnitureFiltersChange={setHomeFurnitureFilters}
+      onHomeFurnitureClear={() => {
+        setPriceMin('');
+        setPriceMax('');
+        setSelectedCity('');
+        setHomeFurnitureSearchTick((value) => value + 1);
+        setMobileFiltersOpen(false);
+      }}
+      onHomeFurnitureSearch={() => {
+        setHomeFurnitureSearchTick((value) => value + 1);
+        setMobileFiltersOpen(false);
+      }}
+    />
+  );
 
   return (
     <main className="flex-1 bg-slate-50">
-      <div className="container mx-auto px-4 py-6">
-        {/* Mobile filter toggle */}
-        <div className="lg:hidden mb-4">
+      <div className="container mx-auto px-4 py-6 md:py-8">
+        <div className={cn('mb-4 flex items-center justify-between gap-3 rounded-[1.6rem] border border-slate-200 bg-white px-4 py-3 shadow-sm lg:hidden', isRtl && 'flex-row-reverse')}>
           <button
             onClick={() => setMobileFiltersOpen(!mobileFiltersOpen)}
-            className={`flex items-center gap-2 px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition ${isRtl ? 'flex-row-reverse' : ''}`}
+            className={`flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-primary-200 hover:bg-primary-50 ${isRtl ? 'flex-row-reverse' : ''}`}
           >
-            {mobileFiltersOpen ? (
-              <X className="w-4 h-4" />
-            ) : (
-              <SlidersHorizontal className="w-4 h-4" />
-            )}
+            <SlidersHorizontal className="w-4 h-4" />
             {t('filter')}
+            {activeFilterCount > 0 && <span className="rounded-full bg-primary-600 px-2 py-0.5 text-xs text-white">{activeFilterCount}</span>}
           </button>
+          <SortDropdown locale={locale} value={sortBy} onChange={setSortBy} />
         </div>
 
         <div className={`flex gap-6 ${isRtl ? 'flex-row-reverse' : ''}`}>
-          {/* Sidebar - desktop always visible, mobile collapsible */}
-          <aside
-            className={`w-full lg:w-72 flex-shrink-0 ${
-              mobileFiltersOpen ? 'block' : 'hidden lg:block'
-            }`}
-          >
-            <FilterSidebar
-              locale={locale}
-              selectedCategory={selectedCategory}
-              onCategoryChange={handleCategoryChange}
-              priceMin={priceMin}
-              onPriceMinChange={setPriceMin}
-              priceMax={priceMax}
-              onPriceMaxChange={setPriceMax}
-              selectedConditions={selectedConditions}
-              onConditionsChange={setSelectedConditions}
-              selectedCity={selectedCity}
-              onCityChange={setSelectedCity}
-              selectedWheelDriveType={selectedWheelDriveType}
-              onWheelDriveTypeChange={setSelectedWheelDriveType}
-              vehicleFilters={vehicleFilters}
-              onVehicleFiltersChange={setVehicleFilters}
-              realEstateFilters={realEstateFilters}
-              onRealEstateFiltersChange={setRealEstateFilters}
-              electronicsFilters={electronicsFilters}
-              onElectronicsFiltersChange={setElectronicsFilters}
-              fashionFilters={fashionFilters}
-              onFashionFiltersChange={setFashionFilters}
-              sparePartsFilters={sparePartsFilters}
-              onSparePartsFiltersChange={setSparePartsFilters}
-              onElectronicsClear={() => {
-                setPriceMin('');
-                setPriceMax('');
-                setSelectedCity('');
-                setElectronicsSearchTick((v) => v + 1);
-                setMobileFiltersOpen(false);
-              }}
-              onElectronicsSearch={() => {
-                setElectronicsSearchTick((v) => v + 1);
-                setMobileFiltersOpen(false);
-              }}
-              onFashionClear={() => {
-                setPriceMin('');
-                setPriceMax('');
-                setSelectedCity('');
-                setFashionSearchTick((v) => v + 1);
-                setMobileFiltersOpen(false);
-              }}
-              onFashionSearch={() => {
-                setFashionSearchTick((v) => v + 1);
-                setMobileFiltersOpen(false);
-              }}
-              onSparePartsClear={() => {
-                setPriceMin('');
-                setPriceMax('');
-                setSelectedCity('');
-                setSparePartsSearchTick((v) => v + 1);
-                setMobileFiltersOpen(false);
-              }}
-              onSparePartsSearch={() => {
-                setSparePartsSearchTick((v) => v + 1);
-                setMobileFiltersOpen(false);
-              }}
-              healthBeautyFilters={healthBeautyFilters}
-              onHealthBeautyFiltersChange={setHealthBeautyFilters}
-              onHealthBeautyClear={() => {
-                setPriceMin('');
-                setPriceMax('');
-                setSelectedCity('');
-                setHealthBeautySearchTick((v) => v + 1);
-                setMobileFiltersOpen(false);
-              }}
-              onHealthBeautySearch={() => {
-                setHealthBeautySearchTick((v) => v + 1);
-                setMobileFiltersOpen(false);
-              }}
-              homeFurnitureFilters={homeFurnitureFilters}
-              onHomeFurnitureFiltersChange={setHomeFurnitureFilters}
-              onHomeFurnitureClear={() => {
-                setPriceMin('');
-                setPriceMax('');
-                setSelectedCity('');
-                setHomeFurnitureSearchTick((v) => v + 1);
-                setMobileFiltersOpen(false);
-              }}
-              onHomeFurnitureSearch={() => {
-                setHomeFurnitureSearchTick((v) => v + 1);
-                setMobileFiltersOpen(false);
-              }}
-            />
-
-            {mobileFiltersOpen && (
-              <div className="lg:hidden mt-3">
-                <button
-                  type="button"
-                  onClick={handleMobileApplyFilters}
-                  className="w-full px-4 py-2.5 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-700 transition"
-                >
-                  {tCommon('search')}
-                </button>
-              </div>
-            )}
+          <aside className="sticky top-28 hidden h-fit w-72 flex-shrink-0 lg:block">
+            {filterSidebar}
           </aside>
 
-          {/* Main content */}
           <div ref={resultsRef} className="flex-1 min-w-0">
-            {/* Results header */}
-            <div
-              className={`flex items-center justify-between mb-4 flex-wrap gap-3 ${isRtl ? 'flex-row-reverse' : ''}`}
-            >
-              <p className={`text-sm text-slate-600 ${isRtl ? 'text-right' : 'text-left'}`}>
+            <div className={cn('mb-4 rounded-[1.75rem] border border-slate-200 bg-white px-4 py-4 shadow-sm md:px-5', isRtl && 'text-right')}>
+              <div className={cn('flex flex-wrap items-center justify-between gap-3', isRtl && 'flex-row-reverse')}>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">
+                    {locale === 'en' ? 'Search results' : locale === 'ps' ? 'د لټون پايلې' : 'نتایج جست‌وجو'}
+                  </p>
+                  <p className={`mt-1 text-sm text-slate-600 ${isRtl ? 'text-right' : 'text-left'}`}>
                 {loading ? '...' : t('results', { count: listings.length })}
-              </p>
-              <SortDropdown locale={locale} value={sortBy} onChange={setSortBy} />
+                  </p>
+                </div>
+                <div className="hidden lg:block">
+                  <SortDropdown locale={locale} value={sortBy} onChange={setSortBy} />
+                </div>
+              </div>
             </div>
 
-            {/* Error */}
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm mb-4">
+              <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                 {error}
               </div>
             )}
 
-            {/* Loading */}
             {loading ? (
-              <div className="bg-white rounded-lg border border-slate-200 p-12 text-center">
-                <Loader2 className="w-8 h-8 text-primary-600 animate-spin mx-auto mb-2" />
-                <p className="text-slate-500 text-sm">Loading...</p>
-              </div>
-            ) : listings.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                {listings.map((listing) => (
-                  <ListingCard key={listing.id} listing={listing} locale={locale} />
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <ListingCardSkeleton key={index} />
                 ))}
               </div>
+            ) : listings.length > 0 ? (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                <AnimatePresence>
+                  {listings.map((listing, index) => (
+                    <motion.div
+                      key={listing.id}
+                      initial={{ opacity: 0, y: 18 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ delay: Math.min(index * 0.025, 0.15), duration: 0.22 }}
+                    >
+                      <ListingCard listing={listing} locale={locale} />
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
             ) : (
-              <div className="bg-white rounded-lg border border-slate-200 p-12 text-center">
-                <p className="text-slate-500 text-base">{t('noResults')}</p>
+              <div className="rounded-[1.75rem] border border-slate-200 bg-white p-12 text-center shadow-sm">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary-50 text-primary-600">
+                  <SearchCheck className="h-7 w-7" />
+                </div>
+                <p className="text-base font-semibold text-slate-900">{t('noResults')}</p>
+                <p className="mt-2 text-sm text-slate-500">
+                  {locale === 'en'
+                    ? 'Try clearing a few filters or widening your search.'
+                    : locale === 'ps'
+                      ? 'ځينې فلټرونه پاک کړئ يا لټون پراخ کړئ.'
+                      : 'چند فیلتر را حذف کنید یا جست‌وجو را گسترده‌تر کنید.'}
+                </p>
               </div>
             )}
           </div>
         </div>
+
+        <BottomSheet
+          open={mobileFiltersOpen}
+          onClose={() => setMobileFiltersOpen(false)}
+          title={locale === 'en' ? 'Filters' : locale === 'ps' ? 'فلټرونه' : 'فیلترها'}
+        >
+          <div className="space-y-4">
+            {filterSidebar}
+            <button
+              type="button"
+              onClick={handleMobileApplyFilters}
+              className="w-full rounded-2xl bg-primary-600 px-4 py-3 text-sm font-medium text-white shadow-lg shadow-primary-200 transition hover:bg-primary-700"
+            >
+              {tCommon('search')}
+            </button>
+          </div>
+        </BottomSheet>
       </div>
     </main>
   );

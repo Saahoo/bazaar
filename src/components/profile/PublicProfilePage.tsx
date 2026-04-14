@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useTranslations } from 'next-intl';
+import Image from 'next/image';
 import { Building2, Calendar, Globe, MapPin, Phone, User, Briefcase, BadgeInfo } from 'lucide-react';
 import { Locale, isRTL } from '@/lib/i18n/config';
 import { ProfileRelationButtons } from './ProfileRelationButtons';
@@ -54,9 +55,9 @@ export const PublicProfilePage: React.FC<PublicProfilePageProps> = ({ locale, pr
         <div className="h-32 bg-gradient-to-r from-primary-500 to-primary-700" />
         <div className="px-6 pb-6">
           <div className={`flex items-end gap-4 -mt-12 mb-6 ${rtl ? 'flex-row-reverse' : ''}`}>
-            <div className="w-24 h-24 rounded-2xl bg-white border-4 border-white shadow-md overflow-hidden flex items-center justify-center bg-slate-100">
+            <div className="relative w-24 h-24 rounded-2xl bg-white border-4 border-white shadow-md overflow-hidden flex items-center justify-center bg-slate-100">
               {profile.avatar_url ? (
-                <img src={profile.avatar_url} alt={profile.display_name} className="w-full h-full object-cover" />
+                <Image src={profile.avatar_url} alt={profile.display_name} fill unoptimized sizes="96px" className="object-cover" />
               ) : (
                 <User className="w-10 h-10 text-slate-400" />
               )}

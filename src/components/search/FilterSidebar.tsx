@@ -106,29 +106,73 @@ export const EMPTY_VEHICLE_FILTERS: VehicleFilterState = {
 export interface RealEstateFilterState {
   purpose: string;
   propertyType: string;
-  areaGrossMin: string;
-  areaGrossMax: string;
-  areaNetMin: string;
-  areaNetMax: string;
-  rooms: string;
-  roomsManual: string;
+  city: string;
+  area: string;
+  priceMin: string;
+  priceMax: string;
+  currency: string;
+  bedrooms: string;
+  bedroomsMin: string;
+  bedroomsMax: string;
+  bathrooms: string;
+  bathroomsMin: string;
+  bathroomsMax: string;
+  areaSizeMin: string;
+  areaSizeMax: string;
+  floorNumber: string;
+  yearBuiltMin: string;
+  yearBuiltMax: string;
+  parkingSpaces: string;
   balcony: string;
-  buildingAge: string;
-  buildingAgeManual: string;
+  elevator: string;
+  furnishing: string;
+  condition: string;
+  kitchenType: string;
+  commercialType: string;
+  meetingRooms: string;
+  washrooms: string;
+  landType: string;
+  roadAccess: string;
+  cornerPlot: string;
+  industrialType: string;
+  ceilingHeight: string;
+  loadingDocks: string;
 }
 
 export const EMPTY_REAL_ESTATE_FILTERS: RealEstateFilterState = {
   purpose: '',
   propertyType: '',
-  areaGrossMin: '',
-  areaGrossMax: '',
-  areaNetMin: '',
-  areaNetMax: '',
-  rooms: '',
-  roomsManual: '',
+  city: '',
+  area: '',
+  priceMin: '',
+  priceMax: '',
+  currency: '',
+  bedrooms: '',
+  bedroomsMin: '',
+  bedroomsMax: '',
+  bathrooms: '',
+  bathroomsMin: '',
+  bathroomsMax: '',
+  areaSizeMin: '',
+  areaSizeMax: '',
+  floorNumber: '',
+  yearBuiltMin: '',
+  yearBuiltMax: '',
+  parkingSpaces: '',
   balcony: '',
-  buildingAge: '',
-  buildingAgeManual: '',
+  elevator: '',
+  furnishing: '',
+  condition: '',
+  kitchenType: '',
+  commercialType: '',
+  meetingRooms: '',
+  washrooms: '',
+  landType: '',
+  roadAccess: '',
+  cornerPlot: '',
+  industrialType: '',
+  ceilingHeight: '',
+  loadingDocks: '',
 };
 
 // ─── Electronics Filter State ──────────────────────────────────────────────
@@ -770,9 +814,24 @@ const MultiCheck: React.FC<{
   </div>
 );
 
-const RE_PURPOSE_OPTIONS = ['forRent', 'forSale', 'forLease'] as const;
-const RE_PROPERTY_TYPES = ['apartment', 'residence', 'villa', 'farmHouse', 'land'] as const;
-const RE_BUILDING_AGES = ['new', 'age1_5', 'age5_10', 'age10_20', 'age20plus'] as const;
+const RE_PURPOSE_OPTIONS = ['forSale', 'forRent'] as const;
+const RE_PROPERTY_TYPES = [
+  'apartment',
+  'house_villa',
+  'commercial',
+  'office',
+  'shop_retail',
+  'land_plot',
+  'industrial',
+  'room_shared',
+  'other'
+] as const;
+const RE_COMMERCIAL_TYPES = ['office', 'shop', 'showroom'] as const;
+const RE_LAND_TYPES = ['residential', 'commercial', 'agricultural'] as const;
+const RE_INDUSTRIAL_TYPES = ['warehouse', 'factory'] as const;
+const RE_CONDITIONS = ['new', 'used', 'renovated'] as const;
+const RE_KITCHEN_TYPES = ['open', 'closed'] as const;
+const RE_FURNISHING_TYPES = ['furnished', 'semiFurnished', 'unfurnished'] as const;
 
 interface DbCategory {
   id: number;
@@ -1289,7 +1348,8 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
          ═══════════════════════════════════════════════════ */}
       {isRealEstate && (
         <>
-          <Section label={tRE('purpose')} isRtl={isRtl}>
+          {/* Purpose */}
+          <Section label={tRE('listingType')} isRtl={isRtl}>
             <Sel value={realEstateFilters.purpose} onChange={(v) => setREF({ purpose: v })} isRtl={isRtl}>
               <option value="">{tCommon('all')}</option>
               {RE_PURPOSE_OPTIONS.map((option) => (
@@ -1298,6 +1358,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
             </Sel>
           </Section>
 
+          {/* Property Type */}
           <Section label={tRE('propertyType')} isRtl={isRtl}>
             <Sel value={realEstateFilters.propertyType} onChange={(v) => setREF({ propertyType: v })} isRtl={isRtl}>
               <option value="">{tCommon('all')}</option>
@@ -1307,103 +1368,331 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
             </Sel>
           </Section>
 
-          <Section label={tRE('areaGross')} isRtl={isRtl}>
-            <div className={`flex gap-2 ${isRtl ? 'flex-row-reverse' : ''}`}>
-              <input
-                type="number"
-                min="0"
-                placeholder="Min"
-                value={realEstateFilters.areaGrossMin}
-                onChange={(e) => setREF({ areaGrossMin: e.target.value })}
-                className={`w-1/2 px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
-              />
-              <input
-                type="number"
-                min="0"
-                placeholder="Max"
-                value={realEstateFilters.areaGrossMax}
-                onChange={(e) => setREF({ areaGrossMax: e.target.value })}
-                className={`w-1/2 px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
-              />
-            </div>
-          </Section>
-
-          <Section label={tRE('areaNet')} isRtl={isRtl}>
-            <div className={`flex gap-2 ${isRtl ? 'flex-row-reverse' : ''}`}>
-              <input
-                type="number"
-                min="0"
-                placeholder="Min"
-                value={realEstateFilters.areaNetMin}
-                onChange={(e) => setREF({ areaNetMin: e.target.value })}
-                className={`w-1/2 px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
-              />
-              <input
-                type="number"
-                min="0"
-                placeholder="Max"
-                value={realEstateFilters.areaNetMax}
-                onChange={(e) => setREF({ areaNetMax: e.target.value })}
-                className={`w-1/2 px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
-              />
-            </div>
-          </Section>
-
-          <Section label={tRE('rooms')} isRtl={isRtl}>
-            <Sel
-              value={realEstateFilters.rooms}
-              onChange={(v) => setREF({ rooms: v, roomsManual: v === '__manual__' ? realEstateFilters.roomsManual : '' })}
-              isRtl={isRtl}
-            >
+          {/* City */}
+          <Section label={tRE('city')} isRtl={isRtl}>
+            <Sel value={realEstateFilters.city} onChange={(v) => setREF({ city: v })} isRtl={isRtl}>
               <option value="">{tCommon('all')}</option>
-              {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
-                <option key={n} value={String(n)}>{n}</option>
+              {cities.map((city) => (
+                <option key={city.name_en} value={city.name_en}>{getManagedCityName(city, locale)}</option>
               ))}
-              <option value="__manual__">Manual</option>
             </Sel>
-            {realEstateFilters.rooms === '__manual__' && (
+          </Section>
+
+          {/* Area/District */}
+          <Section label={tRE('areaDistrict')} isRtl={isRtl}>
+            <input
+              type="text"
+              value={realEstateFilters.area}
+              onChange={(e) => setREF({ area: e.target.value })}
+              placeholder={tRE('enterAreaDistrict')}
+              className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+            />
+          </Section>
+
+          {/* Price Range */}
+          <Section label={tRE('price')} isRtl={isRtl}>
+            <div className={`flex gap-2 ${isRtl ? 'flex-row-reverse' : ''}`}>
               <input
                 type="number"
                 min="0"
-                value={realEstateFilters.roomsManual}
-                onChange={(e) => setREF({ roomsManual: e.target.value })}
-                placeholder="Enter rooms"
-                className={`mt-2 w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                placeholder="Min"
+                value={realEstateFilters.priceMin}
+                onChange={(e) => setREF({ priceMin: e.target.value })}
+                className={`w-1/2 px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
               />
-            )}
+              <input
+                type="number"
+                min="0"
+                placeholder="Max"
+                value={realEstateFilters.priceMax}
+                onChange={(e) => setREF({ priceMax: e.target.value })}
+                className={`w-1/2 px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+              />
+            </div>
           </Section>
 
+          {/* Currency */}
+          <Section label={tRE('currency')} isRtl={isRtl}>
+            <Sel value={realEstateFilters.currency} onChange={(v) => setREF({ currency: v })} isRtl={isRtl}>
+              <option value="">{tCommon('all')}</option>
+              <option value="AFN">{tRE('afd')}</option>
+              <option value="PKR">{tRE('pkr')}</option>
+              <option value="USD">{tRE('usd')}</option>
+            </Sel>
+          </Section>
+
+          {/* Bedrooms */}
+          <Section label={tRE('bedrooms')} isRtl={isRtl}>
+            <div className={`flex gap-2 ${isRtl ? 'flex-row-reverse' : ''}`}>
+              <input
+                type="number"
+                min="0"
+                placeholder="Min"
+                value={realEstateFilters.bedroomsMin}
+                onChange={(e) => setREF({ bedroomsMin: e.target.value })}
+                className={`w-1/2 px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+              />
+              <input
+                type="number"
+                min="0"
+                placeholder="Max"
+                value={realEstateFilters.bedroomsMax}
+                onChange={(e) => setREF({ bedroomsMax: e.target.value })}
+                className={`w-1/2 px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+              />
+            </div>
+          </Section>
+
+          {/* Bathrooms */}
+          <Section label={tRE('bathrooms')} isRtl={isRtl}>
+            <div className={`flex gap-2 ${isRtl ? 'flex-row-reverse' : ''}`}>
+              <input
+                type="number"
+                min="0"
+                placeholder="Min"
+                value={realEstateFilters.bathroomsMin}
+                onChange={(e) => setREF({ bathroomsMin: e.target.value })}
+                className={`w-1/2 px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+              />
+              <input
+                type="number"
+                min="0"
+                placeholder="Max"
+                value={realEstateFilters.bathroomsMax}
+                onChange={(e) => setREF({ bathroomsMax: e.target.value })}
+                className={`w-1/2 px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+              />
+            </div>
+          </Section>
+
+          {/* Area Size */}
+          <Section label={tRE('areaSize')} isRtl={isRtl}>
+            <div className={`flex gap-2 ${isRtl ? 'flex-row-reverse' : ''}`}>
+              <input
+                type="number"
+                min="0"
+                step="0.1"
+                placeholder="Min (sqm)"
+                value={realEstateFilters.areaSizeMin}
+                onChange={(e) => setREF({ areaSizeMin: e.target.value })}
+                className={`w-1/2 px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+              />
+              <input
+                type="number"
+                min="0"
+                step="0.1"
+                placeholder="Max (sqm)"
+                value={realEstateFilters.areaSizeMax}
+                onChange={(e) => setREF({ areaSizeMax: e.target.value })}
+                className={`w-1/2 px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+              />
+            </div>
+          </Section>
+
+          {/* Floor Number */}
+          <Section label={tRE('floorNumber')} isRtl={isRtl}>
+            <input
+              type="number"
+              min="0"
+              value={realEstateFilters.floorNumber}
+              onChange={(e) => setREF({ floorNumber: e.target.value })}
+              placeholder={tRE('enterFloorNumber')}
+              className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+            />
+          </Section>
+
+          {/* Year Built */}
+          <Section label={tRE('yearBuilt')} isRtl={isRtl}>
+            <div className={`flex gap-2 ${isRtl ? 'flex-row-reverse' : ''}`}>
+              <input
+                type="number"
+                min="1800"
+                max="2100"
+                placeholder="Min"
+                value={realEstateFilters.yearBuiltMin}
+                onChange={(e) => setREF({ yearBuiltMin: e.target.value })}
+                className={`w-1/2 px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+              />
+              <input
+                type="number"
+                min="1800"
+                max="2100"
+                placeholder="Max"
+                value={realEstateFilters.yearBuiltMax}
+                onChange={(e) => setREF({ yearBuiltMax: e.target.value })}
+                className={`w-1/2 px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+              />
+            </div>
+          </Section>
+
+          {/* Parking Spaces */}
+          <Section label={tRE('parkingSpaces')} isRtl={isRtl}>
+            <input
+              type="number"
+              min="0"
+              value={realEstateFilters.parkingSpaces}
+              onChange={(e) => setREF({ parkingSpaces: e.target.value })}
+              placeholder={tRE('enterParkingSpaces')}
+              className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+            />
+          </Section>
+
+          {/* Balcony */}
           <Section label={tRE('balcony')} isRtl={isRtl}>
             <Sel value={realEstateFilters.balcony} onChange={(v) => setREF({ balcony: v })} isRtl={isRtl}>
               <option value="">{tCommon('all')}</option>
-              {[0, 1, 2, 3].map((n) => (
-                <option key={n} value={String(n)}>{n}</option>
+              <option value="yes">{tRE('yesBalcony')}</option>
+              <option value="no">{tRE('noBalcony')}</option>
+            </Sel>
+          </Section>
+
+          {/* Elevator */}
+          <Section label={tRE('elevator')} isRtl={isRtl}>
+            <Sel value={realEstateFilters.elevator} onChange={(v) => setREF({ elevator: v })} isRtl={isRtl}>
+              <option value="">{tCommon('all')}</option>
+              <option value="yes">{tRE('yesElevator')}</option>
+              <option value="no">{tRE('noElevator')}</option>
+            </Sel>
+          </Section>
+
+          {/* Furnishing */}
+          <Section label={tRE('furnishing')} isRtl={isRtl}>
+            <Sel value={realEstateFilters.furnishing} onChange={(v) => setREF({ furnishing: v })} isRtl={isRtl}>
+              <option value="">{tCommon('all')}</option>
+              {RE_FURNISHING_TYPES.map((option) => (
+                <option key={option} value={option}>{tRE(option as Parameters<typeof tRE>[0])}</option>
               ))}
             </Sel>
           </Section>
 
-          <Section label={tRE('buildingAge')} isRtl={isRtl}>
-            <Sel
-              value={realEstateFilters.buildingAge}
-              onChange={(v) => setREF({ buildingAge: v, buildingAgeManual: v === '__manual__' ? realEstateFilters.buildingAgeManual : '' })}
-              isRtl={isRtl}
-            >
+          {/* Condition */}
+          <Section label={tRE('condition')} isRtl={isRtl}>
+            <Sel value={realEstateFilters.condition} onChange={(v) => setREF({ condition: v })} isRtl={isRtl}>
               <option value="">{tCommon('all')}</option>
-              {RE_BUILDING_AGES.map((option) => (
-                <option key={option} value={option}>{tRE(option as Parameters<typeof tRE>[0])}</option>
+              {RE_CONDITIONS.map((option) => (
+                <option key={option} value={option}>{tRE(option === 'new' ? 'newCondition' : option === 'used' ? 'usedCondition' : 'renovatedCondition')}</option>
               ))}
-              <option value="__manual__">Manual</option>
             </Sel>
-            {realEstateFilters.buildingAge === '__manual__' && (
+          </Section>
+
+          {/* Kitchen Type */}
+          <Section label={tRE('kitchenType')} isRtl={isRtl}>
+            <Sel value={realEstateFilters.kitchenType} onChange={(v) => setREF({ kitchenType: v })} isRtl={isRtl}>
+              <option value="">{tCommon('all')}</option>
+              {RE_KITCHEN_TYPES.map((option) => (
+                <option key={option} value={option}>{tRE(option === 'open' ? 'openKitchenType' : 'closedKitchenType')}</option>
+              ))}
+            </Sel>
+          </Section>
+
+          {/* Commercial Type (when commercial/office/shop selected) */}
+          {(realEstateFilters.propertyType === 'commercial' || realEstateFilters.propertyType === 'office' || realEstateFilters.propertyType === 'shop_retail') && (
+            <Section label={tRE('commercialType')} isRtl={isRtl}>
+              <Sel value={realEstateFilters.commercialType} onChange={(v) => setREF({ commercialType: v })} isRtl={isRtl}>
+                <option value="">{tCommon('all')}</option>
+                {RE_COMMERCIAL_TYPES.map((option) => (
+                  <option key={option} value={option}>{tRE(option === 'office' ? 'officeCommercialType' : option === 'shop' ? 'shopCommercialType' : 'showroomCommercialType')}</option>
+                ))}
+              </Sel>
+            </Section>
+          )}
+
+          {/* Meeting Rooms (for commercial) */}
+          {(realEstateFilters.propertyType === 'commercial' || realEstateFilters.propertyType === 'office') && (
+            <Section label={tRE('meetingRoomsLabel')} isRtl={isRtl}>
+              <input
+                type="number"
+                min="0"
+                value={realEstateFilters.meetingRooms}
+                onChange={(e) => setREF({ meetingRooms: e.target.value })}
+                className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+              />
+            </Section>
+          )}
+
+          {/* Washrooms (for commercial) */}
+          {(realEstateFilters.propertyType === 'commercial' || realEstateFilters.propertyType === 'office' || realEstateFilters.propertyType === 'shop_retail') && (
+            <Section label={tRE('washroomsLabel')} isRtl={isRtl}>
+              <input
+                type="number"
+                min="0"
+                value={realEstateFilters.washrooms}
+                onChange={(e) => setREF({ washrooms: e.target.value })}
+                className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+              />
+            </Section>
+          )}
+
+          {/* Land Type (when land selected) */}
+          {realEstateFilters.propertyType === 'land_plot' && (
+            <Section label={tRE('landTypeLabel')} isRtl={isRtl}>
+              <Sel value={realEstateFilters.landType} onChange={(v) => setREF({ landType: v })} isRtl={isRtl}>
+                <option value="">{tCommon('all')}</option>
+                {RE_LAND_TYPES.map((option) => (
+                  <option key={option} value={option}>{tRE(option === 'residential' ? 'residentialLandType' : option === 'commercial' ? 'commercialLandType' : 'agriculturalLandType')}</option>
+                ))}
+              </Sel>
+            </Section>
+          )}
+
+          {/* Road Access (for land) */}
+          {realEstateFilters.propertyType === 'land_plot' && (
+            <Section label={tRE('roadAccessLabel')} isRtl={isRtl}>
+              <Sel value={realEstateFilters.roadAccess} onChange={(v) => setREF({ roadAccess: v })} isRtl={isRtl}>
+                <option value="">{tCommon('all')}</option>
+                <option value="yes">{tCommon('yes')}</option>
+                <option value="no">{tCommon('no')}</option>
+              </Sel>
+            </Section>
+          )}
+
+          {/* Corner Plot (for land) */}
+          {realEstateFilters.propertyType === 'land_plot' && (
+            <Section label={tRE('cornerPlotLabel')} isRtl={isRtl}>
+              <Sel value={realEstateFilters.cornerPlot} onChange={(v) => setREF({ cornerPlot: v })} isRtl={isRtl}>
+                <option value="">{tCommon('all')}</option>
+                <option value="yes">{tCommon('yes')}</option>
+                <option value="no">{tCommon('no')}</option>
+              </Sel>
+            </Section>
+          )}
+
+          {/* Industrial Type (when industrial selected) */}
+          {realEstateFilters.propertyType === 'industrial' && (
+            <Section label={tRE('propertyTypeLabel')} isRtl={isRtl}>
+              <Sel value={realEstateFilters.industrialType} onChange={(v) => setREF({ industrialType: v })} isRtl={isRtl}>
+                <option value="">{tCommon('all')}</option>
+                {RE_INDUSTRIAL_TYPES.map((option) => (
+                  <option key={option} value={option}>{tRE(option === 'warehouse' ? 'warehouseIndustrialType' : 'factoryIndustrialType')}</option>
+                ))}
+              </Sel>
+            </Section>
+          )}
+
+          {/* Ceiling Height (for industrial) */}
+          {realEstateFilters.propertyType === 'industrial' && (
+            <Section label={tRE('ceilingHeightLabel')} isRtl={isRtl}>
               <input
                 type="text"
-                value={realEstateFilters.buildingAgeManual}
-                onChange={(e) => setREF({ buildingAgeManual: e.target.value })}
-                placeholder="Enter building age"
-                className={`mt-2 w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                value={realEstateFilters.ceilingHeight}
+                onChange={(e) => setREF({ ceilingHeight: e.target.value })}
+                placeholder="e.g. 5 meters"
+                className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
               />
-            )}
-          </Section>
+            </Section>
+          )}
+
+          {/* Loading Docks (for industrial) */}
+          {realEstateFilters.propertyType === 'industrial' && (
+            <Section label={tRE('loadingDocksLabel')} isRtl={isRtl}>
+              <input
+                type="text"
+                value={realEstateFilters.loadingDocks}
+                onChange={(e) => setREF({ loadingDocks: e.target.value })}
+                className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+              />
+            </Section>
+          )}
         </>
       )}
 

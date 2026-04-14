@@ -3,6 +3,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { ImageIcon, Pencil, Trash2, Eye } from 'lucide-react';
 import { Locale, isRTL } from '@/lib/i18n/config';
@@ -458,9 +459,9 @@ export const MyAdsTab: React.FC<MyAdsTabProps> = ({ locale }) => {
               className={`flex flex-col sm:flex-row sm:items-center gap-4 ${isRtl ? 'sm:flex-row-reverse' : ''}`}
             >
               {/* Thumbnail placeholder */}
-              <Link href={`/${locale}/listing/${listing.id}`} className="w-16 h-16 sm:w-20 sm:h-20 bg-slate-100 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+              <Link href={`/${locale}/listing/${listing.id}`} className="relative w-16 h-16 sm:w-20 sm:h-20 bg-slate-100 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
                 {primaryPhoto ? (
-                  <img src={primaryPhoto} alt={title} className="w-full h-full object-cover" />
+                  <Image src={primaryPhoto} alt={title} fill unoptimized sizes="(max-width: 640px) 64px, 80px" className="object-cover" />
                 ) : (
                   <ImageIcon className="w-8 h-8 text-slate-300" />
                 )}

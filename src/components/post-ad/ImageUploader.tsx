@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useState, useRef, useCallback } from 'react';
+import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { Camera, X, Loader2, GripVertical } from 'lucide-react';
 import { isRTL, Locale } from '@/lib/i18n/config';
@@ -258,10 +259,13 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
               key={photo.id}
               className="relative group aspect-square rounded-lg overflow-hidden border border-slate-200 bg-slate-100"
             >
-              <img
+              <Image
                 src={photo.url}
                 alt={`Photo ${index + 1}`}
-                className="w-full h-full object-cover"
+                fill
+                unoptimized
+                sizes="(max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
+                className="object-cover"
               />
 
               {/* Cover badge on first photo */}

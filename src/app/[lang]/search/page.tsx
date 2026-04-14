@@ -1,6 +1,6 @@
 // src/app/[lang]/search/page.tsx
 import { Header } from '@/components/layout/Header';
-import { SearchPage } from '@/components/search/SearchPage';
+import { SearchPageShell } from '@/components/search/SearchPageShell';
 import { Locale } from '@/lib/i18n/config';
 
 interface PageProps {
@@ -15,7 +15,7 @@ export default async function SearchRoute({ params, searchParams }: PageProps) {
   return (
     <>
       <Header locale={locale as Locale} />
-      <SearchPage locale={locale as Locale} initialCategory={category} initialQuery={q} />
+      <SearchPageShell locale={locale as Locale} initialCategory={category} initialQuery={q} />
     </>
   );
 }

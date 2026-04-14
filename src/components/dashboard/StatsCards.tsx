@@ -3,10 +3,12 @@
 
 import React, { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { motion } from 'framer-motion';
 import { Eye, MousePointerClick, Package, Star } from 'lucide-react';
 import { Locale, isRTL } from '@/lib/i18n/config';
 import { useAuth } from '@/lib/context/AuthContext';
 import { createClient } from '@/lib/supabase/client';
+import { Skeleton } from '@/components/common/Skeleton';
 
 interface StatsCardsProps {
   locale: Locale;
@@ -17,6 +19,7 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ locale }) => {
   const isRtl = isRTL(locale);
   const { user } = useAuth();
   const supabase = createClient();
+  const [loading, setLoading] = useState(true);
   const [statsData, setStatsData] = useState({
     totalViews: 0,
     totalClicks: 0,
@@ -25,7 +28,10 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ locale }) => {
   });
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setLoading(false);
+      return;
+    }
 
     const loadStats = async () => {
       const [{ data: listings }, { data: profile }] = await Promise.all([
@@ -48,9 +54,10 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ locale }) => {
         activeListings: rows.filter((item) => item.status === 'active').length,
         rating: Number(profile?.seller_rating) || 0,
       });
+      setLoading(false);
     };
 
-    loadStats();
+    loadStats().catch(() => setLoading(false));
   }, [user, supabase]);
 
   const stats = [
@@ -75,21 +82,42 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ locale }) => {
     {
       label: t('myRating'),
       value: statsData.rating > 0 ? statsData.rating.toFixed(1) : '0.0',
-      icon: <Star className="w-5 h-5 text-purple-600" />,
-      bgColor: 'bg-purple-100',
+      icon: <Star className="w-5 h-5 text-rose-600" />,
+      bgColor: 'bg-rose-100',
     },
   ];
+
+  if (loading) {
+    return (
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <div key={index} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-10 w-10 rounded-xl" />
+              <div className="space-y-2 flex-1">
+                <Skeleton className="h-6 w-2/3" />
+                <Skeleton className="h-3 w-1/2" />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
       {stats.map((stat, index) => (
-        <div
+        <motion.div
           key={index}
-          className="bg-white rounded-lg border border-slate-200 p-4"
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.24, delay: index * 0.05 }}
+          className="glass-panel rounded-2xl border border-slate-200 p-4 shadow-sm"
         >
           <div className={`flex items-center gap-3 ${isRtl ? 'flex-row-reverse' : ''}`}>
             <div
-              className={`w-10 h-10 rounded-full ${stat.bgColor} flex items-center justify-center flex-shrink-0`}
+              className={`w-10 h-10 rounded-xl ${stat.bgColor} flex items-center justify-center flex-shrink-0`}
             >
               {stat.icon}
             </div>
@@ -98,7 +126,7 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ locale }) => {
               <p className="text-xs text-slate-500">{stat.label}</p>
             </div>
           </div>
-        </div>
+        </motion.div>
       ))}
     </div>
   );

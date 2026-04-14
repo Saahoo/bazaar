@@ -1,8 +1,10 @@
 // src/components/listing/ListingDetail.tsx
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
 import { useTranslations } from 'next-intl';
+import { motion } from 'framer-motion';
 import { ImageIcon, MapPin, ShieldCheck, CalendarDays, Hash } from 'lucide-react';
 import { Locale, isRTL } from '@/lib/i18n/config';
 import { formatCurrency } from '@/lib/constants/currencies';
@@ -102,15 +104,15 @@ export const ListingDetail: React.FC<ListingDetailProps> = ({ listing, seller, l
     return visiblePhotos[Math.min(activePhotoIndex, visiblePhotos.length - 1)] || visiblePhotos[0];
   }, [hasPhotos, visiblePhotos, activePhotoIndex]);
 
-  const showPrevPhoto = () => {
+  const showPrevPhoto = useCallback(() => {
     if (visiblePhotos.length <= 1) return;
     setActivePhotoIndex((prev) => (prev - 1 + visiblePhotos.length) % visiblePhotos.length);
-  };
+  }, [visiblePhotos.length]);
 
-  const showNextPhoto = () => {
+  const showNextPhoto = useCallback(() => {
     if (visiblePhotos.length <= 1) return;
     setActivePhotoIndex((prev) => (prev + 1) % visiblePhotos.length);
-  };
+  }, [visiblePhotos.length]);
 
   const priceHistory = listing.price_history || [];
 
@@ -133,7 +135,7 @@ export const ListingDetail: React.FC<ListingDetailProps> = ({ listing, seller, l
 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [isImageOpen, visiblePhotos.length]);
+  }, [isImageOpen, showNextPhoto, showPrevPhoto]);
 
   const getReasonLabel = (reasonCode?: string | null) => {
     if (reasonCode === 'increase_price') {
@@ -146,30 +148,39 @@ export const ListingDetail: React.FC<ListingDetailProps> = ({ listing, seller, l
   };
 
   return (
-    <div className="container mx-auto px-4 py-6 md:py-8 max-w-[1440px]">
+    <div className="marketplace-shell container mx-auto max-w-[1440px] px-4 py-6 md:py-8">
       {listing.status === 'sold' && (
         <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-red-700 font-medium text-center">
           {t('soldOut')}
         </div>
       )}
 
-      <h1 className={`text-2xl md:text-3xl font-bold text-slate-900 mb-4 ${isRtl ? 'text-right' : 'text-left'}`}>
+      <motion.h1
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2 }}
+        className={`text-2xl md:text-3xl font-bold text-slate-900 mb-4 ${isRtl ? 'text-right' : 'text-left'}`}
+      >
         {title}
-      </h1>
+      </motion.h1>
 
-      <div className="bg-white border border-slate-200 rounded-xl p-4 md:p-5 mb-6">
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.24 }}
+        className="glass-panel border border-slate-200 rounded-3xl p-4 md:p-5 mb-6 shadow-sm"
+      >
         <div className={`grid grid-cols-1 xl:grid-cols-12 gap-5 ${isRtl ? 'xl:[direction:rtl]' : ''}`}>
-          {/* Left: gallery */}
           <div className="xl:col-span-6">
-            <div className="rounded-lg border border-slate-200 overflow-hidden bg-slate-50 aspect-[4/3]">
+            <div className="rounded-2xl border border-slate-200 overflow-hidden bg-slate-50 aspect-[4/3] shadow-sm">
               {activePhoto ? (
                 <button
                   type="button"
                   onClick={() => setIsImageOpen(true)}
-                  className="w-full h-full"
+                  className="relative w-full h-full"
                   aria-label={locale === 'en' ? 'Open image' : locale === 'ps' ? 'انځور خلاص کړئ' : 'باز کردن تصویر'}
                 >
-                  <img src={activePhoto} alt={title} className="w-full h-full object-cover" />
+                  <Image src={activePhoto} alt={title} fill unoptimized sizes="(max-width: 1280px) 100vw, 50vw" className="object-cover" />
                 </button>
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
@@ -191,22 +202,22 @@ export const ListingDetail: React.FC<ListingDetailProps> = ({ listing, seller, l
                     key={`${photo}-${index}`}
                     type="button"
                     onClick={() => setActivePhotoIndex(index)}
-                    className={`aspect-[4/3] rounded-md overflow-hidden border-2 transition ${
+                    title={locale === 'en' ? `View photo ${index + 1}` : locale === 'ps' ? `انځور ${index + 1}` : `نمایش تصویر ${index + 1}`}
+                    className={`relative aspect-[4/3] rounded-md overflow-hidden border-2 transition ${
                       activePhotoIndex === index
-                        ? 'border-primary-600'
+                        ? 'border-primary-600 shadow-sm'
                         : 'border-slate-200 hover:border-slate-300'
                     }`}
                   >
-                    <img src={photo} alt={`${title} ${index + 1}`} className="w-full h-full object-cover" />
+                    <Image src={photo} alt={`${title} ${index + 1}`} fill unoptimized sizes="(max-width: 768px) 20vw, 12vw" className="object-cover" />
                   </button>
                 ))}
               </div>
             )}
           </div>
 
-          {/* Center: price + core specs */}
           <div className="xl:col-span-4">
-            <div className="rounded-lg border border-slate-200 p-4 mb-4">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 mb-4 shadow-sm">
               <p className="text-3xl font-extrabold text-primary-700 leading-tight">
                 {formatCurrency(listing.price, listing.currency)}
               </p>
@@ -246,7 +257,7 @@ export const ListingDetail: React.FC<ListingDetailProps> = ({ listing, seller, l
               </>
             )}
 
-            <div className="rounded-lg border border-slate-200 p-3 mb-4">
+            <div className="rounded-2xl border border-slate-200 bg-white p-3 mb-4 shadow-sm">
               <ActionButtons
                 locale={locale}
                 listingId={listing.id}
@@ -258,11 +269,10 @@ export const ListingDetail: React.FC<ListingDetailProps> = ({ listing, seller, l
             </div>
           </div>
 
-          {/* Right: seller + safety */}
           <div className="xl:col-span-2 space-y-4">
             <SellerCard seller={seller} locale={locale} />
 
-            <div className="bg-white border border-slate-200 rounded-lg p-4">
+            <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
               <div className={`flex items-center gap-2 mb-2 ${isRtl ? 'flex-row-reverse' : ''}`}>
                 <ShieldCheck className="w-5 h-5 text-primary-600" />
                 <h3 className="text-sm font-semibold text-slate-900">
@@ -279,10 +289,15 @@ export const ListingDetail: React.FC<ListingDetailProps> = ({ listing, seller, l
             </div>
           </div>
         </div>
-      </div>
+      </motion.div>
 
-      {/* Description + history */}
-      <div className="bg-white border border-slate-200 rounded-xl p-5 mb-6">
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.25 }}
+        transition={{ duration: 0.24 }}
+        className="bg-white border border-slate-200 rounded-3xl p-5 mb-6 shadow-sm"
+      >
         <h2 className={`text-lg font-semibold text-slate-900 mb-2 ${isRtl ? 'text-right' : 'text-left'}`}>
           {t('description')}
         </h2>
@@ -322,7 +337,7 @@ export const ListingDetail: React.FC<ListingDetailProps> = ({ listing, seller, l
             </div>
           </div>
         )}
-      </div>
+      </motion.div>
 
       <SimilarListings categoryId={listing.category_id} currentListingId={listing.id} locale={locale} />
 
@@ -370,12 +385,16 @@ export const ListingDetail: React.FC<ListingDetailProps> = ({ listing, seller, l
             </>
           )}
 
-          <img
-            src={activePhoto}
-            alt={title}
-            className="max-w-full max-h-[90vh] object-contain rounded-md"
-            onClick={(e) => e.stopPropagation()}
-          />
+          <div className="relative h-[75vh] w-full max-w-6xl" onClick={(e) => e.stopPropagation()}>
+            <Image
+              src={activePhoto}
+              alt={title}
+              fill
+              unoptimized
+              sizes="100vw"
+              className="rounded-md object-contain"
+            />
+          </div>
         </div>
       )}
     </div>

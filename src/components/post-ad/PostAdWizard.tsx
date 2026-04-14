@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
@@ -13,11 +14,14 @@ import { StepDetails, StepDetailsHandle } from './StepDetails';
 import { StepPhotos, StepPhotosData } from './StepPhotos';
 import { StepContact } from './StepContact';
 // Real Estate steps
-import { StepPropertyType, PropertyType, PropertyPurpose } from './real-estate/StepPropertyType';
-import { StepPropertyDetails, StepPropertyDetailsHandle, PropertyDetailsData } from './real-estate/StepPropertyDetails';
-import { StepAddress, AddressData } from './real-estate/StepAddress';
+import { StepRealEstateBasicInfo } from './real-estate/StepRealEstateBasicInfo';
+import { StepRealEstateLocation, RealEstateLocationData } from './real-estate/StepRealEstateLocation';
+import { StepRealEstatePricing } from './real-estate/StepRealEstatePricing';
+import { StepRealEstateSpecs, RealEstateSpecsData, StepRealEstateSpecsHandle } from './real-estate/StepRealEstateSpecs';
+import { StepRealEstateAmenities, RealEstateAmenitiesData } from './real-estate/StepRealEstateAmenities';
 import { StepMedia, MediaData } from './real-estate/StepMedia';
-import { StepContactInfo, ContactInfoData } from './real-estate/StepContactInfo';
+import { StepRealEstateContactReview, RealEstateContactData } from './real-estate/StepRealEstateContactReview';
+import type { RealEstatePropertyType, ListingType, RealEstatePriceType, RealEstateFurnishing } from './real-estate/types';
 // Vehicles steps
 import { StepVehicleType } from './vehicles/StepVehicleType';
 import { StepVehicleSpecs, VehicleSpecsData } from './vehicles/StepVehicleSpecs';
@@ -62,6 +66,7 @@ import { getHealthBeautySpecsConfig, HealthBeautySubcategory } from '@/lib/const
 import { HomeFurnitureSubcategory, getHomeFurnitureSpecsConfig } from '@/lib/constants/home-furniture-wizard';
 import { SparePartsSubcategory, VEHICLE_SPARE_SUBCATEGORIES, ELECTRONICS_OR_MACHINERY_SUBCATEGORIES } from '@/lib/constants/spare-parts-wizard';
 import type { VehicleType as VehicleTypeEnum } from '@/lib/constants/vehicles';
+import { cn } from '@/lib/utils/cn';
 
 // Category slugs (more reliable than hardcoded IDs across environments)
 const REAL_ESTATE_SLUG = 'real-estate';
@@ -88,12 +93,22 @@ export interface PostAdFormData {
 }
 
 export interface RealEstateFormData {
-  propertyType: PropertyType | '';
-  purpose: PropertyPurpose | '';
-  propertyDetails: PropertyDetailsData;
-  address: AddressData;
+  propertyType: RealEstatePropertyType | '';
+  listingType: ListingType;
+  propertyDetails: RealEstateSpecsData & {
+    title: string;
+    description: string;
+    price: number | '';
+    currency: string;
+    price_type: string;
+    negotiable: boolean;
+    available_from: string;
+    furnishing: string;
+  };
+  address: RealEstateLocationData;
+  amenities: RealEstateAmenitiesData;
   media: MediaData;
-  contact: ContactInfoData;
+  contact: RealEstateContactData;
 }
 
 export interface VehiclesFormData {
@@ -231,16 +246,70 @@ const INITIAL_FORM_DATA: PostAdFormData = {
 
 const INITIAL_RE_DATA: RealEstateFormData = {
   propertyType: '',
-  purpose: '',
+  listingType: '',
   propertyDetails: {
-    title: '', description: '', price: '', currency: 'AFN', deposit: '',
-    areaGross: '', areaNet: '', rooms: '', bathrooms: '', kitchenType: '',
-    balcony: '', buildingAge: '', floor: '', totalFloors: '',
-    lift: false, carParking: false, fromWho: '',
+    title: '',
+    description: '',
+    price: '',
+    currency: 'AFN',
+    price_type: '',
+    negotiable: false,
+    available_from: '',
+    furnishing: '',
+    bedrooms: 0,
+    bathrooms: 0,
+    area_size: 0,
+    floor_number: 0,
+    total_floors: 0,
+    year_built: 0,
+    parking_spaces: 0,
+    balcony: false,
+    elevator: false,
+    heating_type: '',
+    cooling: false,
+    kitchen_type: '',
+    living_rooms: 0,
+    condition: '',
+    commercial_type: '',
+    furnished: false,
+    meeting_rooms: 0,
+    washrooms: 0,
+    reception_area: false,
+    suitable_for: '',
+    land_type: '',
+    plot_dimensions: '',
+    road_access: false,
+    corner_plot: false,
+    zoning_type: '',
+    utilities_available: [],
+    industrial_type: '',
+    ceiling_height: '',
+    loading_docks: '',
+    power_supply: '',
+    office_space_included: false,
+    security_features: '',
+    room_type: '',
+    number_of_occupants: 0,
+    bathroom_type: '',
+    bills_included: false,
+    gender_preference: '',
+    custom_property_type: '',
+    custom_specifications: '',
   },
-  address: { city: '', district: '', street: '', unit: '', neighborhood: [], lat: null, lng: null },
-  media: { photos: [], videoUrl: '' },
-  contact: { phone: '', whatsapp: '', email: '', termsAccepted: false },
+  address: { city: '', area_district: '', full_address: '', lat: null, lng: null },
+  amenities: {
+    security: false,
+    gym: false,
+    swimming_pool: false,
+    garden: false,
+    internet: false,
+    cable_tv: false,
+    pets_allowed: false,
+    wheelchair_access: false,
+    smart_home_features: false,
+  },
+  media: { photos: [], videoUrl: '', floorPlanUrl: '' },
+  contact: { contactName: '', phone: '', whatsapp: '', email: '', termsAccepted: false },
 };
 
 const INITIAL_VH_DATA: VehiclesFormData = {
@@ -390,7 +459,16 @@ const INITIAL_HF_DATA: HomeFurnitureFormData = {
 // Default steps for non-specialized categories
 const DEFAULT_STEPS = ['stepCategory', 'stepDetails', 'stepPhotos', 'stepContact'] as const;
 // Real estate steps
-const RE_STEPS = ['stepCategory', 'reStepType', 'reStepDetails', 'reStepAddress', 'reStepMedia', 'reStepContact'] as const;
+const RE_STEPS = [
+  'stepCategory',
+  'reStepBasic',
+  'reStepLocation',
+  'reStepPricing',
+  'reStepSpecs',
+  'reStepAmenities',
+  'reStepMedia',
+  'reStepContact',
+] as const;
 // Vehicle steps
 const VH_STEPS = ['stepCategory', 'vhStepType', 'vhStepSpecs', 'vhStepCondition', 'vhStepAddress', 'vhStepMedia', 'vhStepContact'] as const;
 // Electronics steps
@@ -607,7 +685,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
   const supabase = createClient();
 
   const detailsRef = useRef<StepDetailsHandle>(null);
-  const reDetailsRef = useRef<StepPropertyDetailsHandle>(null);
+  const reSpecsRef = useRef<StepRealEstateSpecsHandle>(null);
 
   const updateFormData = useCallback((updates: Partial<PostAdFormData>) => {
     setFormData((prev) => ({ ...prev, ...updates }));
@@ -705,7 +783,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
     return () => {
       mounted = false;
     };
-  }, [formData.categoryId, supabase]);
+  }, [formData.categoryId, supabase, locale]);
 
   useEffect(() => {
     const draftId = searchParams.get('draft');
@@ -781,14 +859,18 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         ...INITIAL_RE_DATA,
         ...draftReData,
         propertyType: draftReData.propertyType ?? INITIAL_RE_DATA.propertyType,
-        purpose: draftReData.purpose ?? INITIAL_RE_DATA.purpose,
+        listingType: draftReData.listingType ?? INITIAL_RE_DATA.listingType,
         propertyDetails: {
           ...INITIAL_RE_DATA.propertyDetails,
-          ...((draftReData.propertyDetails as Partial<PropertyDetailsData> | undefined) || {}),
+          ...((draftReData.propertyDetails as Partial<RealEstateSpecsData> | undefined) || {}),
         },
         address: {
           ...INITIAL_RE_DATA.address,
-          ...((draftReData.address as Partial<AddressData> | undefined) || {}),
+          ...((draftReData.address as Partial<RealEstateLocationData> | undefined) || {}),
+        },
+        amenities: {
+          ...INITIAL_RE_DATA.amenities,
+          ...((draftReData.amenities as Partial<RealEstateAmenitiesData> | undefined) || {}),
         },
         media: {
           ...INITIAL_RE_DATA.media,
@@ -796,7 +878,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         },
         contact: {
           ...INITIAL_RE_DATA.contact,
-          ...((draftReData.contact as Partial<ContactInfoData> | undefined) || {}),
+          ...((draftReData.contact as Partial<RealEstateContactData> | undefined) || {}),
         },
       });
       setVhData({
@@ -957,11 +1039,13 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       case 'stepDetails': return t('stepDetails');
       case 'stepPhotos': return t('stepPhotos');
       case 'stepContact': return t('stepContact');
-      case 'reStepType': return tRE('stepType');
-      case 'reStepDetails': return tRE('stepDetails');
-      case 'reStepAddress': return tRE('stepAddress');
+      case 'reStepBasic': return 'Basic Info';
+      case 'reStepLocation': return 'Location Details';
+      case 'reStepPricing': return 'Pricing & Availability';
+      case 'reStepSpecs': return 'Property Specifications';
+      case 'reStepAmenities': return 'Amenities & Features';
       case 'reStepMedia': return tRE('stepMedia');
-      case 'reStepContact': return tRE('stepContact');
+      case 'reStepContact': return 'Contact & Review';
       case 'vhStepType': return tVH('stepType');
       case 'vhStepSpecs': return tVH('stepSpecs');
       case 'vhStepCondition': return tVH('stepCondition');
@@ -1004,7 +1088,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
 
   const currentStepKey = steps[currentStep] as StepKey;
 
-  const fallbackDynamicSteps = new Set<StepKey>(['stepDetails', 'reStepDetails', 'vhStepSpecs']);
+  const fallbackDynamicSteps = new Set<StepKey>(['stepDetails', 'reStepSpecs', 'vhStepSpecs']);
   const hasStepScopedWizard = wizardConfig.sections.some((s) => !!s.step) || wizardConfig.lists.some((l) => !!l.step);
   const dynamicConfigForCurrentStep = getConfigForStep(wizardConfig, currentStepKey);
   const hasDynamicFields = dynamicConfigForCurrentStep.sections.length > 0 || dynamicConfigForCurrentStep.lists.length > 0;
@@ -1023,14 +1107,28 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       case 'stepContact':
         return formData.city !== '' && formData.phone !== '' && formData.termsAccepted;
       // Real estate steps
-      case 'reStepType':
-        return reData.propertyType !== '' && reData.purpose !== '';
-      case 'reStepDetails':
-        return requiredDynamicValid;
-      case 'reStepAddress':
+      case 'reStepBasic':
+        return (
+          reData.propertyType !== '' &&
+          reData.listingType !== '' &&
+          reData.propertyDetails.title.trim().length >= 3 &&
+          reData.propertyDetails.description.trim().length >= 10
+        );
+      case 'reStepLocation':
         return reData.address.city !== '';
-      case 'reStepMedia':
+      case 'reStepPricing':
+        return (
+          reData.propertyDetails.price !== '' &&
+          reData.propertyDetails.currency !== '' &&
+          reData.propertyDetails.price_type !== '' &&
+          reData.propertyDetails.available_from !== ''
+        );
+      case 'reStepSpecs':
+        return requiredDynamicValid;
+      case 'reStepAmenities':
         return true;
+      case 'reStepMedia':
+        return reData.media.photos.length >= 1;
       case 'reStepContact':
         return reData.contact.phone !== '' && reData.contact.termsAccepted;
       // Vehicle steps
@@ -1206,8 +1304,8 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       const valid = await detailsRef.current.validate();
       if (!valid) return;
     }
-    if (currentStepKey === 'reStepDetails' && reDetailsRef.current) {
-      const valid = await reDetailsRef.current.validate();
+    if (currentStepKey === 'reStepSpecs' && reSpecsRef.current) {
+      const valid = await reSpecsRef.current.validate();
       if (!valid) return;
     }
 
@@ -1268,9 +1366,11 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       if (isRealEstate) {
         metadata = {
           propertyType: reData.propertyType,
-          purpose: reData.purpose,
+          listingType: reData.listingType,
           ...reData.propertyDetails,
-          ...reData.address,
+          amenities: reData.amenities,
+          address: reData.address,
+          contact: reData.contact,
           wizard_forms: wizardValues,
         };
         title = reData.propertyDetails.title || title;
@@ -1279,7 +1379,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         currency = reData.propertyDetails.currency || currency;
         city = reData.address.city || city;
         _phone = reData.contact.phone || _phone;
-        condition = 'good';
+        condition = reData.propertyDetails.condition || condition;
         photosList = reData.media.photos;
       } else if (isVehicles) {
         const isSourceOwner = vhData.condition.sellerSource === 'owner';
@@ -1687,22 +1787,66 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
           />
         );
       // Real Estate steps
-      case 'reStepType':
+      case 'reStepBasic':
         return (
-          <StepPropertyType
+          <StepRealEstateBasicInfo
             locale={locale}
             propertyType={reData.propertyType}
-            purpose={reData.purpose}
-            onChange={(data) => updateREData(data as Partial<RealEstateFormData>)}
+            listingType={reData.listingType}
+            title={reData.propertyDetails.title}
+            description={reData.propertyDetails.description}
+            onChange={(data) => {
+              if (data.propertyType || data.listingType) {
+                updateREData(data as Partial<RealEstateFormData>);
+              } else {
+                setReData((prev) => ({
+                  ...prev,
+                  propertyDetails: { ...prev.propertyDetails, ...data },
+                }));
+              }
+            }}
           />
         );
-      case 'reStepDetails':
+      case 'reStepLocation':
         return (
-          <StepPropertyDetails
-            ref={reDetailsRef}
+          <StepRealEstateLocation
             locale={locale}
-            purpose={reData.purpose as PropertyPurpose}
-            propertyType={reData.propertyType as PropertyType}
+            data={reData.address}
+            onChange={(data) =>
+              setReData((prev) => ({
+                ...prev,
+                address: { ...prev.address, ...data },
+              }))
+            }
+          />
+        );
+      case 'reStepPricing':
+        return (
+          <StepRealEstatePricing
+            locale={locale}
+            listingType={reData.listingType as ListingType}
+            data={{
+              price: reData.propertyDetails.price,
+              currency: reData.propertyDetails.currency,
+              price_type: reData.propertyDetails.price_type as RealEstatePriceType,
+              negotiable: reData.propertyDetails.negotiable,
+              available_from: reData.propertyDetails.available_from,
+              furnishing: reData.propertyDetails.furnishing as RealEstateFurnishing,
+            }}
+            onChange={(data) =>
+              setReData((prev) => ({
+                ...prev,
+                propertyDetails: { ...prev.propertyDetails, ...data },
+              }))
+            }
+          />
+        );
+      case 'reStepSpecs':
+        return (
+          <StepRealEstateSpecs
+            ref={reSpecsRef}
+            locale={locale}
+            propertyType={reData.propertyType || 'other'}
             data={reData.propertyDetails}
             onChange={(data) =>
               setReData((prev) => ({
@@ -1712,15 +1856,15 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
             }
           />
         );
-      case 'reStepAddress':
+      case 'reStepAmenities':
         return (
-          <StepAddress
+          <StepRealEstateAmenities
             locale={locale}
-            data={reData.address}
+            data={reData.amenities}
             onChange={(data) =>
               setReData((prev) => ({
                 ...prev,
-                address: { ...prev.address, ...data },
+                amenities: { ...prev.amenities, ...data },
               }))
             }
           />
@@ -1740,15 +1884,27 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         );
       case 'reStepContact':
         return (
-          <StepContactInfo
+          <StepRealEstateContactReview
             locale={locale}
-            data={reData.contact}
+            contact={reData.contact}
+            location={reData.address}
+            pricing={{
+              price: reData.propertyDetails.price,
+              currency: reData.propertyDetails.currency,
+              price_type: reData.propertyDetails.price_type as RealEstatePriceType,
+              negotiable: reData.propertyDetails.negotiable,
+              available_from: reData.propertyDetails.available_from,
+              furnishing: reData.propertyDetails.furnishing as RealEstateFurnishing,
+            }}
+            specs={reData.propertyDetails}
+            amenities={reData.amenities}
             onChange={(data) =>
               setReData((prev) => ({
                 ...prev,
                 contact: { ...prev.contact, ...data },
               }))
             }
+            onJumpToStep={(stepIndex) => setCurrentStep(stepIndex)}
           />
         );
       // Vehicle steps
@@ -2357,15 +2513,16 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-28 md:pb-0">
       {/* Progress Bar */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-        <div className={`flex items-center justify-between ${rtl ? 'flex-row-reverse' : ''}`}>
+      <div className="overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white p-4 shadow-sm md:p-6">
+        <div className={`flex items-center gap-2 overflow-x-auto pb-1 ${rtl ? 'flex-row-reverse' : ''}`}>
           {steps.map((step, index) => (
             <React.Fragment key={step}>
-              <div className="flex flex-col items-center gap-2">
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-colors ${
+              <div className="flex min-w-[4.5rem] flex-col items-center gap-2">
+                <motion.div
+                  animate={{ scale: index === currentStep ? 1.06 : 1 }}
+                  className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold transition-colors ${
                     index < currentStep
                       ? 'bg-green-500 text-white'
                       : index === currentStep
@@ -2374,9 +2531,9 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
                   }`}
                 >
                   {index < currentStep ? <Check className="w-5 h-5" /> : index + 1}
-                </div>
+                </motion.div>
                 <span
-                  className={`text-xs font-medium text-center hidden sm:block ${
+                  className={`text-center text-[11px] font-medium ${
                     index === currentStep ? 'text-primary-600' : 'text-slate-500'
                   }`}
                 >
@@ -2385,7 +2542,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
               </div>
               {index < steps.length - 1 && (
                 <div
-                  className={`flex-1 h-0.5 mx-2 ${
+                  className={`mx-1 hidden h-0.5 flex-1 sm:block ${
                     index < currentStep ? 'bg-green-500' : 'bg-slate-200'
                   }`}
                 />
@@ -2396,14 +2553,24 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       </div>
 
       {/* Step Content */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+      <div className="overflow-hidden rounded-[1.75rem] border border-slate-200 bg-white p-4 shadow-sm md:p-6">
         {submitError && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm mb-4 flex items-center justify-between">
             <span>{submitError}</span>
             <button onClick={() => setSubmitError(null)} className="text-red-500 hover:text-red-700 font-bold ml-2">&times;</button>
           </div>
         )}
-        {renderStepContent()}
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={currentStepKey}
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.24 }}
+          >
+            {renderStepContent()}
+          </motion.div>
+        </AnimatePresence>
         {loadingWizardConfig && shouldShowDynamicFields && (
           <p className="text-sm text-slate-500 mt-4">Loading extra fields...</p>
         )}
@@ -2418,11 +2585,12 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       </div>
 
       {/* Navigation Buttons */}
-      <div className={`flex items-center justify-between gap-2 flex-wrap ${rtl ? 'flex-row-reverse' : ''}`}>
+      <div className={cn('fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/92 px-4 py-3 shadow-[0_-12px_30px_rgba(15,23,42,0.08)] backdrop-blur-sm md:static md:border-0 md:bg-transparent md:px-0 md:py-0 md:shadow-none', rtl && 'text-right')}>
+        <div className={`mx-auto flex max-w-3xl items-center justify-between gap-2 flex-wrap ${rtl ? 'flex-row-reverse' : ''}`}>
         <button
           onClick={handleBack}
           disabled={currentStep === 0}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition ${
+          className={`flex min-w-[8.5rem] items-center justify-center gap-2 rounded-2xl px-5 py-3 font-medium transition ${
             currentStep === 0
               ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
               : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
@@ -2432,13 +2600,13 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
           {tCommon('previous')}
         </button>
 
-        <div className={`flex items-center gap-2 ${rtl ? 'flex-row-reverse' : ''}`}>
+        <div className={`flex flex-1 items-center justify-end gap-2 ${rtl ? 'flex-row-reverse' : ''}`}>
           {/* Save Draft */}
           {formData.categoryId !== null && (
             <button
               onClick={handleSaveDraft}
               disabled={savingDraft}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium transition border-2 ${
+              className={`hidden items-center gap-2 rounded-2xl border-2 px-4 py-3 font-medium transition md:inline-flex ${
                 draftSaved
                   ? 'border-green-400 bg-green-50 text-green-700'
                   : 'border-slate-300 bg-white text-slate-600 hover:border-primary-300 hover:bg-primary-50'
@@ -2489,7 +2657,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
             <button
               onClick={handleNext}
               disabled={!canProceed()}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition ${
+              className={`flex flex-1 items-center justify-center gap-2 rounded-2xl px-5 py-3 font-medium transition md:flex-none ${
                 canProceed()
                   ? 'bg-primary-600 text-white hover:bg-primary-700'
                   : 'bg-primary-300 text-white cursor-not-allowed'
@@ -2504,7 +2672,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
               <button
                 onClick={() => setShowPreview(true)}
                 disabled={!canProceed()}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition border-2 ${
+                className={`hidden items-center gap-2 rounded-2xl border-2 px-5 py-3 font-medium transition md:inline-flex ${
                   canProceed()
                     ? 'border-orange-400 bg-orange-50 text-orange-700 hover:bg-orange-100'
                     : 'border-slate-200 bg-slate-100 text-slate-400 cursor-not-allowed'
@@ -2517,7 +2685,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
               <button
                 onClick={handleSubmit}
                 disabled={!canProceed() || submitting}
-                className={`flex items-center gap-2 px-6 py-2.5 rounded-lg font-medium transition ${
+                className={`flex flex-1 items-center justify-center gap-2 rounded-2xl px-6 py-3 font-medium transition md:flex-none ${
                   canProceed() && !submitting
                     ? 'bg-primary-600 text-white hover:bg-primary-700'
                     : 'bg-primary-300 text-white cursor-not-allowed'
@@ -2530,11 +2698,12 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
           )}
         </div>
       </div>
+      </div>
 
       {/* Preview Modal */}
       {showPreview && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto p-6">
+          <div className="max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-[2rem] border border-slate-200 bg-white p-6 shadow-xl">
             <div className={`flex items-center justify-between mb-6 ${rtl ? 'flex-row-reverse' : ''}`}>
               <h2 className="text-xl font-bold text-slate-900">{t('previewAd')}</h2>
               <button

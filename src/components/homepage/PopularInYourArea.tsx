@@ -2,10 +2,13 @@
 
 import React, { useMemo } from 'react';
 import { useTranslations } from 'next-intl';
-import { MapPin, Loader2 } from 'lucide-react';
+import { motion } from 'framer-motion';
+import Image from 'next/image';
+import { MapPin } from 'lucide-react';
 import Link from 'next/link';
 import { Locale, isRTL } from '@/lib/i18n/config';
 import { useListings } from '@/lib/hooks/useListings';
+import { ListingCardSkeleton } from '@/components/common/Skeleton';
 
 interface PopularInYourAreaProps {
   locale: Locale;
@@ -57,8 +60,17 @@ export const PopularInYourArea: React.FC<PopularInYourAreaProps> = ({ locale, ti
       </div>
 
       {loading ? (
-        <div className="flex justify-center py-8">
-          <Loader2 className="w-6 h-6 text-primary-600 animate-spin" />
+        <div className="space-y-4 py-2">
+          {Array.from({ length: 3 }).map((_, row) => (
+            <div key={row} className="space-y-2">
+              <div className="h-4 w-24 animate-pulse rounded-full bg-slate-200" />
+              <div className="grid grid-flow-col auto-cols-[10rem] gap-3 overflow-hidden">
+                {Array.from({ length: 3 }).map((__, index) => (
+                  <ListingCardSkeleton key={`${row}-${index}`} compact />
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       ) : cityListings.length === 0 ? (
         <p className="text-slate-400 text-sm text-center py-8">{titleOverride || t('popular')}</p>
@@ -85,18 +97,22 @@ export const PopularInYourArea: React.FC<PopularInYourAreaProps> = ({ locale, ti
                 className={`flex gap-3 overflow-x-auto pb-1 snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${isRtl ? 'flex-row-reverse' : ''}`}
               >
                 {items.map((listing) => (
-                  <Link
+                  <motion.div key={listing.id} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.22 }}>
+                    <Link
                     key={listing.id}
                     href={`/${locale}/listing/${listing.id}`}
                     className="group flex-shrink-0 w-40 snap-start"
                   >
                     <div className="border border-slate-200 rounded-md overflow-hidden bg-white hover:border-sky-300 hover:shadow-md transition">
-                      <div className="aspect-[4/3] bg-slate-100 overflow-hidden">
+                      <div className="relative aspect-[4/3] bg-slate-100 overflow-hidden">
                         {listing.photos?.[0] ? (
-                          <img
+                          <Image
                             src={listing.photos[0]}
                             alt={listing.title}
-                            className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-300"
+                            fill
+                            unoptimized
+                            sizes="160px"
+                            className="object-cover group-hover:scale-[1.04] transition-transform duration-300"
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center bg-slate-100">
@@ -113,7 +129,8 @@ export const PopularInYourArea: React.FC<PopularInYourAreaProps> = ({ locale, ti
                         </p>
                       </div>
                     </div>
-                  </Link>
+                    </Link>
+                  </motion.div>
                 ))}
               </div>
             </div>

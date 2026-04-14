@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { Edit2, Image as ImageIcon } from 'lucide-react';
 import { isRTL, Locale } from '@/lib/i18n/config';
@@ -177,10 +178,9 @@ export const StepElectronicsReview: React.FC<StepElectronicsReviewProps> = ({
 					{media.photos.length > 0 ? (
 						<div className="flex flex-wrap gap-2">
 							{media.photos.slice(0, 6).map((photo, i) => (
-								<div key={i} className="w-14 h-14 rounded-lg overflow-hidden border border-slate-200 bg-slate-100">
+								<div key={i} className="relative w-14 h-14 rounded-lg overflow-hidden border border-slate-200 bg-slate-100">
 									{photo.url ? (
-										// eslint-disable-next-line @next/next/no-img-element
-										<img src={photo.url} alt="" className="w-full h-full object-cover" />
+										<Image src={photo.url} alt="" fill unoptimized sizes="56px" className="object-cover" />
 									) : (
 										<div className="w-full h-full flex items-center justify-center">
 											<ImageIcon className="w-5 h-5 text-slate-300" />

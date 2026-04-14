@@ -4,9 +4,12 @@
 import React from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
+import Image from 'next/image';
+import { motion } from 'framer-motion';
 import { MessageCircle } from 'lucide-react';
 import { Locale, isRTL } from '@/lib/i18n/config';
 import { Conversation } from '@/lib/chat/actions';
+import { Skeleton } from '@/components/common/Skeleton';
 
 interface ConversationListProps {
   locale: Locale;
@@ -46,9 +49,18 @@ export const ConversationList: React.FC<ConversationListProps> = ({
 
   if (loading) {
     return (
-      <div className="p-6 text-center text-slate-400">
-        <div className="w-6 h-6 border-2 border-slate-300 border-t-primary-500 rounded-full animate-spin mx-auto mb-2" />
-        {t('loading')}
+      <div className="space-y-2 p-3">
+        {Array.from({ length: 7 }).map((_, index) => (
+          <div key={index} className="rounded-2xl border border-slate-200 bg-white p-3">
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-10 w-10 rounded-xl" />
+              <div className="space-y-2 flex-1">
+                <Skeleton className="h-4 w-1/3" />
+                <Skeleton className="h-3 w-2/3" />
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     );
   }
@@ -63,15 +75,18 @@ export const ConversationList: React.FC<ConversationListProps> = ({
   }
 
   return (
-    <div className="divide-y divide-slate-100">
+    <div className="space-y-1 p-2">
       {conversations.map((conv) => {
         const isActive = conv.id === activeId;
         const hasUnread = (conv.unread_count || 0) > 0;
         const initial = (conv.other_user_name || 'U').charAt(0).toUpperCase();
 
         return (
-          <div
+          <motion.div
             key={conv.id}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
             role="button"
             tabIndex={0}
             onClick={() => onSelect(conv)}
@@ -82,15 +97,15 @@ export const ConversationList: React.FC<ConversationListProps> = ({
               }
             }}
             className={`
-              w-full p-3 transition-colors cursor-pointer
+              w-full rounded-2xl border p-3 transition-all cursor-pointer
               ${isRtl ? 'text-right' : 'text-left'}
-              ${isActive ? 'bg-primary-50 border-l-2 border-primary-500' : hasUnread ? 'bg-primary-50/50 hover:bg-primary-50' : 'hover:bg-slate-50'}
+              ${isActive ? 'bg-primary-50 border-primary-300 shadow-sm' : hasUnread ? 'bg-primary-50/60 border-primary-100 hover:bg-primary-50' : 'border-transparent hover:border-slate-200 hover:bg-white'}
             `}
           >
             <div className={`flex items-start gap-3 ${isRtl ? 'flex-row-reverse' : ''}`}>
-              <div className="w-10 h-10 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center font-semibold text-sm flex-shrink-0 overflow-hidden">
+              <div className="relative w-10 h-10 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center font-semibold text-sm flex-shrink-0 overflow-hidden">
                 {conv.other_user_avatar ? (
-                  <img src={conv.other_user_avatar} alt={conv.other_user_name || 'User'} className="w-full h-full object-cover" />
+                  <Image src={conv.other_user_avatar} alt={conv.other_user_name || 'User'} fill unoptimized sizes="40px" className="object-cover" />
                 ) : (
                   initial
                 )}
@@ -132,7 +147,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
                       e.stopPropagation();
                       onDelete(conv);
                     }}
-                    className="text-xs text-slate-400 hover:text-red-600 px-1"
+                    className="rounded-lg px-1.5 py-1 text-xs text-slate-400 hover:bg-red-50 hover:text-red-600"
                     aria-label={t('delete')}
                     title={t('delete')}
                   >
@@ -141,7 +156,7 @@ export const ConversationList: React.FC<ConversationListProps> = ({
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
         );
       })}
     </div>

@@ -57,13 +57,35 @@ export interface VehicleFilters {
 export interface RealEstateFilters {
   purpose?: string;
   propertyType?: string;
-  areaGrossMin?: number;
-  areaGrossMax?: number;
-  areaNetMin?: number;
-  areaNetMax?: number;
-  rooms?: number;
-  balcony?: number;
-  buildingAge?: string;
+  city?: string;
+  area?: string;
+  priceMin?: number;
+  priceMax?: number;
+  currency?: string;
+  bedroomsMin?: number;
+  bedroomsMax?: number;
+  bathroomsMin?: number;
+  bathroomsMax?: number;
+  areaSizeMin?: number;
+  areaSizeMax?: number;
+  floorNumber?: number;
+  yearBuiltMin?: number;
+  yearBuiltMax?: number;
+  parkingSpaces?: number;
+  balcony?: boolean;
+  elevator?: boolean;
+  furnishing?: string;
+  condition?: string;
+  kitchenType?: string;
+  commercialType?: string;
+  meetingRooms?: number;
+  washrooms?: number;
+  landType?: string;
+  roadAccess?: boolean;
+  cornerPlot?: boolean;
+  industrialType?: string;
+  ceilingHeight?: string;
+  loadingDocks?: string;
 }
 
 export interface ElectronicsFilters {
@@ -340,11 +362,6 @@ function applyVehicleFilters(listings: Listing[], vf?: VehicleFilters): Listing[
   });
 }
 
-function toNumberOrNaN(value: unknown): number {
-  const n = Number(value);
-  return Number.isFinite(n) ? n : NaN;
-}
-
 function applyRealEstateFilters(listings: Listing[], rf?: RealEstateFilters): Listing[] {
   if (!rf) return listings;
 
@@ -353,22 +370,47 @@ function applyRealEstateFilters(listings: Listing[], rf?: RealEstateFilters): Li
 
     if (rf.purpose && String(m.purpose ?? '') !== rf.purpose) return false;
     if (rf.propertyType && String(m.propertyType ?? '') !== rf.propertyType) return false;
+    if (rf.city && String(m.city ?? '') !== rf.city) return false;
+    if (rf.area && String(m.area ?? '') !== rf.area) return false;
 
-    const areaGross = toNumberOrNaN(m.areaGross);
-    if (rf.areaGrossMin !== undefined && !isNaN(areaGross) && areaGross < rf.areaGrossMin) return false;
-    if (rf.areaGrossMax !== undefined && !isNaN(areaGross) && areaGross > rf.areaGrossMax) return false;
+    if (rf.priceMin !== undefined && !isNaN(Number(m.price)) && Number(m.price) < rf.priceMin) return false;
+    if (rf.priceMax !== undefined && !isNaN(Number(m.price)) && Number(m.price) > rf.priceMax) return false;
+    if (rf.currency && String(m.currency ?? '') !== rf.currency) return false;
 
-    const areaNet = toNumberOrNaN(m.areaNet);
-    if (rf.areaNetMin !== undefined && !isNaN(areaNet) && areaNet < rf.areaNetMin) return false;
-    if (rf.areaNetMax !== undefined && !isNaN(areaNet) && areaNet > rf.areaNetMax) return false;
+    if (rf.bedroomsMin !== undefined && !isNaN(Number(m.bedrooms)) && Number(m.bedrooms) < rf.bedroomsMin) return false;
+    if (rf.bedroomsMax !== undefined && !isNaN(Number(m.bedrooms)) && Number(m.bedrooms) > rf.bedroomsMax) return false;
 
-    const rooms = toNumberOrNaN(m.rooms);
-    if (rf.rooms !== undefined && !isNaN(rooms) && rooms !== rf.rooms) return false;
+    if (rf.bathroomsMin !== undefined && !isNaN(Number(m.bathrooms)) && Number(m.bathrooms) < rf.bathroomsMin) return false;
+    if (rf.bathroomsMax !== undefined && !isNaN(Number(m.bathrooms)) && Number(m.bathrooms) > rf.bathroomsMax) return false;
 
-    const balcony = toNumberOrNaN(m.balcony);
-    if (rf.balcony !== undefined && !isNaN(balcony) && balcony !== rf.balcony) return false;
+    if (rf.areaSizeMin !== undefined && !isNaN(Number(m.areaSize)) && Number(m.areaSize) < rf.areaSizeMin) return false;
+    if (rf.areaSizeMax !== undefined && !isNaN(Number(m.areaSize)) && Number(m.areaSize) > rf.areaSizeMax) return false;
 
-    if (rf.buildingAge && String(m.buildingAge ?? '') !== rf.buildingAge) return false;
+    if (rf.floorNumber !== undefined && !isNaN(Number(m.floorNumber)) && Number(m.floorNumber) !== rf.floorNumber) return false;
+
+    if (rf.yearBuiltMin !== undefined && !isNaN(Number(m.yearBuilt)) && Number(m.yearBuilt) < rf.yearBuiltMin) return false;
+    if (rf.yearBuiltMax !== undefined && !isNaN(Number(m.yearBuilt)) && Number(m.yearBuilt) > rf.yearBuiltMax) return false;
+
+    if (rf.parkingSpaces !== undefined && !isNaN(Number(m.parkingSpaces)) && Number(m.parkingSpaces) !== rf.parkingSpaces) return false;
+
+    if (rf.balcony !== undefined && Boolean(m.balcony) !== rf.balcony) return false;
+    if (rf.elevator !== undefined && Boolean(m.elevator) !== rf.elevator) return false;
+
+    if (rf.furnishing && String(m.furnishing ?? '') !== rf.furnishing) return false;
+    if (rf.condition && String(m.condition ?? '') !== rf.condition) return false;
+    if (rf.kitchenType && String(m.kitchenType ?? '') !== rf.kitchenType) return false;
+
+    if (rf.commercialType && String(m.commercialType ?? '') !== rf.commercialType) return false;
+    if (rf.meetingRooms !== undefined && !isNaN(Number(m.meetingRooms)) && Number(m.meetingRooms) !== rf.meetingRooms) return false;
+    if (rf.washrooms !== undefined && !isNaN(Number(m.washrooms)) && Number(m.washrooms) !== rf.washrooms) return false;
+
+    if (rf.landType && String(m.landType ?? '') !== rf.landType) return false;
+    if (rf.roadAccess !== undefined && Boolean(m.roadAccess) !== rf.roadAccess) return false;
+    if (rf.cornerPlot !== undefined && Boolean(m.cornerPlot) !== rf.cornerPlot) return false;
+
+    if (rf.industrialType && String(m.industrialType ?? '') !== rf.industrialType) return false;
+    if (rf.ceilingHeight && String(m.ceilingHeight ?? '') !== rf.ceilingHeight) return false;
+    if (rf.loadingDocks && String(m.loadingDocks ?? '') !== rf.loadingDocks) return false;
 
     return true;
   });
@@ -688,6 +730,9 @@ export function useListings(filters: ListingFilters = {}) {
   const fetchListings = useCallback(async () => {
     setLoading(true);
     setError(null);
+    // Keep explicit dependency on searchTick for manual re-search triggers.
+    const searchTick = filters.searchTick;
+    void searchTick;
 
     try {
       let query = supabase
@@ -923,20 +968,13 @@ export function useListings(filters: ListingFilters = {}) {
     filters.sortBy,
     filters.limit,
     filters.searchTick,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    JSON.stringify(filters.vehicleFilters),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    JSON.stringify(filters.realEstateFilters),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    JSON.stringify(filters.electronicsFilters),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    JSON.stringify(filters.fashionFilters),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    JSON.stringify(filters.sparePartsFilters),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    JSON.stringify(filters.healthBeautyFilters),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    JSON.stringify(filters.homeFurnitureFilters),
+    filters.vehicleFilters,
+    filters.realEstateFilters,
+    filters.electronicsFilters,
+    filters.fashionFilters,
+    filters.sparePartsFilters,
+    filters.healthBeautyFilters,
+    filters.homeFurnitureFilters,
   ]);
 
   // Initial fetch
@@ -961,7 +999,7 @@ export function useListings(filters: ListingFilters = {}) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [supabase, fetchListings]);
+  }, [supabase, fetchListings, channelName]);
 
   return { listings, loading, error, refetch: fetchListings };
 }
