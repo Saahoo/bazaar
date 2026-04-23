@@ -33,6 +33,7 @@ import { StepElectronicsBasicInfo } from './electronics/StepElectronicsBasicInfo
 import { StepElectronicsSpecs } from './electronics/StepElectronicsSpecs';
 import { StepElectronicsMedia, ElectronicsMediaData } from './electronics/StepElectronicsMedia';
 import { StepElectronicsDetails } from './electronics/StepElectronicsDetails';
+import { StepElectronicsContact } from './electronics/StepElectronicsContact';
 import { StepElectronicsReview } from './electronics/StepElectronicsReview';
 import { StepFashionBasicInfo } from './fashion/StepFashionBasicInfo';
 import { StepFashionGeneralDetails } from './fashion/StepFashionGeneralDetails';
@@ -59,12 +60,26 @@ import { StepHomeFurnitureSpecs } from './home-furniture/StepHomeFurnitureSpecs'
 import { StepHomeFurnitureMedia, HomeFurnitureMediaData } from './home-furniture/StepHomeFurnitureMedia';
 import { StepHomeFurnitureContact } from './home-furniture/StepHomeFurnitureContact';
 import { StepHomeFurnitureReview } from './home-furniture/StepHomeFurnitureReview';
+import { StepServicesBasicInfo } from './services/StepServicesBasicInfo';
+import { StepServicesLocation } from './services/StepServicesLocation';
+import { StepServicesPricing } from './services/StepServicesPricing';
+import { StepServicesDetails } from './services/StepServicesDetails';
+import { StepServicesMedia, ServicesMediaData } from './services/StepServicesMedia';
+import { StepServicesContact } from './services/StepServicesContact';
+import { StepServicesReview } from './services/StepServicesReview';
+import { StepJobBasicInfo } from './jobs/StepJobBasicInfo';
+import { StepJobDescription } from './jobs/StepJobDescription';
+import { StepJobCompensation } from './jobs/StepJobCompensation';
+import { StepJobContact } from './jobs/StepJobContact';
+import { StepJobReview } from './jobs/StepJobReview';
 import { DynamicWizardFields, WizardFormConfig, isWizardRequiredFieldsValid } from './DynamicWizardFields';
 import { ElectronicsSubcategory, getElectronicsSpecsConfig, hasConditionInSpecs } from '@/lib/constants/electronics-wizard';
 import { FashionSubcategory, FASHION_BRANDS_BY_SUBCATEGORY, FASHION_SUBCATEGORY_LABEL_KEYS, getFashionSpecsConfig } from '@/lib/constants/fashion-wizard';
 import { getHealthBeautySpecsConfig, HealthBeautySubcategory } from '@/lib/constants/health-beauty-wizard';
 import { HomeFurnitureSubcategory, getHomeFurnitureSpecsConfig } from '@/lib/constants/home-furniture-wizard';
 import { SparePartsSubcategory, VEHICLE_SPARE_SUBCATEGORIES, ELECTRONICS_OR_MACHINERY_SUBCATEGORIES } from '@/lib/constants/spare-parts-wizard';
+import { ServicesSubcategory, getServicesSpecsConfig, ServiceType, PricingType } from '@/lib/constants/services-wizard';
+import { EmploymentType, ExperienceLevel, Currency, ApplicationMethod } from '@/lib/constants/jobs-wizard';
 import type { VehicleType as VehicleTypeEnum } from '@/lib/constants/vehicles';
 import { cn } from '@/lib/utils/cn';
 
@@ -77,6 +92,8 @@ const SPARE_PARTS_SLUG = 'spare-parts';
 const HEALTH_BEAUTY_SLUGS = ['health-beauty', 'health-and-beauty', 'health-beauty-products'];
 const HEALTH_BEAUTY_CATEGORY_ID = 13;
 const HOME_FURNITURE_SLUGS = ['home-furniture', 'home-and-furniture', 'furniture'];
+const SERVICES_SLUGS = ['services'];
+const JOBS_SLUGS = ['jobs', 'job'];
 
 export interface PostAdFormData {
   categoryId: number | null;
@@ -228,6 +245,76 @@ export interface HomeFurnitureFormData {
   termsAccepted: boolean;
   specs: Record<string, unknown>;
   media: HomeFurnitureMediaData;
+}
+
+export interface ServicesFormData {
+  subcategory: ServicesSubcategory | '';
+  service_type: ServiceType | '';
+  title: string;
+  description: string;
+  city: string;
+  area: string;
+  service_radius_km: number | '';
+  multiple_cities: string[];
+  days_available: string[];
+  working_hours_from: string;
+  working_hours_to: string;
+  emergency_service: boolean;
+  advance_booking_required: boolean;
+  pricing_type: PricingType | '';
+  price: number | '';
+  currency: string;
+  negotiable: boolean;
+  call_out_fee: boolean;
+  call_out_fee_amount: number | '';
+  contact_name: string;
+  lat: number | null;
+  lng: number | null;
+  phone: string;
+  whatsapp: string;
+  email: string;
+  website: string;
+  social_media_links: string;
+  termsAccepted: boolean;
+  specs: Record<string, unknown>;
+  media: ServicesMediaData;
+}
+
+export interface JobsFormData {
+  // Step 1: Basic Details
+  jobTitle: string;
+  employmentType: 'full-time' | 'part-time' | 'contract' | 'internship' | 'temporary' | '';
+  isRemote: boolean;
+  country: string;
+  city: string;
+  workCanBeDoneRemotely: boolean;
+  
+  // Step 2: Description & Requirements
+  jobDescription: string;
+  responsibilities: string[];
+  requirements: string[];
+  preferredQualifications: string[];
+  experienceLevel: 'entry-level' | 'mid-level' | 'senior' | 'executive' | '';
+  
+  // Step 3: Compensation & Logistics
+  currency: Currency;
+  minSalary: number | '';
+  maxSalary: number | '';
+  salaryNegotiable: boolean;
+  salaryNotDisclosed: boolean;
+  benefits: string[];
+  otherBenefits: string;
+  applicationDeadline: string;
+  applicationMethod: ApplicationMethod | '';
+  applicationEmail: string;
+  applicationUrl: string;
+  hiringManagerName: string;
+  
+  // Common/Contact fields
+  contactPhone: string;
+  contactEmail: string;
+  termsAccepted: boolean;
+  photos: { photos: string[] };
 }
 
 const INITIAL_FORM_DATA: PostAdFormData = {
@@ -456,6 +543,82 @@ const INITIAL_HF_DATA: HomeFurnitureFormData = {
   },
 };
 
+const INITIAL_SERVICES_DATA: ServicesFormData = {
+  subcategory: '',
+  service_type: '',
+  title: '',
+  description: '',
+  city: '',
+  area: '',
+  service_radius_km: '',
+  multiple_cities: [],
+  days_available: [],
+  working_hours_from: '',
+  working_hours_to: '',
+  emergency_service: false,
+  advance_booking_required: false,
+  pricing_type: '',
+  price: '',
+  currency: 'AFN',
+  negotiable: false,
+  call_out_fee: false,
+  call_out_fee_amount: '',
+  contact_name: '',
+  lat: null,
+  lng: null,
+  phone: '',
+  whatsapp: '',
+  email: '',
+  website: '',
+  social_media_links: '',
+  termsAccepted: false,
+  specs: {},
+  media: {
+    images: [],
+    has_video: false,
+    video: '',
+    has_documents: false,
+    documents: '',
+  },
+};
+
+const INITIAL_JOBS_DATA: JobsFormData = {
+  // Step 1: Basic Details
+  jobTitle: '',
+  employmentType: '' as EmploymentType | '',
+  isRemote: false,
+  country: '',
+  city: '',
+  workCanBeDoneRemotely: false,
+  
+  // Step 2: Description & Requirements
+  jobDescription: '',
+  responsibilities: [''],
+  requirements: [''],
+  preferredQualifications: [''],
+  experienceLevel: '' as ExperienceLevel | '',
+  
+  // Step 3: Compensation & Logistics
+  currency: 'AFN' as Currency,
+  minSalary: '' as number | '',
+  maxSalary: '' as number | '',
+  salaryNegotiable: false,
+  salaryNotDisclosed: false,
+  benefits: [] as string[],
+  otherBenefits: '',
+  applicationDeadline: '',
+  applicationMethod: '' as ApplicationMethod | '',
+  applicationEmail: '',
+  applicationUrl: '',
+  hiringManagerName: '',
+  
+  // Common/Contact fields
+  contactPhone: '',
+  contactEmail: '',
+  termsAccepted: false,
+  photos: { photos: [] },
+};
+
 // Default steps for non-specialized categories
 const DEFAULT_STEPS = ['stepCategory', 'stepDetails', 'stepPhotos', 'stepContact'] as const;
 // Real estate steps
@@ -472,7 +635,7 @@ const RE_STEPS = [
 // Vehicle steps
 const VH_STEPS = ['stepCategory', 'vhStepType', 'vhStepSpecs', 'vhStepCondition', 'vhStepAddress', 'vhStepMedia', 'vhStepContact'] as const;
 // Electronics steps
-const EL_STEPS = ['stepCategory', 'elStepBasic', 'elStepSpecs', 'elStepMedia', 'elStepDetails', 'elStepReview'] as const;
+const EL_STEPS = ['stepCategory', 'elStepBasic', 'elStepSpecs', 'elStepMedia', 'elStepDetails', 'elStepContact', 'elStepReview'] as const;
 // Fashion & Clothing steps
 const FA_STEPS = ['stepCategory', 'faStepBasic', 'faStepGeneral', 'faStepSpecs', 'faStepMedia', 'faStepContact', 'faStepReview'] as const;
 // Spare parts steps
@@ -481,6 +644,10 @@ const SP_STEPS = ['stepCategory', 'spStepBasic', 'spStepGeneral', 'spStepCompati
 const HB_STEPS = ['stepCategory', 'hbStepBasic', 'hbStepGeneral', 'hbStepSpecs', 'hbStepMedia', 'hbStepContact', 'hbStepReview'] as const;
 // Home & Furniture steps
 const HF_STEPS = ['stepCategory', 'hfStepBasic', 'hfStepGeneral', 'hfStepSpecs', 'hfStepMedia', 'hfStepContact', 'hfStepReview'] as const;
+// Services steps
+const SERVICES_STEPS = ['stepCategory', 'srvStepBasic', 'srvStepLocation', 'srvStepPricing', 'srvStepDetails', 'srvStepMedia', 'srvStepContact', 'srvStepReview'] as const;
+// Jobs steps
+const JOBS_STEPS = ['stepCategory', 'jobStepBasic', 'jobStepDescription', 'jobStepCompensation', 'jobStepContact', 'jobStepReview'] as const;
 
 const isFashionSlug = (categorySlug: string | null): boolean => {
   if (!categorySlug) return false;
@@ -495,6 +662,8 @@ const getStepsForCategorySlug = (categorySlug: string | null): readonly string[]
   if (categorySlug === SPARE_PARTS_SLUG) return SP_STEPS;
   if (categorySlug && HEALTH_BEAUTY_SLUGS.includes(categorySlug)) return HB_STEPS;
   if (categorySlug && HOME_FURNITURE_SLUGS.includes(categorySlug)) return HF_STEPS;
+  if (categorySlug && SERVICES_SLUGS.includes(categorySlug)) return SERVICES_STEPS;
+  if (categorySlug && JOBS_SLUGS.includes(categorySlug)) return JOBS_STEPS;
   return DEFAULT_STEPS;
 };
 
@@ -638,7 +807,9 @@ type StepKey =
   | typeof FA_STEPS[number]
   | typeof SP_STEPS[number]
   | typeof HB_STEPS[number]
-  | typeof HF_STEPS[number];
+  | typeof HF_STEPS[number]
+  | typeof SERVICES_STEPS[number]
+  | typeof JOBS_STEPS[number];
 
 interface PostAdWizardProps {
   locale: Locale;
@@ -646,13 +817,14 @@ interface PostAdWizardProps {
 
 export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
   const t = useTranslations('postAd');
-  const tRE = useTranslations('postAd.realEstate');
+  const tREWizard = useTranslations('realEstateWizard');
   const tVH = useTranslations('postAd.vehicles');
   const tEL = useTranslations('postAd.electronics');
   const tFA = useTranslations('postAd.fashion');
   const tSP = useTranslations('postAd.spareParts');
   const tHB = useTranslations('postAd.healthBeauty');
   const tHF = useTranslations('postAd.homeFurniture');
+  const tSRV = useTranslations('postAd.services');
   const tCommon = useTranslations('common');
   const tAuth = useTranslations('auth');
   const rtl = isRTL(locale);
@@ -668,6 +840,8 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
   const [spData, setSpData] = useState<SparePartsFormData>(INITIAL_SP_DATA);
   const [hbData, setHbData] = useState<HealthBeautyFormData>(INITIAL_HB_DATA);
   const [hfData, setHfData] = useState<HomeFurnitureFormData>(INITIAL_HF_DATA);
+  const [srvData, setSrvData] = useState<ServicesFormData>(INITIAL_SERVICES_DATA);
+  const [jobsData, setJobsData] = useState<JobsFormData>(INITIAL_JOBS_DATA);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -717,6 +891,10 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
 
   const updateHFData = useCallback((updates: Partial<HomeFurnitureFormData>) => {
     setHfData((prev) => ({ ...prev, ...updates }));
+  }, []);
+
+  const updateSRVData = useCallback((updates: Partial<ServicesFormData>) => {
+    setSrvData((prev) => ({ ...prev, ...updates }));
   }, []);
 
   const handleCategorySelect = useCallback(
@@ -825,6 +1003,8 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       const draftSpData = (draftData.spData || {}) as Partial<SparePartsFormData>;
       const draftHbData = (draftData.hbData || {}) as Partial<HealthBeautyFormData>;
       const draftHfData = (draftData.hfData || {}) as Partial<HomeFurnitureFormData>;
+      const draftSrvData = (draftData.srvData || {}) as Partial<ServicesFormData>;
+      const draftJobsData = (draftData.jobsData || {}) as Partial<JobsFormData>;
       const categoryId = draftRow.category_id ?? draftFormData.categoryId ?? null;
 
       let categorySlug: string | null = null;
@@ -970,6 +1150,23 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
           ...((draftHfData.media as Partial<HomeFurnitureMediaData> | undefined) || {}),
         },
       });
+      setSrvData({
+        ...INITIAL_SERVICES_DATA,
+        ...draftSrvData,
+        subcategory: draftSrvData.subcategory ?? INITIAL_SERVICES_DATA.subcategory,
+        specs: {
+          ...INITIAL_SERVICES_DATA.specs,
+          ...((draftSrvData.specs as Record<string, unknown> | undefined) || {}),
+        },
+        media: {
+          ...INITIAL_SERVICES_DATA.media,
+          ...((draftSrvData.media as Partial<ServicesMediaData> | undefined) || {}),
+        },
+      });
+      setJobsData({
+        ...INITIAL_JOBS_DATA,
+        ...draftJobsData,
+      });
       setWizardValues(((draftData.wizardValues as Record<string, unknown> | undefined) || {}));
 
       const savedStep = typeof draftData.currentStep === 'number' ? draftData.currentStep : (categoryId ? 1 : 0);
@@ -1031,21 +1228,23 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
   const isSpareParts = selectedCategorySlug === SPARE_PARTS_SLUG;
   const isHealthBeauty = (selectedCategorySlug ? HEALTH_BEAUTY_SLUGS.includes(selectedCategorySlug) : false) || formData.categoryId === HEALTH_BEAUTY_CATEGORY_ID;
   const isHomeFurniture = selectedCategorySlug ? HOME_FURNITURE_SLUGS.includes(selectedCategorySlug) : false;
-  const steps: readonly string[] = isHomeFurniture ? HF_STEPS : isHealthBeauty ? HB_STEPS : getStepsForCategorySlug(selectedCategorySlug);
+  const isServices = selectedCategorySlug ? SERVICES_SLUGS.includes(selectedCategorySlug) : false;
+  const isJobs = selectedCategorySlug ? JOBS_SLUGS.includes(selectedCategorySlug) : false;
+  const steps: readonly string[] = isJobs ? JOBS_STEPS : isServices ? SERVICES_STEPS : isHomeFurniture ? HF_STEPS : isHealthBeauty ? HB_STEPS : getStepsForCategorySlug(selectedCategorySlug);
 
   const getStepLabel = (step: string): string => {
     switch (step) {
-      case 'stepCategory': return t('stepCategory');
+      case 'stepCategory': return isRealEstate ? tREWizard('stepper.step1') : t('stepCategory');
       case 'stepDetails': return t('stepDetails');
       case 'stepPhotos': return t('stepPhotos');
       case 'stepContact': return t('stepContact');
-      case 'reStepBasic': return 'Basic Info';
-      case 'reStepLocation': return 'Location Details';
-      case 'reStepPricing': return 'Pricing & Availability';
-      case 'reStepSpecs': return 'Property Specifications';
-      case 'reStepAmenities': return 'Amenities & Features';
-      case 'reStepMedia': return tRE('stepMedia');
-      case 'reStepContact': return 'Contact & Review';
+      case 'reStepBasic': return tREWizard('stepper.step2');
+      case 'reStepLocation': return tREWizard('stepper.step3');
+      case 'reStepPricing': return tREWizard('stepper.step4');
+      case 'reStepSpecs': return tREWizard('stepper.step5');
+      case 'reStepAmenities': return tREWizard('stepper.step6');
+      case 'reStepMedia': return tREWizard('stepper.step7');
+      case 'reStepContact': return tREWizard('stepper.step8');
       case 'vhStepType': return tVH('stepType');
       case 'vhStepSpecs': return tVH('stepSpecs');
       case 'vhStepCondition': return tVH('stepCondition');
@@ -1055,7 +1254,8 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       case 'elStepBasic': return tEL('stepBasic');
       case 'elStepSpecs': return tEL('stepSpecs');
       case 'elStepMedia': return tEL('stepMedia');
-      case 'elStepDetails': return tEL('stepContact');
+      case 'elStepDetails': return tEL('stepDetails');
+      case 'elStepContact': return tEL('stepContact');
       case 'elStepReview': return tEL('stepReview');
       case 'faStepBasic': return tFA('stepBasic');
       case 'faStepGeneral': return tFA('stepGeneral');
@@ -1082,6 +1282,13 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       case 'hfStepMedia': return tHF('stepMedia');
       case 'hfStepContact': return tHF('stepContact');
       case 'hfStepReview': return tHF('stepReview');
+      case 'srvStepBasic': return tSRV('stepBasic');
+      case 'srvStepLocation': return tSRV('stepLocation');
+      case 'srvStepPricing': return tSRV('stepPricing');
+      case 'srvStepDetails': return tSRV('stepDetails');
+      case 'srvStepMedia': return tSRV('stepMedia');
+      case 'srvStepContact': return tSRV('stepContact');
+      case 'srvStepReview': return tSRV('stepReview');
       default: return '';
     }
   };
@@ -1173,7 +1380,9 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       case 'elStepMedia':
         return elData.media.photos.length >= 1;
       case 'elStepDetails':
-        return elData.city !== '' && elData.phone.trim() !== '' && elData.termsAccepted;
+        return elData.city !== '' && elData.sellerType !== '';
+      case 'elStepContact':
+        return elData.phone.trim() !== '' && elData.termsAccepted;
       case 'elStepReview':
         return true;
       // Fashion & Clothing steps
@@ -1293,6 +1502,45 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       case 'hfStepContact':
         return hfData.city.trim() !== '' && hfData.phone.trim() !== '' && hfData.termsAccepted;
       case 'hfStepReview':
+        return true;
+      // Services steps
+      case 'srvStepBasic':
+        return srvData.title.trim().length >= 3 && srvData.description.trim().length >= 10 && srvData.subcategory !== '' && srvData.service_type !== '';
+      case 'srvStepLocation':
+        return srvData.city !== '';
+      case 'srvStepPricing':
+        return srvData.pricing_type !== '' && srvData.price !== '' && srvData.currency !== '';
+      case 'srvStepDetails': {
+        const fields = getServicesSpecsConfig(srvData.subcategory as ServicesSubcategory);
+        return fields.every((field) => {
+          if (!field.required) return true;
+          const value = srvData.specs[field.key];
+          if (field.type === 'multiselect') return Array.isArray(value) && value.length > 0;
+          if (field.type === 'toggle') return typeof value === 'boolean';
+          return typeof value === 'string' && value.trim().length > 0;
+        });
+      }
+      case 'srvStepMedia':
+        return srvData.media.images.length >= 1;
+      case 'srvStepContact':
+        return srvData.city.trim() !== '' && srvData.phone.trim() !== '' && srvData.termsAccepted;
+      case 'srvStepReview':
+        return true;
+      // Jobs steps
+      case 'jobStepBasic':
+        return jobsData.jobTitle.trim().length >= 3 && jobsData.employmentType !== '';
+      case 'jobStepDescription':
+        return jobsData.jobDescription.trim().length >= 20 && jobsData.experienceLevel !== '';
+      case 'jobStepCompensation':
+        // Either salary range is provided OR salaryNotDisclosed is true
+        const hasSalaryRange = jobsData.minSalary !== '' && jobsData.maxSalary !== '';
+        const salaryValid = jobsData.salaryNotDisclosed || (hasSalaryRange && Number(jobsData.minSalary) <= Number(jobsData.maxSalary));
+        const applicationValid = jobsData.applicationMethod !== '' &&
+          (jobsData.applicationMethod === 'email' ? jobsData.applicationEmail.trim() !== '' : jobsData.applicationUrl.trim() !== '');
+        return salaryValid && applicationValid;
+      case 'jobStepContact':
+        return jobsData.contactPhone.trim() !== '' && jobsData.contactEmail.trim() !== '' && jobsData.termsAccepted;
+      case 'jobStepReview':
         return true;
       default:
         return false;
@@ -1552,6 +1800,51 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         _phone = hfData.phone || _phone;
         condition = (hfData.condition || condition || 'good') as string;
         photosList = hfData.media.images;
+      } else if (isServices) {
+        metadata = {
+          subcategory: srvData.subcategory,
+          service_type: srvData.service_type,
+          pricing_type: srvData.pricing_type,
+          currency: srvData.currency,
+          negotiable: srvData.negotiable,
+          call_out_fee: srvData.call_out_fee,
+          call_out_fee_amount: srvData.call_out_fee_amount,
+          city: srvData.city,
+          area: srvData.area,
+          service_radius_km: srvData.service_radius_km,
+          multiple_cities: srvData.multiple_cities,
+          days_available: srvData.days_available,
+          working_hours_from: srvData.working_hours_from,
+          working_hours_to: srvData.working_hours_to,
+          emergency_service: srvData.emergency_service,
+          advance_booking_required: srvData.advance_booking_required,
+          ...srvData.specs,
+          location: {
+            city: srvData.city,
+            lat: srvData.lat,
+            lng: srvData.lng,
+          },
+          contact: {
+            contact_name: srvData.contact_name,
+            phone: srvData.phone,
+            whatsapp: srvData.whatsapp,
+            email: srvData.email,
+            website: srvData.website,
+            social_media_links: srvData.social_media_links,
+          },
+          media: {
+            video: srvData.media.video,
+            documents: srvData.media.documents,
+          },
+          wizard_forms: wizardValues,
+        };
+        title = srvData.title || title;
+        description = srvData.description || description;
+        price = Number(srvData.price) || price;
+        currency = srvData.currency || currency;
+        city = srvData.city || city;
+        _phone = srvData.phone || _phone;
+        photosList = srvData.media.images;
       } else {
         metadata = {
           ...metadata,
@@ -1559,10 +1852,11 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         };
       }
 
-      // Insert listing
-      const { data: listing, error: insertError } = await supabase
-        .from('listings')
-        .insert({
+      // Insert listing via server API (normalizes and validates metadata)
+      const resp = await fetch('/api/listings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           user_id: user.id,
           category_id: formData.categoryId,
           title,
@@ -1574,15 +1868,17 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
           phone_visible: true,
           from_owner: fromOwner,
           metadata,
-          status: 'active',
-        })
-        .select('id')
-        .single();
+          photos: photosList,
+        }),
+      });
 
-      if (insertError) {
-        console.error('Listing insert failed:', insertError);
-        throw new Error(insertError.message);
+      const json = await resp.json();
+      if (!resp.ok || json.error) {
+        console.error('Listing insert failed (server):', json);
+        throw new Error(json.error || 'Failed to insert listing');
       }
+
+      const listing = { id: json.id };
 
       // Insert photos into photos table
       if (listing && photosList.length > 0) {
@@ -1629,6 +1925,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
     setSpData(INITIAL_SP_DATA);
     setHbData(INITIAL_HB_DATA);
     setHfData(INITIAL_HF_DATA);
+    setSrvData(INITIAL_SERVICES_DATA);
     setCurrentStep(0);
     setSubmitted(false);
     setSubmittedListingId(null);
@@ -1682,6 +1979,8 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       else if (isSpareParts) draftData = { ...draftData, spData };
       else if (isHealthBeauty) draftData = { ...draftData, hbData };
       else if (isHomeFurniture) draftData = { ...draftData, hfData };
+      else if (isServices) draftData = { ...draftData, srvData };
+      else if (isJobs) draftData = { ...draftData, jobsData };
 
       const { data: savedDraft, error: draftError } = await supabase.from('listing_drafts').upsert({
         user_id: user.id,
@@ -2047,13 +2346,24 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
             data={{
               city: elData.city,
               sellerType: elData.sellerType,
+            }}
+            onChange={(detailsUpdate) => {
+              updateELData(detailsUpdate as Partial<ElectronicsFormData>);
+            }}
+          />
+        );
+      case 'elStepContact':
+        return (
+          <StepElectronicsContact
+            locale={locale}
+            data={{
               phone: elData.phone,
               whatsapp: elData.whatsapp,
               email: elData.email,
               termsAccepted: elData.termsAccepted,
             }}
-            onChange={(detailsUpdate) => {
-              updateELData(detailsUpdate as Partial<ElectronicsFormData>);
+            onChange={(contactUpdate) => {
+              updateELData(contactUpdate as Partial<ElectronicsFormData>);
             }}
           />
         );
@@ -2505,6 +2815,248 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
             specs={hfData.specs}
             media={hfData.media}
             onEdit={(stepIndex) => setCurrentStep(stepIndex)}
+          />
+        );
+      // Services steps
+      case 'srvStepBasic':
+        return (
+          <StepServicesBasicInfo
+            locale={locale}
+            data={{
+              title: srvData.title,
+              description: srvData.description,
+              subcategory: srvData.subcategory,
+              service_type: srvData.service_type,
+            }}
+            onChange={(updates) => {
+              if (updates.subcategory !== undefined && updates.subcategory !== srvData.subcategory) {
+                updateSRVData({
+                  ...updates,
+                  specs: {},
+                });
+                return;
+              }
+              updateSRVData(updates);
+            }}
+          />
+        );
+      case 'srvStepLocation':
+        return (
+          <StepServicesLocation
+            locale={locale}
+            data={{
+              city: srvData.city,
+              area: srvData.area,
+              service_radius_km: srvData.service_radius_km,
+              multiple_cities: srvData.multiple_cities,
+              days_available: srvData.days_available,
+              working_hours_from: srvData.working_hours_from,
+              working_hours_to: srvData.working_hours_to,
+              emergency_service: srvData.emergency_service,
+              advance_booking_required: srvData.advance_booking_required,
+            }}
+            onChange={(updates) => updateSRVData(updates)}
+          />
+        );
+      case 'srvStepPricing':
+        return (
+          <StepServicesPricing
+            locale={locale}
+            data={{
+              pricing_type: srvData.pricing_type,
+              price: srvData.price,
+              currency: srvData.currency,
+              negotiable: srvData.negotiable,
+              call_out_fee: srvData.call_out_fee,
+              call_out_fee_amount: srvData.call_out_fee_amount,
+            }}
+            onChange={(updates) => updateSRVData(updates)}
+          />
+        );
+      case 'srvStepDetails':
+        return (
+          <StepServicesDetails
+            locale={locale}
+            subcategory={srvData.subcategory}
+            specs={srvData.specs}
+            onChange={(specs) => updateSRVData({ specs })}
+          />
+        );
+      case 'srvStepMedia':
+        return (
+          <StepServicesMedia
+            locale={locale}
+            data={srvData.media}
+            onChange={(updates) => updateSRVData({ media: { ...srvData.media, ...updates } })}
+          />
+        );
+      case 'srvStepContact':
+        return (
+          <StepServicesContact
+            locale={locale}
+            data={{
+              contact_name: srvData.contact_name,
+              city: srvData.city,
+              lat: srvData.lat,
+              lng: srvData.lng,
+              phone: srvData.phone,
+              whatsapp: srvData.whatsapp,
+              email: srvData.email,
+              website: srvData.website,
+              social_media_links: srvData.social_media_links,
+              termsAccepted: srvData.termsAccepted,
+            }}
+            onChange={(updates) => updateSRVData(updates)}
+          />
+        );
+      case 'srvStepReview':
+        return (
+          <StepServicesReview
+            locale={locale}
+            basic={{
+              title: srvData.title,
+              description: srvData.description,
+              subcategory: srvData.subcategory,
+              service_type: srvData.service_type,
+            }}
+            location={{
+              city: srvData.city,
+              area: srvData.area,
+              service_radius_km: srvData.service_radius_km,
+              multiple_cities: srvData.multiple_cities,
+              days_available: srvData.days_available,
+              working_hours_from: srvData.working_hours_from,
+              working_hours_to: srvData.working_hours_to,
+              emergency_service: srvData.emergency_service,
+              advance_booking_required: srvData.advance_booking_required,
+            }}
+            pricing={{
+              pricing_type: srvData.pricing_type,
+              price: srvData.price,
+              currency: srvData.currency,
+              negotiable: srvData.negotiable,
+              call_out_fee: srvData.call_out_fee,
+              call_out_fee_amount: srvData.call_out_fee_amount,
+            }}
+            specs={srvData.specs}
+            media={srvData.media}
+            contact={{
+              contact_name: srvData.contact_name,
+              city: srvData.city,
+              lat: srvData.lat,
+              lng: srvData.lng,
+              phone: srvData.phone,
+              whatsapp: srvData.whatsapp,
+              email: srvData.email,
+              website: srvData.website,
+              social_media_links: srvData.social_media_links,
+            }}
+            onEdit={(stepIndex) => setCurrentStep(stepIndex)}
+          />
+        );
+      case 'jobStepBasic':
+        return (
+          <StepJobBasicInfo
+            locale={locale}
+            data={{
+              jobTitle: jobsData.jobTitle,
+              employmentType: jobsData.employmentType,
+              isRemote: jobsData.isRemote,
+              country: jobsData.country,
+              city: jobsData.city,
+              workCanBeDoneRemotely: jobsData.workCanBeDoneRemotely,
+            }}
+            onChange={(updates) => setJobsData((prev) => ({ ...prev, ...updates }))}
+          />
+        );
+      case 'jobStepDescription':
+        return (
+          <StepJobDescription
+            locale={locale}
+            data={{
+              jobDescription: jobsData.jobDescription,
+              responsibilities: jobsData.responsibilities,
+              requirements: jobsData.requirements,
+              preferredQualifications: jobsData.preferredQualifications,
+              experienceLevel: jobsData.experienceLevel,
+            }}
+            onChange={(updates) => setJobsData((prev) => ({ ...prev, ...updates }))}
+          />
+        );
+      case 'jobStepCompensation':
+        return (
+          <StepJobCompensation
+            locale={locale}
+            data={{
+              currency: jobsData.currency,
+              minSalary: jobsData.minSalary,
+              maxSalary: jobsData.maxSalary,
+              salaryNegotiable: jobsData.salaryNegotiable,
+              salaryNotDisclosed: jobsData.salaryNotDisclosed,
+              benefits: jobsData.benefits,
+              otherBenefits: jobsData.otherBenefits,
+              applicationDeadline: jobsData.applicationDeadline,
+              applicationMethod: jobsData.applicationMethod,
+              applicationEmail: jobsData.applicationEmail,
+              applicationUrl: jobsData.applicationUrl,
+              hiringManagerName: jobsData.hiringManagerName,
+            }}
+            onChange={(updates) => setJobsData((prev) => ({ ...prev, ...updates }))}
+          />
+        );
+      case 'jobStepContact':
+        return (
+          <StepJobContact
+            locale={locale}
+            data={{
+              contactPhone: jobsData.contactPhone,
+              contactEmail: jobsData.contactEmail,
+              termsAccepted: jobsData.termsAccepted,
+            }}
+            onChange={(updates) => setJobsData((prev) => ({ ...prev, ...updates }))}
+          />
+        );
+      case 'jobStepReview':
+        return (
+          <StepJobReview
+            locale={locale}
+            data={{
+              jobTitle: jobsData.jobTitle,
+              employmentType: jobsData.employmentType,
+              isRemote: jobsData.isRemote,
+              country: jobsData.country,
+              city: jobsData.city,
+              workCanBeDoneRemotely: jobsData.workCanBeDoneRemotely,
+              jobDescription: jobsData.jobDescription,
+              responsibilities: jobsData.responsibilities,
+              requirements: jobsData.requirements,
+              preferredQualifications: jobsData.preferredQualifications,
+              experienceLevel: jobsData.experienceLevel,
+              currency: jobsData.currency,
+              minSalary: jobsData.minSalary,
+              maxSalary: jobsData.maxSalary,
+              salaryNegotiable: jobsData.salaryNegotiable,
+              salaryNotDisclosed: jobsData.salaryNotDisclosed,
+              benefits: jobsData.benefits,
+              otherBenefits: jobsData.otherBenefits,
+              applicationDeadline: jobsData.applicationDeadline,
+              applicationMethod: jobsData.applicationMethod,
+              applicationEmail: jobsData.applicationEmail,
+              applicationUrl: jobsData.applicationUrl,
+              hiringManagerName: jobsData.hiringManagerName,
+              contactPhone: jobsData.contactPhone,
+              contactEmail: jobsData.contactEmail,
+              termsAccepted: jobsData.termsAccepted,
+            }}
+            onEditSection={(section) => {
+              // Map section to step index
+              let stepIndex = 0;
+              if (section === 'basic') stepIndex = steps.indexOf('jobStepBasic');
+              else if (section === 'description') stepIndex = steps.indexOf('jobStepDescription');
+              else if (section === 'compensation') stepIndex = steps.indexOf('jobStepCompensation');
+              else if (section === 'contact') stepIndex = steps.indexOf('jobStepContact');
+              setCurrentStep(stepIndex);
+            }}
           />
         );
       default:

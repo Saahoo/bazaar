@@ -266,6 +266,70 @@ export interface HomeFurnitureFilters {
   custom_spec_3_value?: string;
 }
 
+export interface JobsFilters {
+  subcategory?: string;
+  keywords?: string;
+  condition?: string;
+  postedDate?: string;
+  sellerType?: string;
+  employmentType?: string;
+  experienceLevel?: string;
+  minSalary?: string;
+  maxSalary?: string;
+  currency?: string;
+  benefits?: string[];
+  isRemote?: string;
+  country?: string;
+  city?: string;
+  applicationMethod?: string;
+}
+
+export interface ServicesFilters {
+  subcategory?: string;
+  keywords?: string;
+  condition?: string;
+  postedDate?: string;
+  sellerType?: string;
+  service_type?: string;
+  experience_years?: string;
+  certification?: string;
+  warranty?: string;
+  warranty_duration?: string;
+  tools_provided?: string;
+  spare_parts_included?: string;
+  service_duration?: string;
+  materials_included?: string;
+  specialized_in?: string;
+  gender_served?: string;
+  certified_professional?: string;
+  products_used?: string;
+  session_duration?: string;
+  home_service_available?: string;
+  subject_course?: string;
+  level?: string;
+  mode?: string;
+  group_or_individual?: string;
+  duration_per_session?: string;
+  skills?: string[];
+  tools_technologies?: string;
+  delivery_time?: string;
+  revisions_included?: string;
+  portfolio_link?: string;
+  event_types?: string[];
+  team_size?: string;
+  equipment_provided?: string;
+  travel_available?: string;
+  duration?: string;
+  industry?: string;
+  consultation_mode?: string;
+  specialization?: string;
+  license_verified?: string;
+  clinic_or_home?: string;
+  emergency_available?: string;
+  custom_service_type?: string;
+  description_detail?: string;
+}
+
 export interface ListingFilters {
   category?: number | null;
   query?: string;
@@ -284,6 +348,8 @@ export interface ListingFilters {
   sparePartsFilters?: SparePartsFilters;
   healthBeautyFilters?: HealthBeautyFilters;
   homeFurnitureFilters?: HomeFurnitureFilters;
+  jobsFilters?: JobsFilters;
+  servicesFilters?: ServicesFilters;
 }
 
 // ─── Engine Power / Capacity helpers ────────────────────────────────────────
@@ -716,6 +782,90 @@ function applyHomeFurnitureFilters(listings: Listing[], hff?: HomeFurnitureFilte
   });
 }
 
+function applyJobsFilters(listings: Listing[], jf?: JobsFilters): Listing[] {
+  if (!jf) return listings;
+
+  const skipFields = new Set(['subcategory', 'keywords', 'condition', 'postedDate', 'sellerType']);
+
+  return listings.filter((l) => {
+    const m = l.metadata as Record<string, unknown>;
+
+    if (jf.condition && !matchesLooseToken(m.condition ?? l.condition, jf.condition)) return false;
+
+    for (const [key, rawValue] of Object.entries(jf)) {
+      if (skipFields.has(key) || rawValue === undefined || rawValue === '') continue;
+
+      const metadataValue = m[key];
+
+      if (Array.isArray(rawValue)) {
+        if (rawValue.length === 0) continue;
+
+        if (Array.isArray(metadataValue)) {
+          const selectedTokens = rawValue.map((v) => normalizeToken(v));
+          const metadataTokens = metadataValue.map((v) => normalizeToken(v));
+          if (!selectedTokens.some((token) => metadataTokens.includes(token))) return false;
+        } else {
+          const metadataToken = normalizeToken(metadataValue);
+          if (!rawValue.some((v) => normalizeToken(v) === metadataToken)) return false;
+        }
+        continue;
+      }
+
+      const selectedString = String(rawValue);
+      if (selectedString === 'yes' || selectedString === 'no') {
+        if (normalizeYesNo(metadataValue) !== selectedString) return false;
+        continue;
+      }
+
+      if (!matchesLooseToken(metadataValue, selectedString)) return false;
+    }
+
+    return true;
+  });
+}
+
+function applyServicesFilters(listings: Listing[], sf?: ServicesFilters): Listing[] {
+  if (!sf) return listings;
+
+  const skipFields = new Set(['subcategory', 'keywords', 'condition', 'postedDate', 'sellerType']);
+
+  return listings.filter((l) => {
+    const m = l.metadata as Record<string, unknown>;
+
+    if (sf.condition && !matchesLooseToken(m.condition ?? l.condition, sf.condition)) return false;
+
+    for (const [key, rawValue] of Object.entries(sf)) {
+      if (skipFields.has(key) || rawValue === undefined || rawValue === '') continue;
+
+      const metadataValue = m[key];
+
+      if (Array.isArray(rawValue)) {
+        if (rawValue.length === 0) continue;
+
+        if (Array.isArray(metadataValue)) {
+          const selectedTokens = rawValue.map((v) => normalizeToken(v));
+          const metadataTokens = metadataValue.map((v) => normalizeToken(v));
+          if (!selectedTokens.some((token) => metadataTokens.includes(token))) return false;
+        } else {
+          const metadataToken = normalizeToken(metadataValue);
+          if (!rawValue.some((v) => normalizeToken(v) === metadataToken)) return false;
+        }
+        continue;
+      }
+
+      const selectedString = String(rawValue);
+      if (selectedString === 'yes' || selectedString === 'no') {
+        if (normalizeYesNo(metadataValue) !== selectedString) return false;
+        continue;
+      }
+
+      if (!matchesLooseToken(metadataValue, selectedString)) return false;
+    }
+
+    return true;
+  });
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function useListings(filters: ListingFilters = {}) {
@@ -891,6 +1041,31 @@ export function useListings(filters: ListingFilters = {}) {
         }
       }
 
+      // Services-specific filters
+      if (filters.servicesFilters?.subcategory) {
+        query = query.contains('metadata', { subcategory: filters.servicesFilters.subcategory });
+      }
+      if (filters.servicesFilters?.sellerType === 'Individual') {
+        query = query.eq('from_owner', true);
+      }
+      if (filters.servicesFilters?.sellerType === 'Dealer') {
+        query = query.eq('from_owner', false);
+      }
+      if (filters.servicesFilters?.postedDate) {
+        const now = new Date();
+        const from = new Date(now);
+        if (filters.servicesFilters.postedDate === 'today') {
+          from.setHours(0, 0, 0, 0);
+          query = query.gte('created_at', from.toISOString());
+        } else if (filters.servicesFilters.postedDate === 'last7') {
+          from.setDate(now.getDate() - 7);
+          query = query.gte('created_at', from.toISOString());
+        } else if (filters.servicesFilters.postedDate === 'last30') {
+          from.setDate(now.getDate() - 30);
+          query = query.gte('created_at', from.toISOString());
+        }
+      }
+
       // Vehicle-specific: fromOwner is a direct column
       const vf = filters.vehicleFilters;
       if (vf?.fromOwner !== undefined && vf?.fromOwner !== null) {
@@ -949,7 +1124,9 @@ export function useListings(filters: ListingFilters = {}) {
       const sparePartsFiltered = applySparePartsFilters(fashionFiltered, filters.sparePartsFilters);
       const healthBeautyFiltered = applyHealthBeautyFilters(sparePartsFiltered, filters.healthBeautyFilters);
       const homeFurnitureFiltered = applyHomeFurnitureFilters(healthBeautyFiltered, filters.homeFurnitureFilters);
-      setListings(homeFurnitureFiltered);
+      const jobsFiltered = applyJobsFilters(homeFurnitureFiltered, filters.jobsFilters);
+      const servicesFiltered = applyServicesFilters(jobsFiltered, filters.servicesFilters);
+      setListings(servicesFiltered);
     } catch (err: unknown) {      const message = err instanceof Error ? err.message : 'Failed to load listings.';
       setError(message);
       console.error('Fetch listings error:', err);
@@ -975,6 +1152,8 @@ export function useListings(filters: ListingFilters = {}) {
     filters.sparePartsFilters,
     filters.healthBeautyFilters,
     filters.homeFurnitureFilters,
+    filters.jobsFilters,
+    filters.servicesFilters,
   ]);
 
   // Initial fetch

@@ -7,7 +7,10 @@ import { Edit2, Image as ImageIcon } from 'lucide-react';
 import { isRTL, Locale } from '@/lib/i18n/config';
 import { ElectronicsSubcategory, getElectronicsSpecsConfig } from '@/lib/constants/electronics-wizard';
 import { ElectronicsDetailsData } from './StepElectronicsDetails';
+import { ElectronicsContactData } from './StepElectronicsContact';
 import { ElectronicsMediaData } from './StepElectronicsMedia';
+
+interface ElectronicsReviewContactData extends ElectronicsDetailsData, ElectronicsContactData {}
 
 interface StepElectronicsReviewProps {
 	locale: Locale;
@@ -17,7 +20,7 @@ interface StepElectronicsReviewProps {
 	price: number | '';
 	negotiable: boolean;
 	condition: string;
-	contactData: ElectronicsDetailsData;
+	contactData: ElectronicsReviewContactData;
 	specs: Record<string, string>;
 	media: ElectronicsMediaData;
 	onEdit: (stepIndex: number) => void;

@@ -1,0 +1,15 @@
+route,libs
+/_not-found,
+/[lang],"src/lib/i18n/config; src/lib/i18n/request; src/lib/supabase/server; src/lib/content/homepageSettings"
+/[lang]/admin,"src/lib/i18n/config; src/lib/supabase/server"
+/[lang]/dashboard,src/lib/i18n/config
+/[lang]/forgot-password,src/lib/i18n/config
+/[lang]/signup,src/lib/i18n/config
+/[lang]/search,src/lib/i18n/config
+/[lang]/messages,src/lib/i18n/config
+/[lang]/reset-password,src/lib/i18n/config
+/[lang]/login,src/lib/i18n/config
+/[lang]/profile,src/lib/i18n/config
+/[lang]/profile/[id],"src/lib/i18n/config; src/lib/supabase/server; src/lib/constants/mock-data"
+/[lang]/post-ad,
+/[lang]/listing/[id],

@@ -19,25 +19,19 @@ export const CURRENCIES: Record<string, Currency> = {
     symbol: '$',
     exchange_rate: 1,
   },
-  PKR: {
-    code: 'PKR',
-    name: 'Pakistani Rupee',
-    symbol: '₨',
-    exchange_rate: 0.0036,
-  },
-  TRY: {
-    code: 'TRY',
-    name: 'Turkish Lira',
-    symbol: '₺',
-    exchange_rate: 0.033,
-  },
+  
 };
 
 export const DEFAULT_CURRENCY = 'AFN';
 
 export const formatCurrency = (amount: number, currency: string = DEFAULT_CURRENCY): string => {
   const currencyData = CURRENCIES[currency] || CURRENCIES[DEFAULT_CURRENCY];
-  return `${currencyData.symbol}${amount.toLocaleString()}`;
+  
+  // Use basic number formatting to avoid hydration errors
+  // Always use Western Arabic numerals (0-9) for consistency between server and client
+  const formattedAmount = amount.toLocaleString('en-US');
+  
+  return `${currencyData.symbol}${formattedAmount}`;
 };
 
 export const convertCurrency = (amount: number, fromCurrency: string, toCurrency: string): number => {

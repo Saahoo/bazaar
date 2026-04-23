@@ -357,8 +357,20 @@ export const POPULAR_CITIES: City[] = [
 ];
 
 export const getCityName = (cityName: string, locale: 'en' | 'ps' | 'fa'): string => {
-  const city = POPULAR_CITIES.find((c) => c.name_en.toLowerCase() === cityName.toLowerCase());
-  if (!city) return cityName;
+  const raw = String(cityName || '').trim();
+  const cityNameLower = raw.toLowerCase();
+
+  let city = POPULAR_CITIES.find((c) => c.name_en.toLowerCase() === cityNameLower);
+  if (!city) {
+    // try contains (e.g., "Kandahar afghanistan") or startsWith
+    city = POPULAR_CITIES.find((c) => cityNameLower.includes(c.name_en.toLowerCase()) || c.name_en.toLowerCase().includes(cityNameLower));
+  }
+  if (!city) {
+    // try first token match
+    const first = cityNameLower.split(/\s|,|-/)[0];
+    city = POPULAR_CITIES.find((c) => c.name_en.toLowerCase() === first);
+  }
+  if (!city) return raw;
 
   switch (locale) {
     case 'en':

@@ -584,12 +584,29 @@ CREATE TRIGGER on_new_message
 -- ============================================
 -- SEED DATA: Categories
 -- ============================================
-INSERT INTO categories (name_en, name_ps, name_fa, slug, icon_name, sort_order) VALUES
-('Vehicles', 'واسطې', 'وسایل نقلیه', 'vehicles', 'car', 1),
-('Real Estate', 'ملکیتونه', 'املاک', 'real-estate', 'home', 2),
-('Electronics', 'بریښنایي', 'الکترونیک', 'electronics', 'smartphone', 3),
-('Fashion & Clothing', 'فېشن او کالي', 'مد و لباس', 'fashion', 'shirt', 4),
-('Spare Parts', 'اسپېر پارټس', 'قطعات یدکی', 'spare-parts', 'wrench', 5);
+-- First, delete existing categories to avoid duplicates (if re-running)
+-- DELETE FROM categories;
+
+INSERT INTO categories (id, name_en, name_ps, name_fa, slug, icon_name, sort_order) VALUES
+(1, 'Vehicles', 'موټرونه', 'وسایل نقلیه', 'vehicles', 'car', 1),
+(2, 'Real Estate', 'ملکیت', 'ملک و ملکیت', 'real-estate', 'home', 2),
+(3, 'Electronics', 'بریښنایي توکي', 'لوازم الکترونیکی', 'electronics', 'smartphone', 3),
+(4, 'Fashion & Clothing', 'فیشن او جامې', 'مد و لباس', 'fashion', 'shirt', 4),
+(5, 'Spare Parts', 'پرزې', 'قطعات یدکی', 'spare-parts', 'puzzle', 5),
+(6, 'Home & Furniture', 'کور او فرنیچر', 'خانه و مبلمان', 'home-furniture', 'sofa', 6),
+(8, 'Jobs', 'دندې', 'کار و استخدام', 'jobs', 'briefcase', 8),
+(9, 'Services', 'خدمتونه', 'خدمات', 'services', 'wrench', 9),
+(10, 'Animals & Livestock', 'حیوانات او مالداري', 'حیوانات و دامداری', 'animals-livestock', 'paw', 10),
+(11, 'Food & Agriculture', 'خوراکي توکي او کرنه', 'مواد غذایی و کشاورزی', 'food-agriculture', 'leaf', 11),
+(12, 'Books & Education', 'کتابونه او زده کړه', 'کتاب و آموزش', 'books-education', 'book', 12),
+(13, 'Health & Beauty', 'روغتیا او ښکلا', 'بهداشت و زیبایی', 'health-beauty', 'heart', 13),
+(14, 'Sports & Hobbies', 'سپورت او تفریح', 'ورزش و سرگرمی', 'sports-hobbies', 'bike', 14),
+(15, 'Kids & Baby', 'ماشومان او کوچنیان', 'کودک و نوزاد', 'kids-baby', 'baby', 15),
+(16, 'Business & Industry', 'سوداګري او صنعت', 'تجارت و صنعت', 'business-industry', 'zap', 16),
+(17, 'Shopping & Groceries', 'پلورنځي او پیرود', 'خرید و سوپرمارکت', 'shopping-groceries', 'shopping-bag', 17),
+(18, 'Construction & Materials', 'ساختماني توکي', 'مصالح ساختمانی', 'construction-materials', 'hammer', 18);
+
+-- Note: ID 7 is intentionally skipped to match TypeScript constants
 
 -- ============================================
 -- STORAGE BUCKETS (run separately in Supabase Dashboard > Storage)

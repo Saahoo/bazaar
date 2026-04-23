@@ -7,7 +7,7 @@ import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { User, CheckCircle, Phone, Eye, EyeOff, Star, Building2 } from 'lucide-react';
 import { Locale, isRTL } from '@/lib/i18n/config';
-import type { SellerData } from './ListingDetail';
+import type { SellerData } from './types';
 import { ProfileRelationButtons } from '@/components/profile/ProfileRelationButtons';
 
 interface SellerCardProps {

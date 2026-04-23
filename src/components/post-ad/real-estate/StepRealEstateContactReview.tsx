@@ -4,6 +4,7 @@ import React from 'react';
 import { useTranslations } from 'next-intl';
 import { Phone, MessageCircle, Mail } from 'lucide-react';
 import { Locale, isRTL } from '@/lib/i18n/config';
+import { normalizeDisplayString } from '@/lib/i18n/safeTranslate';
 import { LegalReadNotice } from '@/components/common/LegalReadNotice';
 import type { RealEstateLocationData } from './StepRealEstateLocation';
 import type { RealEstatePricingData } from './StepRealEstatePricing';
@@ -60,8 +61,8 @@ export const StepRealEstateContactReview: React.FC<StepRealEstateContactReviewPr
             <div className="flex items-center justify-between gap-4">
               <div>
                 <div className="text-sm font-semibold text-slate-900">Basic Location</div>
-                <div className={valueClass}>{location.city || '—'}{location.area_district ? ` • ${location.area_district}` : ''}</div>
-                <div className={valueClass}>{location.full_address || 'No full address provided'}</div>
+                <div className={valueClass}>{location.city ? normalizeDisplayString(location.city) : '—'}{location.area_district ? ` • ${normalizeDisplayString(String(location.area_district))}` : ''}</div>
+                <div className={valueClass}>{location.full_address ? normalizeDisplayString(location.full_address) : 'No full address provided'}</div>
               </div>
               <button type="button" className="text-sm text-primary-600" onClick={() => onJumpToStep(2)}>
                 Edit
@@ -73,7 +74,7 @@ export const StepRealEstateContactReview: React.FC<StepRealEstateContactReviewPr
               <div>
                 <div className="text-sm font-semibold text-slate-900">Pricing</div>
                 <div className={valueClass}>{pricing.price ? `${pricing.price} ${pricing.currency}` : 'No price set'}</div>
-                <div className={valueClass}>{pricing.price_type ? pricing.price_type.replace(/([A-Z])/g, ' $1') : ''}</div>
+                <div className={valueClass}>{pricing.price_type ? normalizeDisplayString(String(pricing.price_type)) : ''}</div>
                 <div className={valueClass}>{pricing.negotiable ? 'Negotiable' : 'Firm price'}</div>
               </div>
               <button type="button" className="text-sm text-primary-600" onClick={() => onJumpToStep(3)}>
@@ -85,7 +86,7 @@ export const StepRealEstateContactReview: React.FC<StepRealEstateContactReviewPr
             <div className="flex items-center justify-between gap-4">
               <div>
                 <div className="text-sm font-semibold text-slate-900">Property Specs</div>
-                <div className={valueClass}>Area: {specs.area_size || '—'}</div>
+                <div className={valueClass}>Area: {specs.area_size ? normalizeDisplayString(String(specs.area_size)) : '—'}</div>
                 <div className={valueClass}>Bedrooms: {specs.bedrooms ?? '—'}</div>
                 <div className={valueClass}>Bathrooms: {specs.bathrooms ?? '—'}</div>
               </div>
@@ -98,7 +99,7 @@ export const StepRealEstateContactReview: React.FC<StepRealEstateContactReviewPr
             <div className="flex items-center justify-between gap-4">
               <div>
                 <div className="text-sm font-semibold text-slate-900">Amenities</div>
-                <div className={valueClass}>{Object.entries(amenities).filter(([, value]) => value).map(([key]) => key.replace(/_/g, ' ')).join(', ') || 'None selected'}</div>
+                <div className={valueClass}>{Object.entries(amenities).filter(([, value]) => value).map(([key]) => normalizeDisplayString(key.replace(/_/g, ' '))).join(', ') || 'None selected'}</div>
               </div>
               <button type="button" className="text-sm text-primary-600" onClick={() => onJumpToStep(5)}>
                 Edit

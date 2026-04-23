@@ -51,6 +51,20 @@ import {
   getHomeFurnitureOptionTranslationKey,
 } from '@/lib/constants/home-furniture-wizard';
 import { useCities, getManagedCityName } from '@/lib/hooks/useCities';
+import {
+  JobSubcategory,
+  JOB_SUBCATEGORIES,
+  EMPLOYMENT_TYPES,
+  EXPERIENCE_LEVELS,
+  CURRENCIES,
+  BENEFIT_OPTIONS
+} from '@/lib/constants/jobs-wizard';
+import {
+  ServicesSubcategory,
+  SERVICES_SUBCATEGORIES,
+  getServicesSpecsConfig,
+  ServicesSpecField
+} from '@/lib/constants/services-wizard';
 
 const ELECTRONICS_SUBCATEGORY_LABEL_KEYS: Record<ElectronicsSubcategory, string> = {
   phones: 'subcategoryPhones',
@@ -631,6 +645,136 @@ export const EMPTY_HOME_FURNITURE_FILTERS: HomeFurnitureFilterState = {
   custom_spec_3_value: '',
 };
 
+// ─── Jobs Filter State ──────────────────────────────────────────────────────
+export interface JobsFilterState {
+  subcategory: JobSubcategory | '';
+  keywords: string;
+  condition: 'New' | 'Used' | 'Refurbished' | '';
+  postedDate: '' | 'today' | 'last7' | 'last30';
+  sellerType: 'Individual' | 'Dealer' | '';
+  employmentType: string;
+  experienceLevel: string;
+  minSalary: string;
+  maxSalary: string;
+  currency: string;
+  benefits: string[];
+  isRemote: '' | 'yes' | 'no';
+  country: string;
+  city: string;
+  applicationMethod: string;
+}
+
+export const EMPTY_JOBS_FILTERS: JobsFilterState = {
+  subcategory: '',
+  keywords: '',
+  condition: '',
+  postedDate: '',
+  sellerType: '',
+  employmentType: '',
+  experienceLevel: '',
+  minSalary: '',
+  maxSalary: '',
+  currency: '',
+  benefits: [],
+  isRemote: '',
+  country: '',
+  city: '',
+  applicationMethod: '',
+};
+
+// ─── Services Filter State ──────────────────────────────────────────────────
+export interface ServicesFilterState {
+  subcategory: ServicesSubcategory | '';
+  keywords: string;
+  condition: 'New' | 'Used' | 'Refurbished' | '';
+  postedDate: '' | 'today' | 'last7' | 'last30';
+  sellerType: 'Individual' | 'Dealer' | '';
+  service_type: string;
+  experience_years: string;
+  certification: '' | 'yes' | 'no';
+  warranty: '' | 'yes' | 'no';
+  warranty_duration: string;
+  tools_provided: '' | 'yes' | 'no';
+  spare_parts_included: '' | 'yes' | 'no';
+  service_duration: string;
+  materials_included: '' | 'yes' | 'no';
+  specialized_in: string;
+  gender_served: string;
+  certified_professional: '' | 'yes' | 'no';
+  products_used: string;
+  session_duration: string;
+  home_service_available: '' | 'yes' | 'no';
+  subject_course: string;
+  level: string;
+  mode: string;
+  group_or_individual: string;
+  duration_per_session: string;
+  skills: string[];
+  tools_technologies: string;
+  delivery_time: string;
+  revisions_included: string;
+  portfolio_link: string;
+  event_types: string[];
+  team_size: string;
+  equipment_provided: '' | 'yes' | 'no';
+  travel_available: '' | 'yes' | 'no';
+  duration: string;
+  industry: string;
+  consultation_mode: string;
+  specialization: string;
+  license_verified: '' | 'yes' | 'no';
+  clinic_or_home: string;
+  emergency_available: '' | 'yes' | 'no';
+  custom_service_type: string;
+  description_detail: string;
+}
+
+export const EMPTY_SERVICES_FILTERS: ServicesFilterState = {
+  subcategory: '',
+  keywords: '',
+  condition: '',
+  postedDate: '',
+  sellerType: '',
+  service_type: '',
+  experience_years: '',
+  certification: '',
+  warranty: '',
+  warranty_duration: '',
+  tools_provided: '',
+  spare_parts_included: '',
+  service_duration: '',
+  materials_included: '',
+  specialized_in: '',
+  gender_served: '',
+  certified_professional: '',
+  products_used: '',
+  session_duration: '',
+  home_service_available: '',
+  subject_course: '',
+  level: '',
+  mode: '',
+  group_or_individual: '',
+  duration_per_session: '',
+  skills: [],
+  tools_technologies: '',
+  delivery_time: '',
+  revisions_included: '',
+  portfolio_link: '',
+  event_types: [],
+  team_size: '',
+  equipment_provided: '',
+  travel_available: '',
+  duration: '',
+  industry: '',
+  consultation_mode: '',
+  specialization: '',
+  license_verified: '',
+  clinic_or_home: '',
+  emergency_available: '',
+  custom_service_type: '',
+  description_detail: '',
+};
+
 const RAM_OPTIONS = ['2GB', '3GB', '4GB', '6GB', '8GB', '12GB', '16GB+'];
 const STORAGE_OPTIONS = ['16GB', '32GB', '64GB', '128GB', '256GB', '512GB', '1TB'];
 const REFRESH_RATE_OPTIONS = ['60Hz', '90Hz', '120Hz+'];
@@ -743,6 +887,14 @@ interface FilterSidebarProps {
   onHomeFurnitureFiltersChange: (filters: HomeFurnitureFilterState) => void;
   onHomeFurnitureClear?: () => void;
   onHomeFurnitureSearch?: () => void;
+  jobsFilters: JobsFilterState;
+  onJobsFiltersChange: (filters: JobsFilterState) => void;
+  onJobsClear?: () => void;
+  onJobsSearch?: () => void;
+  servicesFilters: ServicesFilterState;
+  onServicesFiltersChange: (filters: ServicesFilterState) => void;
+  onServicesClear?: () => void;
+  onServicesSearch?: () => void;
 }
 
 const CONDITIONS = [
@@ -882,6 +1034,14 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
   onHomeFurnitureFiltersChange,
   onHomeFurnitureClear,
   onHomeFurnitureSearch,
+  jobsFilters,
+  onJobsFiltersChange,
+  onJobsClear,
+  onJobsSearch,
+  servicesFilters,
+  onServicesFiltersChange,
+  onServicesClear,
+  onServicesSearch,
 }) => {
   const supabase = createClient();
   const t = useTranslations('search');
@@ -893,6 +1053,8 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
   const tSP = useTranslations('postAd.spareParts');
   const tHB = useTranslations('postAd.healthBeauty');
   const tHF = useTranslations('postAd.homeFurniture');
+  const tJO = useTranslations('postAd.jobs');
+  const tSR = useTranslations('postAd.services');
   const isRtl = isRTL(locale);
   const { cities } = useCities();
 
@@ -1004,23 +1166,36 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
     });
   }, [dbCategories]);
 
+  // Correct selected category ID if it's wrong
+  const correctedSelectedCategory = React.useMemo(() => {
+    if (selectedCategory === null) return null;
+    
+    // Database has been fixed - IDs now match constants
+    // No mapping needed anymore
+    return selectedCategory;
+  }, [selectedCategory]);
+
   const selectedDbCategory = dedupedDbCategories.find((c) => c.id === selectedCategory);
   const selectedCategorySlug = (selectedDbCategory?.slug || '').toLowerCase();
 
-  const isVehicles = selectedCategory === 1;
-  const isRealEstate = selectedCategory === 2;
-  const isElectronics = selectedCategory === 3;
-  const isFashion = selectedCategory === 4;
-  const isSpareParts = selectedCategory === 5;
+  const isVehicles = correctedSelectedCategory === 1;
+  const isRealEstate = correctedSelectedCategory === 2;
+  const isElectronics = correctedSelectedCategory === 3;
+  const isFashion = correctedSelectedCategory === 4;
+  const isSpareParts = correctedSelectedCategory === 5;
+  const isJobs = correctedSelectedCategory === 8;
+  const isServices = correctedSelectedCategory === 9 || selectedCategorySlug === 'services';
+  // Health & Beauty detection: check IDs first, then slugs, but exclude Jobs category
   const isHealthBeauty =
     selectedCategorySlug === 'health-beauty' ||
     selectedCategorySlug === 'health-and-beauty' ||
-    selectedCategory === 13 ||
-    selectedCategory === 18;
+    correctedSelectedCategory === 13;
+
   const isHomeFurniture =
     selectedCategorySlug === 'home-furniture' ||
     selectedCategorySlug === 'home-and-furniture' ||
-    selectedCategory === 6;
+    correctedSelectedCategory === 6;
+    
 
   const [fashionGeneralOpen, setFashionGeneralOpen] = React.useState(true);
   const [fashionSpecificOpen, setFashionSpecificOpen] = React.useState(true);
@@ -1031,6 +1206,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
   const [hbSpecificOpen, setHbSpecificOpen] = React.useState(true);
   const [hfGeneralOpen, setHfGeneralOpen] = React.useState(true);
   const [hfSpecificOpen, setHfSpecificOpen] = React.useState(true);
+  const [servicesSpecificOpen, setServicesSpecificOpen] = React.useState(true);
 
   const setVF = (patch: Partial<VehicleFilterState>) =>
     onVehicleFiltersChange({ ...vehicleFilters, ...patch });
@@ -1052,6 +1228,12 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
 
   const setHF = (patch: Partial<HomeFurnitureFilterState>) =>
     onHomeFurnitureFiltersChange({ ...homeFurnitureFilters, ...patch });
+
+  const setJF = (patch: Partial<JobsFilterState>) =>
+    onJobsFiltersChange({ ...jobsFilters, ...patch });
+
+  const setSF = (patch: Partial<ServicesFilterState>) =>
+    onServicesFiltersChange({ ...servicesFilters, ...patch });
 
   const getHFFieldLabel = (field: string, fallbackLabel?: string) => {
     const translationKey = getHomeFurnitureFieldTranslationKey(field);
@@ -1182,6 +1364,10 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
     ? getHomeFurnitureSpecsConfig(homeFurnitureFilters.subcategory)
     : [];
 
+  const servicesSpecFields = servicesFilters.subcategory
+    ? getServicesSpecsConfig(servicesFilters.subcategory)
+    : [];
+
   const renderHomeFurnitureField = (field: HomeFurnitureSpecField) => {
     const key = field.key as keyof HomeFurnitureFilterState;
     const label = getHFFieldLabel(field.key, field.label);
@@ -1250,6 +1436,96 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
     );
   };
 
+  const renderServicesField = (field: ServicesSpecField) => {
+    const key = field.key as keyof ServicesFilterState;
+    const label = tSR(`fields.${field.key}` as Parameters<typeof tSR>[0]);
+
+    if (field.type === 'multiselect') {
+      const selected = servicesFilters[key] as string[];
+      return (
+        <Section key={field.key} label={label} isRtl={isRtl}>
+          <MultiCheck
+            options={(field.options || []).map((option: { value: string; labelKey: string }) => ({
+              value: option.value,
+              label: tSR(`options.${option.value}` as Parameters<typeof tSR>[0]) || option.labelKey
+            }))}
+            selected={selected || []}
+            onToggle={(v) => {
+              const current = servicesFilters[key] as string[];
+              const next = current.includes(v)
+                ? current.filter((x) => x !== v)
+                : [...current, v];
+              setSF({ [key]: next } as Partial<ServicesFilterState>);
+            }}
+            isRtl={isRtl}
+          />
+        </Section>
+      );
+    }
+
+    if (field.type === 'toggle') {
+      const value = String(servicesFilters[key] || '');
+      return (
+        <Section key={field.key} label={label} isRtl={isRtl}>
+          <Sel
+            value={value}
+            onChange={(v) => setSF({ [key]: v } as Partial<ServicesFilterState>)}
+            isRtl={isRtl}
+          >
+            <option value="">{tCommon('all')}</option>
+            <option value="yes">{tCommon('yes')}</option>
+            <option value="no">{tCommon('no')}</option>
+          </Sel>
+        </Section>
+      );
+    }
+
+    if (field.type === 'select') {
+      const value = String(servicesFilters[key] || '');
+      return (
+        <Section key={field.key} label={label} isRtl={isRtl}>
+          <Sel
+            value={value}
+            onChange={(v) => setSF({ [key]: v } as Partial<ServicesFilterState>)}
+            isRtl={isRtl}
+          >
+            <option value="">{tCommon('all')}</option>
+            {(field.options || []).map((option: { value: string; labelKey: string }) => (
+              <option key={option.value} value={option.value}>
+                {tSR(`options.${option.value}` as Parameters<typeof tSR>[0]) || option.labelKey}
+              </option>
+            ))}
+          </Sel>
+        </Section>
+      );
+    }
+
+    const value = String(servicesFilters[key] || '');
+    const inputType = field.type === 'number' ? 'number' : 'text';
+    const placeholder = field.type === 'textarea' ? tSR('fields.descriptionPlaceholder') : label;
+    return (
+      <Section key={field.key} label={label} isRtl={isRtl}>
+        {field.type === 'textarea' ? (
+          <textarea
+            value={value}
+            onChange={(e) => setSF({ [key]: e.target.value } as Partial<ServicesFilterState>)}
+            placeholder={placeholder}
+            className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+            rows={3}
+          />
+        ) : (
+          <input
+            type={inputType}
+            value={value}
+            onChange={(e) => setSF({ [key]: e.target.value } as Partial<ServicesFilterState>)}
+            placeholder={placeholder}
+            className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+          />
+        )}
+      </Section>
+    );
+  };
+
   const renderFashionSelect = (label: string, key: keyof FashionFilterState, options: string[]) => (
     <Section label={getFashionFieldLabel(label)} isRtl={isRtl}>
       <Sel
@@ -1288,8 +1564,8 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
           <option value="">{tCommon('all')}</option>
           {dedupedDbCategories.length > 0
             ? dedupedDbCategories.map((cat) => (
-              <option key={cat.id} value={cat.id}>{getLocalizedDbCategoryName(cat)}</option>
-            ))
+                <option key={cat.id} value={cat.id}>{getLocalizedDbCategoryName(cat)}</option>
+              ))
             : MAIN_CATEGORIES.map((cat) => (
               <option key={cat.id} value={cat.id}>{getCategoryName(cat.id, locale)}</option>
             ))}
@@ -1317,7 +1593,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
       </Section>
 
       {/* Condition (non-vehicle/non-real-estate/non-electronics) */}
-      {!isVehicles && !isRealEstate && !isElectronics && !isFashion && !isSpareParts && !isHealthBeauty && !isHomeFurniture && (
+      {!isVehicles && !isRealEstate && !isElectronics && !isFashion && !isSpareParts && !isHealthBeauty && !isHomeFurniture && !isJobs && !isServices && (
         <Section label={t('condition')} isRtl={isRtl}>
           <div className="space-y-2">
             {CONDITIONS.map(({ value, translationKey }) => (
@@ -1332,7 +1608,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
       )}
 
       {/* Wheel drive (non-vehicle/non-real-estate/non-electronics) */}
-      {!isVehicles && !isRealEstate && !isElectronics && !isFashion && !isSpareParts && !isHealthBeauty && !isHomeFurniture && (
+      {!isVehicles && !isRealEstate && !isElectronics && !isFashion && !isSpareParts && !isHealthBeauty && !isHomeFurniture && !isJobs && !isServices && (
         <Section label={t('wheelDrive')} isRtl={isRtl}>
           <Sel id="wheel-drive-filter" value={selectedWheelDriveType} onChange={onWheelDriveTypeChange} isRtl={isRtl}>
             <option value="">{t('anyWheelDrive')}</option>
@@ -1395,7 +1671,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
               <input
                 type="number"
                 min="0"
-                placeholder="Min"
+                placeholder={t('min')}
                 value={realEstateFilters.priceMin}
                 onChange={(e) => setREF({ priceMin: e.target.value })}
                 className={`w-1/2 px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
@@ -1403,7 +1679,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
               <input
                 type="number"
                 min="0"
-                placeholder="Max"
+                placeholder={t('max')}
                 value={realEstateFilters.priceMax}
                 onChange={(e) => setREF({ priceMax: e.target.value })}
                 className={`w-1/2 px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
@@ -1427,7 +1703,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
               <input
                 type="number"
                 min="0"
-                placeholder="Min"
+                placeholder={t('min')}
                 value={realEstateFilters.bedroomsMin}
                 onChange={(e) => setREF({ bedroomsMin: e.target.value })}
                 className={`w-1/2 px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
@@ -1435,7 +1711,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
               <input
                 type="number"
                 min="0"
-                placeholder="Max"
+                placeholder={t('max')}
                 value={realEstateFilters.bedroomsMax}
                 onChange={(e) => setREF({ bedroomsMax: e.target.value })}
                 className={`w-1/2 px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
@@ -1449,7 +1725,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
               <input
                 type="number"
                 min="0"
-                placeholder="Min"
+                placeholder={t('min')}
                 value={realEstateFilters.bathroomsMin}
                 onChange={(e) => setREF({ bathroomsMin: e.target.value })}
                 className={`w-1/2 px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
@@ -1457,7 +1733,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
               <input
                 type="number"
                 min="0"
-                placeholder="Max"
+                placeholder={t('max')}
                 value={realEstateFilters.bathroomsMax}
                 onChange={(e) => setREF({ bathroomsMax: e.target.value })}
                 className={`w-1/2 px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
@@ -1472,7 +1748,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                 type="number"
                 min="0"
                 step="0.1"
-                placeholder="Min (sqm)"
+                placeholder={t('minSqm')}
                 value={realEstateFilters.areaSizeMin}
                 onChange={(e) => setREF({ areaSizeMin: e.target.value })}
                 className={`w-1/2 px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
@@ -1481,7 +1757,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                 type="number"
                 min="0"
                 step="0.1"
-                placeholder="Max (sqm)"
+                placeholder={t('maxSqm')}
                 value={realEstateFilters.areaSizeMax}
                 onChange={(e) => setREF({ areaSizeMax: e.target.value })}
                 className={`w-1/2 px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
@@ -1508,7 +1784,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                 type="number"
                 min="1800"
                 max="2100"
-                placeholder="Min"
+                placeholder={t('min')}
                 value={realEstateFilters.yearBuiltMin}
                 onChange={(e) => setREF({ yearBuiltMin: e.target.value })}
                 className={`w-1/2 px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
@@ -1517,7 +1793,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                 type="number"
                 min="1800"
                 max="2100"
-                placeholder="Max"
+                placeholder={t('max')}
                 value={realEstateFilters.yearBuiltMax}
                 onChange={(e) => setREF({ yearBuiltMax: e.target.value })}
                 className={`w-1/2 px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
@@ -2459,8 +2735,8 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                 </Section>
               </div>
             )}
+      
           </div>
-
           <div className="rounded-lg border border-slate-200 bg-slate-50">
             <button
               type="button"
@@ -2659,6 +2935,253 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
             >
               {t('applyFilters')}
             </button>
+          </div>
+        </>
+      )}
+
+      {isServices && (
+        <>
+          <div className="rounded-lg border border-slate-200 bg-slate-50">
+            {/* ═══════════════════════════════════════════════════
+                SERVICES-ONLY FILTERS
+               ═══════════════════════════════════════════════════ */}
+            <Section label={t('subcategory')} isRtl={isRtl}>
+              <Sel id="services-subcategory-filter" value={servicesFilters.subcategory} onChange={(v) => setSF({ ...EMPTY_SERVICES_FILTERS, subcategory: v as ServicesSubcategory | '' })} isRtl={isRtl}>
+                <option value="">{tCommon('all')}</option>
+                {SERVICES_SUBCATEGORIES.map((sub) => (
+                  <option key={sub.value} value={sub.value}>
+                    {tSR(`subcategories.${sub.value}` as Parameters<typeof tSR>[0])}
+                  </option>
+                ))}
+              </Sel>
+            </Section>
+
+            <Section label={t('keywords')} isRtl={isRtl}>
+              <input
+                type="text"
+                value={servicesFilters.keywords}
+                onChange={(e) => setSF({ keywords: e.target.value })}
+                placeholder={t('keywords')}
+                className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+              />
+            </Section>
+
+            <Section label={t('condition')} isRtl={isRtl}>
+              <Sel id="services-condition-filter" value={servicesFilters.condition} onChange={(v) => setSF({ condition: v as 'New' | 'Used' | 'Refurbished' | '' })} isRtl={isRtl}>
+                <option value="">{tCommon('all')}</option>
+                <option value="new">{tCommon('newCondition')}</option>
+                <option value="used">{tCommon('used')}</option>
+                <option value="refurbished">{tCommon('refurbished')}</option>
+              </Sel>
+            </Section>
+
+            <Section label={t('postedDate')} isRtl={isRtl}>
+              <Sel value={servicesFilters.postedDate} onChange={(v) => setSF({ postedDate: v as '' | 'today' | 'last7' | 'last30' })} isRtl={isRtl}>
+                <option value="">{tCommon('all')}</option>
+                <option value="today">{t('today')}</option>
+                <option value="last7">{t('last7Days')}</option>
+                <option value="last30">{t('last30Days')}</option>
+              </Sel>
+            </Section>
+
+            <Section label={t('sellerType')} isRtl={isRtl}>
+              <Sel value={servicesFilters.sellerType} onChange={(v) => setSF({ sellerType: v as 'Individual' | 'Dealer' | '' })} isRtl={isRtl}>
+                <option value="">{tCommon('all')}</option>
+                <option value="individual">{t('individual')}</option>
+                <option value="dealer">{t('dealer')}</option>
+              </Sel>
+            </Section>
+
+            {servicesFilters.subcategory && (
+              <div className="rounded-lg border border-slate-200 bg-slate-50">
+                <button
+                  type="button"
+                  onClick={() => setServicesSpecificOpen((v) => !v)}
+                  className={`w-full px-3 py-2 text-sm font-semibold text-slate-700 ${isRtl ? 'text-right' : 'text-left'}`}
+                >
+                  {t('subcategoryFilters')}
+                </button>
+                {servicesSpecificOpen && (
+                  <div className="space-y-4 px-3 pb-3">
+                    {servicesSpecFields.map((field) => renderServicesField(field))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className={`flex gap-2 ${isRtl ? 'flex-row-reverse' : ''}`}>
+              <button
+                type="button"
+                onClick={() => {
+                  setSF(EMPTY_SERVICES_FILTERS);
+                  onServicesClear?.();
+                }}
+                className="w-1/2 px-3 py-2 rounded-md border border-slate-300 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                {t('clearFilters')}
+              </button>
+              <button
+                type="button"
+                onClick={() => onServicesSearch?.()}
+                className="w-1/2 px-3 py-2 rounded-md border border-primary-600 bg-primary-600 text-sm font-medium text-white hover:bg-primary-700"
+              >
+                {t('applyFilters')}
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {isJobs && (
+        <>
+          <div className="rounded-lg border border-slate-200 bg-slate-50">
+            {/* ═══════════════════════════════════════════════════
+                JOBS-ONLY FILTERS
+               ═══════════════════════════════════════════════════ */}
+            <Section label={t('subcategory')} isRtl={isRtl}>
+              <Sel id="jobs-subcategory-filter" value={jobsFilters.subcategory} onChange={(v) => setJF({ ...EMPTY_JOBS_FILTERS, subcategory: v as JobSubcategory | '' })} isRtl={isRtl}>
+                <option value="">{tCommon('all')}</option>
+                {JOB_SUBCATEGORIES.map((sub) => (
+                  <option key={sub} value={sub}>
+                    {tJO(`subcategories.${sub}` as Parameters<typeof tJO>[0])}
+                  </option>
+                ))}
+              </Sel>
+            </Section>
+
+            <Section label={t('keywords')} isRtl={isRtl}>
+              <input
+                type="text"
+                value={jobsFilters.keywords}
+                onChange={(e) => setJF({ keywords: e.target.value })}
+                placeholder={t('keywords')}
+                className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+              />
+            </Section>
+
+            <Section label={t('condition')} isRtl={isRtl}>
+              <Sel id="jobs-condition-filter" value={jobsFilters.condition} onChange={(v) => setJF({ condition: v as 'New' | 'Used' | 'Refurbished' | '' })} isRtl={isRtl}>
+                <option value="">{tCommon('all')}</option>
+                <option value="new">{tCommon('newCondition')}</option>
+                <option value="used">{tCommon('used')}</option>
+                <option value="refurbished">{tCommon('refurbished')}</option>
+              </Sel>
+            </Section>
+
+            <Section label={t('postedDate')} isRtl={isRtl}>
+              <Sel value={jobsFilters.postedDate} onChange={(v) => setJF({ postedDate: v as '' | 'today' | 'last7' | 'last30' })} isRtl={isRtl}>
+                <option value="">{tCommon('all')}</option>
+                <option value="today">{t('today')}</option>
+                <option value="last7">{t('last7Days')}</option>
+                <option value="last30">{t('last30Days')}</option>
+              </Sel>
+            </Section>
+
+            <Section label={t('sellerType')} isRtl={isRtl}>
+              <Sel value={jobsFilters.sellerType} onChange={(v) => setJF({ sellerType: v as 'Individual' | 'Dealer' | '' })} isRtl={isRtl}>
+                <option value="">{tCommon('all')}</option>
+                <option value="individual">{t('individual')}</option>
+                <option value="dealer">{t('dealer')}</option>
+              </Sel>
+            </Section>
+
+            <Section label={tJO('employmentType')} isRtl={isRtl}>
+              <Sel value={jobsFilters.employmentType} onChange={(v) => setJF({ employmentType: v })} isRtl={isRtl}>
+                <option value="">{tCommon('all')}</option>
+                {EMPLOYMENT_TYPES.map((type) => (
+                  <option key={type} value={type}>
+                    {tJO(`employmentTypes.${type}` as Parameters<typeof tJO>[0])}
+                  </option>
+                ))}
+              </Sel>
+            </Section>
+
+            <Section label={tJO('experienceLevel')} isRtl={isRtl}>
+              <Sel value={jobsFilters.experienceLevel} onChange={(v) => setJF({ experienceLevel: v })} isRtl={isRtl}>
+                <option value="">{tCommon('all')}</option>
+                {EXPERIENCE_LEVELS.map((level) => (
+                  <option key={level.value} value={level.value}>
+                    {tJO(`experienceLevels.${level.value}` as Parameters<typeof tJO>[0])}
+                  </option>
+                ))}
+              </Sel>
+            </Section>
+
+
+            <Section label={tJO('currency')} isRtl={isRtl}>
+              <Sel value={jobsFilters.currency} onChange={(v) => setJF({ currency: v })} isRtl={isRtl}>
+                <option value="">{tCommon('all')}</option>
+                {CURRENCIES.map((currency) => (
+                  <option key={currency} value={currency}>{currency}</option>
+                ))}
+              </Sel>
+            </Section>
+
+            <Section label={tJO('benefits')} isRtl={isRtl}>
+              <div className="flex flex-wrap gap-1.5">
+                {BENEFIT_OPTIONS.map((benefit) => {
+                  const active = jobsFilters.benefits.includes(benefit.value);
+                  return (
+                    <button
+                      key={benefit.value}
+                      type="button"
+                      onClick={() => {
+                        const next = active
+                          ? jobsFilters.benefits.filter((b) => b !== benefit.value)
+                          : [...jobsFilters.benefits, benefit.value];
+                        setJF({ benefits: next });
+                      }}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium border ${active
+                          ? 'border-primary-600 bg-primary-50 text-primary-700'
+                          : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+                        }`}
+                    >
+                      {tJO(`benefits.${benefit.value}` as Parameters<typeof tJO>[0])}
+                    </button>
+                  );
+                })}
+              </div>
+            </Section>
+
+            <Section label={tJO('remotePosition')} isRtl={isRtl}>
+              <Sel value={jobsFilters.isRemote} onChange={(v) => setJF({ isRemote: v as '' | 'yes' | 'no' })} isRtl={isRtl}>
+                <option value="">{tCommon('all')}</option>
+                <option value="yes">{tCommon('yes')}</option>
+                <option value="no">{tCommon('no')}</option>
+              </Sel>
+            </Section>
+
+
+
+            <Section label={tJO('applicationMethod')} isRtl={isRtl}>
+              <Sel value={jobsFilters.applicationMethod} onChange={(v) => setJF({ applicationMethod: v })} isRtl={isRtl}>
+                <option value="">{tCommon('all')}</option>
+                <option value="email">{tJO('applicationMethods.email')}</option>
+                <option value="phone">{tJO('applicationMethods.phone')}</option>
+                <option value="website">{tJO('applicationMethods.website')}</option>
+                <option value="in_person">{tJO('applicationMethods.in_person')}</option>
+              </Sel>
+            </Section>
+
+            <div className={`flex gap-2 ${isRtl ? 'flex-row-reverse' : ''}`}>
+              <button
+                type="button"
+                onClick={() => {
+                  setJF(EMPTY_JOBS_FILTERS);
+                  onJobsClear?.();
+                }}
+                className="w-1/2 px-3 py-2 rounded-md border border-slate-300 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                {t('clearFilters')}
+              </button>
+              <button
+                type="button"
+                onClick={() => onJobsSearch?.()}
+                className="w-1/2 px-3 py-2 rounded-md border border-primary-600 bg-primary-600 text-sm font-medium text-white hover:bg-primary-700"
+              >
+                {t('applyFilters')}
+              </button>
+            </div>
           </div>
         </>
       )}

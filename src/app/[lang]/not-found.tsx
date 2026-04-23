@@ -1,3 +1,4 @@
+// src/app/[lang]/not-found.tsx
 export default function NotFound() {
   return (
     <main className="min-h-[50vh] flex items-center justify-center px-4">

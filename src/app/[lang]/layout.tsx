@@ -2,7 +2,7 @@
 import type { Metadata, Viewport } from 'next';
 import { ReactNode } from 'react';
 import { notFound } from 'next/navigation';
-import { NextIntlClientProvider } from 'next-intl';
+import { IntlProvider } from '@/components/providers/IntlProvider';
 import { getDir, isRTL, LOCALES, Locale } from '@/lib/i18n/config';
 import { getMessages } from '@/lib/i18n/request';
 import { AuthProvider } from '@/lib/context/AuthContext';
@@ -23,13 +23,15 @@ export const viewport: Viewport = {
   themeColor: '#0066FF',
 };
 
+export const dynamic = 'force-dynamic';
+
 export async function generateMetadata({ params }: LocaleLayoutProps): Promise<Metadata> {
   const { lang: locale } = await params;
 
   const titles: Record<string, string> = {
     en: 'Bazaar - Buy & Sell Anything from Anyone',
     ps: 'Bazaar - اسانه چټک او دباور وړ',
-    fa: 'Bazaar - هرجا هرچیزی بخرید یا بفروشید',
+    fa: 'Bazaar - آسان، سریع و قابل اعتماد',
   };
 
   const descriptions: Record<string, string> = {
@@ -75,7 +77,7 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
   return (
     <html lang={locale} dir={dir} className={isRtl ? 'rtl' : 'ltr'} suppressHydrationWarning>
       <body className="text-slate-900 antialiased">
-        <NextIntlClientProvider locale={locale} messages={messages}>
+        <IntlProvider locale={locale} messages={messages}>
           <ThemeProvider>
             <ToastProvider>
               <AuthProvider>
@@ -83,7 +85,7 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
               </AuthProvider>
             </ToastProvider>
           </ThemeProvider>
-        </NextIntlClientProvider>
+        </IntlProvider>
       </body>
     </html>
   );

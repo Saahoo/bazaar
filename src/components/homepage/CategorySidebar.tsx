@@ -164,10 +164,11 @@ export const CategorySidebar: React.FC<CategorySidebarProps> = ({ locale, titleO
   }, [dbCategories, counts]);
 
   const effectiveCategories = dedupedDbCategories.length > 0
-    ? dedupedDbCategories.map((c) => ({ 
-        id: c.id, 
-        label: getLocalizedDbCategoryName(c), 
-        icon: c.icon_name || getIconNameFromSlug(c.slug) 
+    ? dedupedDbCategories.map((c) => ({
+        // Use database ID directly - correction will happen in SearchPage
+        id: c.id,
+        label: getLocalizedDbCategoryName(c),
+        icon: c.icon_name || getIconNameFromSlug(c.slug)
       }))
     : MAIN_CATEGORIES.map((c) => ({ id: c.id, label: getCategoryName(c.id, locale), icon: c.icon }));
 

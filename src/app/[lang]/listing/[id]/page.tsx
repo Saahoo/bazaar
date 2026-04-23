@@ -1,7 +1,7 @@
 // src/app/[lang]/listing/[id]/page.tsx
 import { notFound } from 'next/navigation';
 import { Header } from '@/components/layout/Header';
-import { ListingDetail } from '@/components/listing/ListingDetail';
+import { ListingDetails } from '@/components/listing/ListingDetails';
 import { Locale, LOCALES } from '@/lib/i18n/config';
 import { createClient } from '@/lib/supabase/server';
 import { getMockListing, getMockUser, getListingTitle, getListingDescription } from '@/lib/constants/mock-data';
@@ -77,7 +77,7 @@ export default async function ListingPage({ params }: PageProps) {
       <>
         <Header locale={locale} />
         <main className="flex-1 bg-slate-50">
-          <ListingDetail listing={listingData} seller={seller} locale={locale} />
+          <ListingDetails listing={listingData} seller={seller} locale={locale} />
         </main>
       </>
     );
@@ -147,7 +147,7 @@ export default async function ListingPage({ params }: PageProps) {
     <>
       <Header locale={locale} />
       <main className="flex-1 bg-slate-50">
-        <ListingDetail listing={listingData} seller={seller} locale={locale} />
+        <ListingDetails listing={listingData} seller={seller} locale={locale} />
       </main>
     </>
   );

@@ -61,10 +61,11 @@ export const CategoryGrid: React.FC<CategoryGridProps> = ({ locale }) => {
 
   const effectiveCategories = dbCategories.length > 0
     ? dbCategories.map((c) => ({
-      id: c.id,
-      label: getLocalizedDbCategoryName(c),
-      icon: c.icon_name || 'home',
-    }))
+        // Use database ID directly - correction will happen in SearchPage
+        id: c.id,
+        label: getLocalizedDbCategoryName(c),
+        icon: c.icon_name || 'home',
+      }))
     : MAIN_CATEGORIES.map((c) => ({
       id: c.id,
       label: getCategoryName(c.id, locale),

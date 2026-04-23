@@ -23,6 +23,10 @@ import {
   EMPTY_HEALTH_BEAUTY_FILTERS,
   HomeFurnitureFilterState,
   EMPTY_HOME_FURNITURE_FILTERS,
+  JobsFilterState,
+  EMPTY_JOBS_FILTERS,
+  ServicesFilterState,
+  EMPTY_SERVICES_FILTERS,
 } from './FilterSidebar';
 import { ListingCard } from './ListingCard';
 import { SortDropdown } from './SortDropdown';
@@ -42,9 +46,41 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory,
   const isRtl = isRTL(locale);
   const resultsRef = useRef<HTMLDivElement | null>(null);
 
+  // Helper to convert category parameter (could be slug or ID) to numeric ID
+  const parseCategoryParam = (param: string | undefined): number | null => {
+    if (!param) return null;
+    
+    // Try to parse as number first
+    const asNumber = Number(param);
+    if (!isNaN(asNumber)) return asNumber;
+    
+    // If not a number, try to match common slugs
+    const slug = param.toLowerCase().trim();
+    const slugToId: Record<string, number> = {
+      'vehicles': 1,
+      'real-estate': 2,
+      'electronics': 3,
+      'fashion': 4,
+      'spare-parts': 5,
+      'home-furniture': 6,
+      'jobs': 8,
+      'services': 9, // Database has Services as ID 9
+      'health-beauty': 13,
+      'health-and-beauty': 13,
+    };
+    
+    return slugToId[slug] || null;
+  };
+
+  // Database has been fixed - IDs now match constants
+  // No correction needed anymore
+  const correctCategoryId = (categoryId: number | null): number | null => {
+    return categoryId;
+  };
+
   // Base filter state
   const [selectedCategory, setSelectedCategory] = useState<number | null>(
-    initialCategory ? Number(initialCategory) : null
+    parseCategoryParam(initialCategory)
   );
   const [priceMin, setPriceMin] = useState('');
   const [priceMax, setPriceMax] = useState('');
@@ -58,6 +94,8 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory,
   const [sparePartsSearchTick, setSparePartsSearchTick] = useState(0);
   const [healthBeautySearchTick, setHealthBeautySearchTick] = useState(0);
   const [homeFurnitureSearchTick, setHomeFurnitureSearchTick] = useState(0);
+  const [jobsSearchTick, setJobsSearchTick] = useState(0);
+  const [servicesSearchTick, setServicesSearchTick] = useState(0);
 
   // Vehicle-specific filter group
   const [vehicleFilters, setVehicleFilters] = useState<VehicleFilterState>(EMPTY_VEHICLE_FILTERS);
@@ -73,28 +111,41 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory,
   const [healthBeautyFilters, setHealthBeautyFilters] = useState<HealthBeautyFilterState>(EMPTY_HEALTH_BEAUTY_FILTERS);
   // Home & Furniture-specific filter group
   const [homeFurnitureFilters, setHomeFurnitureFilters] = useState<HomeFurnitureFilterState>(EMPTY_HOME_FURNITURE_FILTERS);
+  // Jobs-specific filter group
+  const [jobsFilters, setJobsFilters] = useState<JobsFilterState>(EMPTY_JOBS_FILTERS);
+  // Services-specific filter group
+  const [servicesFilters, setServicesFilters] = useState<ServicesFilterState>(EMPTY_SERVICES_FILTERS);
 
   // Reset category-specific filters when leaving their category
   const handleCategoryChange = useCallback((categoryId: number | null) => {
     setSelectedCategory(categoryId);
-    if (categoryId !== 1) setVehicleFilters(EMPTY_VEHICLE_FILTERS);
-    if (categoryId !== 2) setRealEstateFilters(EMPTY_REAL_ESTATE_FILTERS);
-    if (categoryId !== 3) setElectronicsFilters(EMPTY_ELECTRONICS_FILTERS);
-    if (categoryId !== 4) setFashionFilters(EMPTY_FASHION_FILTERS);
-    if (categoryId !== 5) setSparePartsFilters(EMPTY_SPARE_PARTS_FILTERS);
-    if (categoryId !== 13 && categoryId !== 18) setHealthBeautyFilters(EMPTY_HEALTH_BEAUTY_FILTERS);
-    if (categoryId !== 6) setHomeFurnitureFilters(EMPTY_HOME_FURNITURE_FILTERS);
+    const correctedId = correctCategoryId(categoryId);
+    if (correctedId !== 1) setVehicleFilters(EMPTY_VEHICLE_FILTERS);
+    if (correctedId !== 2) setRealEstateFilters(EMPTY_REAL_ESTATE_FILTERS);
+    if (correctedId !== 3) setElectronicsFilters(EMPTY_ELECTRONICS_FILTERS);
+    if (correctedId !== 4) setFashionFilters(EMPTY_FASHION_FILTERS);
+    if (correctedId !== 5) setSparePartsFilters(EMPTY_SPARE_PARTS_FILTERS);
+    if (correctedId !== 13) setHealthBeautyFilters(EMPTY_HEALTH_BEAUTY_FILTERS);
+    if (correctedId !== 6) setHomeFurnitureFilters(EMPTY_HOME_FURNITURE_FILTERS);
+    if (correctedId !== 8) setJobsFilters(EMPTY_JOBS_FILTERS);
+    if (correctedId !== 9) setServicesFilters(EMPTY_SERVICES_FILTERS);
   }, []);
 
-  const isVehicles = selectedCategory === 1;
-  const isRealEstate = selectedCategory === 2;
-  const isElectronics = selectedCategory === 3;
-  const isFashion = selectedCategory === 4;
-  const isSpareParts = selectedCategory === 5;
-  const isHealthBeauty = selectedCategory === 13 || selectedCategory === 18;
-  const isHomeFurniture = selectedCategory === 6;
+  // Apply category ID correction for known wrong IDs in database
+  const correctedSelectedCategory = correctCategoryId(selectedCategory);
+  
+  const isVehicles = correctedSelectedCategory === 1;
+  const isRealEstate = correctedSelectedCategory === 2;
+  const isElectronics = correctedSelectedCategory === 3;
+  const isFashion = correctedSelectedCategory === 4;
+  const isSpareParts = correctedSelectedCategory === 5;
+  const isHealthBeauty = correctedSelectedCategory === 13;
+  const isHomeFurniture = correctedSelectedCategory === 6;
+  const isJobs = correctedSelectedCategory === 8;
+  const isServices = correctedSelectedCategory === 9;
 
   // Build filters for the hook
+  // Use selectedCategory (database ID) for filtering, not correctedSelectedCategory (constant ID)
   const filters = useMemo(() => ({
     category: selectedCategory,
     query: (isVehicles
@@ -109,6 +160,10 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory,
               ? healthBeautyFilters.keywords
               : isHomeFurniture
                 ? homeFurnitureFilters.keywords
+              : isJobs
+                ? jobsFilters.keywords
+              : isServices
+                ? servicesFilters.keywords
             : initialQuery)?.trim() || undefined,
     city: selectedCity || undefined,
     priceMin: priceMin ? Number(priceMin) : undefined,
@@ -116,7 +171,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory,
     conditions: selectedConditions.length > 0 ? selectedConditions : undefined,
     wheelDriveType: (!isVehicles && !isElectronics && selectedWheelDriveType) ? selectedWheelDriveType as 'fwd' | 'rwd' | 'awd' | '4wd' : undefined,
     sortBy: sortBy as 'newest' | 'oldest' | 'priceLow' | 'priceHigh',
-    searchTick: electronicsSearchTick + fashionSearchTick + sparePartsSearchTick + healthBeautySearchTick + homeFurnitureSearchTick,
+    searchTick: electronicsSearchTick + fashionSearchTick + sparePartsSearchTick + healthBeautySearchTick + homeFurnitureSearchTick + jobsSearchTick + servicesSearchTick,
     vehicleFilters: isVehicles ? {
       vehicleMake: vehicleFilters.make || undefined,
       vehicleModel: vehicleFilters.model || undefined,
@@ -185,9 +240,15 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory,
     homeFurnitureFilters: isHomeFurniture ? {
       ...homeFurnitureFilters,
     } : undefined,
+    jobsFilters: isJobs ? {
+      ...jobsFilters,
+    } : undefined,
+    servicesFilters: isServices ? {
+      ...servicesFilters,
+    } : undefined,
   }), [
     selectedCategory, initialQuery, selectedCity, priceMin, priceMax,
-    selectedConditions, selectedWheelDriveType, sortBy, isVehicles, isRealEstate, isElectronics, isFashion, isSpareParts, isHealthBeauty, isHomeFurniture, vehicleFilters, realEstateFilters, electronicsFilters, fashionFilters, sparePartsFilters, healthBeautyFilters, homeFurnitureFilters, electronicsSearchTick, fashionSearchTick, sparePartsSearchTick, healthBeautySearchTick, homeFurnitureSearchTick,
+    selectedConditions, selectedWheelDriveType, sortBy, isVehicles, isRealEstate, isElectronics, isFashion, isSpareParts, isHealthBeauty, isHomeFurniture, isJobs, isServices, vehicleFilters, realEstateFilters, electronicsFilters, fashionFilters, sparePartsFilters, healthBeautyFilters, homeFurnitureFilters, jobsFilters, servicesFilters, electronicsSearchTick, fashionSearchTick, sparePartsSearchTick, healthBeautySearchTick, homeFurnitureSearchTick, jobsSearchTick, servicesSearchTick,
   ]);
 
   const deferredFilters = useDeferredValue(filters);
@@ -199,13 +260,15 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory,
     if (isSpareParts) setSparePartsSearchTick((value) => value + 1);
     if (isHealthBeauty) setHealthBeautySearchTick((value) => value + 1);
     if (isHomeFurniture) setHomeFurnitureSearchTick((value) => value + 1);
-  }, [isElectronics, isFashion, isHealthBeauty, isHomeFurniture, isSpareParts]);
+    if (isJobs) setJobsSearchTick((value) => value + 1);
+    if (isServices) setServicesSearchTick((value) => value + 1);
+  }, [isElectronics, isFashion, isHealthBeauty, isHomeFurniture, isSpareParts, isJobs, isServices]);
 
   const activeFilterCount = useMemo(() => {
-    return [selectedCategory, priceMin, priceMax, selectedCity, selectedWheelDriveType]
+    return [correctedSelectedCategory, priceMin, priceMax, selectedCity, selectedWheelDriveType]
       .filter(Boolean)
       .length + selectedConditions.length;
-  }, [priceMax, priceMin, selectedCategory, selectedCity, selectedConditions.length, selectedWheelDriveType]);
+  }, [priceMax, priceMin, correctedSelectedCategory, selectedCity, selectedConditions.length, selectedWheelDriveType]);
 
   const handleMobileApplyFilters = useCallback(() => {
     triggerCategorySearch();
@@ -298,6 +361,32 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory,
       }}
       onHomeFurnitureSearch={() => {
         setHomeFurnitureSearchTick((value) => value + 1);
+        setMobileFiltersOpen(false);
+      }}
+      jobsFilters={jobsFilters}
+      onJobsFiltersChange={setJobsFilters}
+      onJobsClear={() => {
+        setPriceMin('');
+        setPriceMax('');
+        setSelectedCity('');
+        setJobsSearchTick((value) => value + 1);
+        setMobileFiltersOpen(false);
+      }}
+      onJobsSearch={() => {
+        setJobsSearchTick((value) => value + 1);
+        setMobileFiltersOpen(false);
+      }}
+      servicesFilters={servicesFilters}
+      onServicesFiltersChange={setServicesFilters}
+      onServicesClear={() => {
+        setPriceMin('');
+        setPriceMax('');
+        setSelectedCity('');
+        setServicesSearchTick((value) => value + 1);
+        setMobileFiltersOpen(false);
+      }}
+      onServicesSearch={() => {
+        setServicesSearchTick((value) => value + 1);
         setMobileFiltersOpen(false);
       }}
     />

@@ -9,6 +9,7 @@ import { Locale, isRTL } from '@/lib/i18n/config';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/context/AuthContext';
 import { getOrCreateConversation } from '@/lib/chat/actions';
+import { useToast } from '@/components/common/ToastProvider';
 
 interface ActionButtonsProps {
   locale: Locale;
@@ -28,9 +29,11 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
   phoneVisible,
 }) => {
   const tCommon = useTranslations('common');
+  const tToast = useTranslations('toasts');
   const router = useRouter();
   const supabase = createClient();
   const { user } = useAuth();
+  const { showToast } = useToast();
   const isRtl = isRTL(locale);
   const [isFavorite, setIsFavorite] = React.useState(false);
   const [favoriteLoading, setFavoriteLoading] = React.useState(false);
@@ -122,22 +125,23 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
     }
     try {
       await navigator.clipboard.writeText(url);
-      alert('Link copied');
+      showToast(tToast('linkCopied'), 'success');
     } catch {
-      window.prompt('Copy this link:', url);
+      // Fallback prompt with translated label
+      window.prompt(tToast('copyLinkPrompt'), url);
     }
   };
 
   const handleReport = () => {
     const url = `${window.location.origin}/${locale}/listing/${listingId}`;
-    const subject = encodeURIComponent(`Report listing ${listingId}`);
-    const body = encodeURIComponent(`Please review this listing:\n${url}`);
+    const subject = encodeURIComponent(tToast('reportSubject', { id: listingId }));
+    const body = encodeURIComponent(tToast('reportBody', { url }));
     window.location.href = `mailto:support@bazaar.local?subject=${subject}&body=${body}`;
   };
 
   const handleCall = () => {
     if (!phoneVisible || !sellerPhone) {
-      alert('Phone number is not available.');
+      showToast(tCommon('phoneNotAvailable'), 'info');
       return;
     }
     window.location.href = `tel:${sellerPhone}`;
