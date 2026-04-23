@@ -3117,7 +3117,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
               </Sel>
             </Section>
 
-            <Section label={tJO('benefits')} isRtl={isRtl}>
+            <Section label={tJO('benefitsLabel')} isRtl={isRtl}>
               <div className="flex flex-wrap gap-1.5">
                 {BENEFIT_OPTIONS.map((benefit) => {
                   const active = jobsFilters.benefits.includes(benefit.value);

@@ -2238,7 +2238,7 @@
       "compensationLogistics": "حقوق و مزایا",
       "location": "موقعیت",
       "salary": "حقوق",
-      "benefits": "مزایا",
+      "benefitsLabel": "مزایا",
       "applicationMethodLabel": "روش درخواست",
       "edit": "ویرایش",
       "notSpecified": "مشخص نشده",

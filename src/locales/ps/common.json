@@ -2238,7 +2238,7 @@
       "compensationLogistics": "معاش او لوجستیک",
       "location": "موقعیت",
       "salary": "معاش",
-      "benefits": "ګټې",
+      "benefitsLabel": "ګټې",
       "applicationMethodLabel": "د غوښتنلیک طریقه",
       "edit": "سمول",
       "notSpecified": "نه دی ټاکل شوی",

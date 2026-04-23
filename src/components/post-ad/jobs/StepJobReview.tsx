@@ -266,7 +266,7 @@ export const StepJobReview: React.FC<StepJobReviewProps> = ({ locale, data, onEd
               </div>
               
               <div>
-                <dt className="text-sm font-medium text-slate-500">{t('benefits')}</dt>
+                <dt className="text-sm font-medium text-slate-500">{t('benefitsLabel')}</dt>
                 <dd className="mt-1 text-sm text-slate-900">{formatBenefits()}</dd>
               </div>
               

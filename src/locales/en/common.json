@@ -2248,7 +2248,7 @@
       "compensationLogistics": "Compensation & Logistics",
       "location": "Location",
       "salary": "Salary",
-      "benefits": "Benefits",
+      "benefitsLabel": "Benefits",
       "applicationMethodLabel": "Application Method",
       "edit": "Edit",
       "notSpecified": "Not specified",

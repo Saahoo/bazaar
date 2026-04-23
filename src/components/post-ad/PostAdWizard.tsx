@@ -1872,9 +1872,34 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         }),
       });
 
-      const json = await resp.json();
+      // Log response details for debugging
+      console.log('API Response status:', resp.status, resp.statusText);
+      
+      const responseText = await resp.text();
+      console.log('API Response text:', responseText);
+      
+      interface ApiResponse {
+        id?: string;
+        error?: string;
+        details?: string;
+        [key: string]: unknown;
+      }
+      
+      let json: ApiResponse = {};
+      try {
+        json = responseText ? JSON.parse(responseText) : {};
+      } catch (e) {
+        console.error('Failed to parse API response as JSON:', e);
+        console.error('Raw response:', responseText);
+      }
+      
       if (!resp.ok || json.error) {
-        console.error('Listing insert failed (server):', json);
+        console.error('Listing insert failed (server):', {
+          status: resp.status,
+          statusText: resp.statusText,
+          json,
+          responseText
+        });
         throw new Error(json.error || 'Failed to insert listing');
       }
 
