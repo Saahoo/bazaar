@@ -248,7 +248,7 @@ function getCategorySectionOverrides(categoryId: number): Record<string, Display
  */
 export function transformFieldsForDisplay(
   fields: ListingField[],
-  listingData: any,
+  listingData: Record<string, unknown>,
   categoryId: number,
   locale: Locale
 ): MappedField[] {
@@ -316,10 +316,14 @@ export function transformFieldsForDisplay(
 /**
  * Get field value from listing data (root level or metadata)
  */
-function getFieldValue(listingData: any, fieldId: string): unknown {
+function getFieldValue(listingData: Record<string, unknown>, fieldId: string): unknown {
   if (!listingData) return '';
   if (listingData[fieldId] !== undefined) return listingData[fieldId];
-  if (listingData.metadata && listingData.metadata[fieldId] !== undefined) return listingData.metadata[fieldId];
+  
+  // Handle metadata access with proper typing
+  const metadata = listingData.metadata as Record<string, unknown> | undefined;
+  if (metadata && metadata[fieldId] !== undefined) return metadata[fieldId];
+  
   return '';
 }
 

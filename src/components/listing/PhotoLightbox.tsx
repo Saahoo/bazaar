@@ -60,20 +60,20 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
     setPosition({ x: 0, y: 0 });
   }, [images.length]);
 
-  const zoomIn = () => {
+  const zoomIn = useCallback(() => {
     setScale((prev) => Math.min(prev + 0.25, 3));
-  };
+  }, []);
 
-  const zoomOut = () => {
+  const zoomOut = useCallback(() => {
     setScale((prev) => Math.max(prev - 0.25, 0.5));
-  };
+  }, []);
 
-  const resetZoom = () => {
+  const resetZoom = useCallback(() => {
     setScale(1);
     setPosition({ x: 0, y: 0 });
-  };
+  }, []);
 
-  const toggleFullscreen = async () => {
+  const toggleFullscreen = useCallback(async () => {
     if (!document.fullscreenElement) {
       await document.documentElement.requestFullscreen();
       setIsFullscreen(true);
@@ -81,7 +81,7 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
       await document.exitFullscreen();
       setIsFullscreen(false);
     }
-  };
+  }, []);
 
   // Handle keyboard navigation
   useEffect(() => {

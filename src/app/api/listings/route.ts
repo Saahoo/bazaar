@@ -107,11 +107,18 @@ export async function POST(req: Request) {
     } else if (typeof err === 'string') {
       errorMessage = err;
     } else if (err && typeof err === 'object') {
-      if ('message' in err) {
-        errorMessage = String((err as any).message);
+      // Define a type for error-like objects
+      interface ErrorLike {
+        message?: unknown;
+        stack?: unknown;
       }
-      if ('stack' in err) {
-        errorDetails = String((err as any).stack);
+      
+      const errorLike = err as ErrorLike;
+      if ('message' in errorLike) {
+        errorMessage = String(errorLike.message);
+      }
+      if ('stack' in errorLike) {
+        errorDetails = String(errorLike.stack);
       }
     }
     
