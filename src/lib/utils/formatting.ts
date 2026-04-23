@@ -105,7 +105,7 @@ export const getDatePlaceholder = (locale: Locale): string => {
  * Parse a date string in locale-specific format
  * Note: This is a simplified implementation - in production you'd want a more robust parser
  */
-export const parseLocaleDate = (dateString: string, locale: Locale): Date | null => {
+export const parseLocaleDate = (dateString: string, _locale: Locale): Date | null => {
   try {
     // For now, assume ISO format or YYYY-MM-DD format
     // In a real app, you'd use a library like moment-jalaali for Persian dates

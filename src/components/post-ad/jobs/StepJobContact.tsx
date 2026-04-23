@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { Phone, Mail } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { LegalReadNotice } from '@/components/common/LegalReadNotice';
-import { InputField } from './JobsFieldControls';
 import { Locale, isRTL } from '@/lib/i18n/config';
 
 interface StepJobContactProps {

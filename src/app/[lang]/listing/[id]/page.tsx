@@ -38,18 +38,18 @@ export default async function ListingPage({ params }: PageProps) {
 
     const seller = {
       id: mockSeller.id,
-      display_name: mockSeller.display_name,
+      display_name: mockSeller.display_name || mockSeller.name,
       avatar_url: null,
       phone: mockSeller.phone,
       city: null,
-      bio: mockSeller.bio,
+      bio: mockSeller.bio || '',
       profile_type: 'personal',
       company_name: null,
       age: null,
       sex: null,
-      verified: mockSeller.verified,
-      rating: mockSeller.rating,
-      member_since: mockSeller.member_since,
+      verified: mockSeller.verified || false,
+      rating: mockSeller.rating || 0,
+      member_since: mockSeller.member_since || new Date().toISOString(),
     };
 
     const listingData = {
@@ -61,14 +61,14 @@ export default async function ListingPage({ params }: PageProps) {
       price: mockListing.price,
       currency: mockListing.currency,
       condition: mockListing.condition,
-      city: mockListing.city,
-      view_count: mockListing.view_count,
-      favorite_count: mockListing.favorite_count,
-      status: mockListing.status,
+      city: mockListing.city || 'Unknown City',
+      view_count: mockListing.view_count || 0,
+      favorite_count: mockListing.favorite_count || 0,
+      status: mockListing.status || 'active',
       phone_visible: true,
       from_owner: Boolean(mockListing.from_owner),
       created_at: mockListing.created_at,
-      photos: mockListing.photos,
+      photos: mockListing.photos || [],
       metadata: {},
       price_history: [],
     };

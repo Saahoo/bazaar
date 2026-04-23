@@ -165,7 +165,7 @@ export const BaseListingDetails = <T extends ListingCategory>({
     // Transform fields for display using comprehensive mapping system
     const mappedFields = transformFieldsForDisplay(
       allFields,
-      listingData,
+      listingData as unknown as Record<string, unknown>,
       listingData.category_id,
       locale
     );

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useTranslations } from 'next-intl';
 import { Locale, isRTL } from '@/lib/i18n/config';
 import { ExperienceLevel, EXPERIENCE_LEVELS } from '@/lib/constants/jobs-wizard';

@@ -1,8 +1,6 @@
 'use client';
 
 import React from 'react';
-import { useTranslations } from 'next-intl';
-import { Locale, isRTL } from '@/lib/i18n/config';
 import { cn } from '@/lib/utils/cn';
 
 interface InputFieldProps {

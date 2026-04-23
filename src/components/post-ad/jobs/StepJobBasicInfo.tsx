@@ -3,7 +3,7 @@
 import React from 'react';
 import { useTranslations } from 'next-intl';
 import { Locale, isRTL } from '@/lib/i18n/config';
-import { EmploymentType, EMPLOYMENT_TYPES, JOB_SUBCATEGORIES } from '@/lib/constants/jobs-wizard';
+import { EmploymentType, EMPLOYMENT_TYPES } from '@/lib/constants/jobs-wizard';
 import { InputField, SelectField, ToggleField, CheckboxField } from './JobsFieldControls';
 
 interface StepJobBasicInfoProps {
@@ -35,10 +35,6 @@ export const StepJobBasicInfo: React.FC<StepJobBasicInfoProps> = ({ locale, data
     label: t(`employmentTypes.${type}`)
   }));
 
-  const subcategoryOptions = JOB_SUBCATEGORIES.map(cat => ({
-    value: cat,
-    label: t(`subcategories.${cat}`)
-  }));
 
   return (
     <div className="space-y-6">

@@ -6,7 +6,6 @@ import { Locale, isRTL } from '@/lib/i18n/config';
 import { Currency, CURRENCIES, BENEFIT_OPTIONS, ApplicationMethod } from '@/lib/constants/jobs-wizard';
 import { getDatePlaceholder } from '@/lib/utils/formatting';
 import { InputField, SelectField, CheckboxField } from './JobsFieldControls';
-import { cn } from '@/lib/utils/cn';
 
 interface StepJobCompensationProps {
   locale: Locale;

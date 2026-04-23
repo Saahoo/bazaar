@@ -4,7 +4,7 @@ import React from 'react';
 import { useTranslations } from 'next-intl';
 import { Locale, isRTL } from '@/lib/i18n/config';
 import { EmploymentType, ExperienceLevel, ApplicationMethod } from '@/lib/constants/jobs-wizard';
-import { formatNumber, formatDate, formatSalaryRange } from '@/lib/utils/formatting';
+import { formatDate, formatSalaryRange } from '@/lib/utils/formatting';
 import { Check, Edit2 } from 'lucide-react';
 
 interface StepJobReviewProps {

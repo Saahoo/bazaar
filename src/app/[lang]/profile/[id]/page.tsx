@@ -27,10 +27,10 @@ export default async function PublicProfile({ params }: PageProps) {
 
     const mockProfile = {
       id: mockUser.id,
-      display_name: mockUser.display_name,
+      display_name: mockUser.display_name || mockUser.name,
       phone: mockUser.phone,
       avatar_url: null,
-      bio: mockUser.bio,
+      bio: mockUser.bio || '',
       city: null,
       district: null,
       address_line: null,
@@ -40,9 +40,9 @@ export default async function PublicProfile({ params }: PageProps) {
       company_name: null,
       occupation: null,
       website: null,
-      verified_phone: mockUser.verified,
-      seller_rating: mockUser.rating,
-      created_at: mockUser.member_since,
+      verified_phone: mockUser.verified || false,
+      seller_rating: mockUser.rating || 0,
+      created_at: mockUser.member_since || new Date().toISOString(),
     };
 
     return (
@@ -54,7 +54,7 @@ export default async function PublicProfile({ params }: PageProps) {
               locale={locale}
               profile={mockProfile}
               stats={{
-                activeListings: mockUser.listing_count,
+                activeListings: mockUser.listing_count || 0,
                 friends: 0,
                 favoriteUsers: 0,
               }}

@@ -14,6 +14,12 @@ export interface MockListing {
   images: string[];
   created_at: string;
   user_id: string;
+  city?: string;
+  view_count?: number;
+  favorite_count?: number;
+  status?: string;
+  from_owner?: boolean;
+  photos?: string[];
 }
 
 export interface MockUser {
@@ -22,6 +28,18 @@ export interface MockUser {
   email: string;
   phone: string;
   avatar: string;
+  display_name?: string;
+  bio?: string;
+  verified?: boolean;
+  rating?: number;
+  member_since?: string;
+  listing_count?: number;
+  city?: string;
+  view_count?: number;
+  favorite_count?: number;
+  status?: string;
+  from_owner?: boolean;
+  photos?: string[];
 }
 
 export function getMockListing(id: string): MockListing {
@@ -35,6 +53,12 @@ export function getMockListing(id: string): MockListing {
     subcategory: 'sample',
     condition: 'New',
     location: 'Sample City',
+    city: 'Sample City',
+    view_count: 0,
+    favorite_count: 0,
+    status: 'active',
+    from_owner: true,
+    photos: ['/placeholder-image.jpg'],
     images: ['/placeholder-image.jpg'],
     created_at: new Date().toISOString(),
     user_id: 'user-123'
@@ -47,14 +71,19 @@ export function getMockUser(id: string): MockUser {
     name: `Sample User ${id}`,
     email: `user${id}@example.com`,
     phone: '+1234567890',
-    avatar: '/placeholder-avatar.jpg'
+    avatar: '/placeholder-avatar.jpg',
+    display_name: `User ${id}`,
+    bio: 'Sample bio for development purposes.',
+    verified: true,
+    rating: 4.5,
+    member_since: '2023-01-01'
   };
 }
 
-export function getListingTitle(listing: MockListing): string {
+export function getListingTitle(listing: MockListing, _locale?: string): string {
   return listing.title;
 }
 
-export function getListingDescription(listing: MockListing): string {
+export function getListingDescription(listing: MockListing, _locale?: string): string {
   return listing.description;
 }
