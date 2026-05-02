@@ -34,11 +34,59 @@ const formatFieldValue = (
     return '—';
   }
 
+  // Helper function to get proper Intl locale string
+  const getIntlLocale = (locale: Locale): string => {
+    switch (locale) {
+      case 'en': return 'en-US';
+      case 'fa': return 'fa-IR';
+      case 'ps': return 'ps-AF';
+      default: return 'en-US';
+    }
+  };
+
+  // Helper function to get date locale
+  const getDateLocale = (locale: Locale): string => {
+    switch (locale) {
+      case 'en': return 'en-US';
+      case 'fa': return 'fa-IR';
+      case 'ps': return 'en-US'; // Pashto uses Gregorian calendar with English month names
+      default: return 'en-US';
+    }
+  };
+
+  // Helper function to get localized units
+  const getLocalizedUnit = (unitType: 'area' | 'distance' | 'weight', locale: Locale): string => {
+    switch (locale) {
+      case 'fa':
+        switch (unitType) {
+          case 'area': return 'متر مربع';
+          case 'distance': return 'کیلومتر';
+          case 'weight': return 'کیلوگرم';
+          default: return '';
+        }
+      case 'ps':
+        switch (unitType) {
+          case 'area': return 'متر مربع';
+          case 'distance': return 'کیلومتر';
+          case 'weight': return 'کیلوگرم';
+          default: return '';
+        }
+      case 'en':
+      default:
+        switch (unitType) {
+          case 'area': return 'm²';
+          case 'distance': return 'km';
+          case 'weight': return 'kg';
+          default: return '';
+        }
+    }
+  };
+
   switch (fieldType) {
     case 'currency':
       if (typeof value === 'number') {
         const currencyCode = typeof metadata?.currency === 'string' ? metadata.currency : 'USD';
-        return new Intl.NumberFormat(locale === 'en' ? 'en-US' : 'fa-AF', {
+        return new Intl.NumberFormat(getIntlLocale(locale), {
           style: 'currency',
           currency: currencyCode,
           minimumFractionDigits: 0,
@@ -49,7 +97,7 @@ const formatFieldValue = (
     
     case 'number':
       if (typeof value === 'number') {
-        return new Intl.NumberFormat(locale === 'en' ? 'en-US' : 'fa-AF').format(value);
+        return new Intl.NumberFormat(getIntlLocale(locale)).format(value);
       }
       return String(value);
     
@@ -64,13 +112,29 @@ const formatFieldValue = (
     
     case 'date':
       if (value instanceof Date) {
-        return value.toLocaleDateString(locale === 'en' ? 'en-US' : 'fa-IR');
+        return value.toLocaleDateString(getDateLocale(locale), {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
       }
       return String(value);
     
     case 'area':
       if (typeof value === 'number') {
-        return `${new Intl.NumberFormat(locale === 'en' ? 'en-US' : 'fa-AF').format(value)} m²`;
+        return `${new Intl.NumberFormat(getIntlLocale(locale)).format(value)} ${getLocalizedUnit('area', locale)}`;
+      }
+      return String(value);
+    
+    case 'distance':
+      if (typeof value === 'number') {
+        return `${new Intl.NumberFormat(getIntlLocale(locale)).format(value)} ${getLocalizedUnit('distance', locale)}`;
+      }
+      return String(value);
+    
+    case 'weight':
+      if (typeof value === 'number') {
+        return `${new Intl.NumberFormat(getIntlLocale(locale)).format(value)} ${getLocalizedUnit('weight', locale)}`;
       }
       return String(value);
     
@@ -85,7 +149,7 @@ const SkeletonLoader = () => (
   <div className="animate-pulse">
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <div className="lg:col-span-2 space-y-8">
-        <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+        <div className="rounded-2xl border border-slate-200/60 bg-white/80 shadow-lg shadow-slate-900/5 backdrop-blur-xl overflow-hidden">
           <div className="h-64 bg-slate-200" />
           <div className="p-4">
             <div className="h-6 bg-slate-200 rounded w-3/4 mb-2" />
@@ -93,7 +157,7 @@ const SkeletonLoader = () => (
           </div>
         </div>
         
-        <div className="bg-white border border-slate-200 rounded-lg p-6">
+        <div className="rounded-2xl border border-slate-200/60 bg-white/80 shadow-lg shadow-slate-900/5 backdrop-blur-xl p-6">
           <div className="h-6 bg-slate-200 rounded w-1/4 mb-6" />
           <div className="space-y-4">
             {[1, 2, 3, 4, 5].map((i) => (
@@ -105,7 +169,7 @@ const SkeletonLoader = () => (
           </div>
         </div>
         
-        <div className="bg-white border border-slate-200 rounded-lg p-6">
+        <div className="rounded-2xl border border-slate-200/60 bg-white/80 shadow-lg shadow-slate-900/5 backdrop-blur-xl p-6">
           <div className="h-6 bg-slate-200 rounded w-1/4 mb-4" />
           <div className="space-y-2">
             <div className="h-4 bg-slate-200 rounded w-full" />
@@ -116,7 +180,7 @@ const SkeletonLoader = () => (
       </div>
       
       <div className="lg:col-span-1 space-y-8">
-        <div className="bg-white border border-slate-200 rounded-lg p-6">
+        <div className="rounded-2xl border border-slate-200/60 bg-white/80 shadow-lg shadow-slate-900/5 backdrop-blur-xl p-6">
           <div className="flex items-center space-x-4 mb-4">
             <div className="w-12 h-12 bg-slate-200 rounded-full" />
             <div className="flex-1">
@@ -131,7 +195,7 @@ const SkeletonLoader = () => (
           </div>
         </div>
         
-        <div className="bg-white border border-slate-200 rounded-lg p-6">
+        <div className="rounded-2xl border border-slate-200/60 bg-white/80 shadow-lg shadow-slate-900/5 backdrop-blur-xl p-6">
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
               <div key={i} className="h-10 bg-slate-200 rounded" />
@@ -149,7 +213,8 @@ export const BaseListingDetails = <T extends ListingCategory>({
   loading,
   locale,
 }: BaseListingDetailsProps<T>) => {
-  const t = useTranslations('listing');
+  const t = useTranslations();
+  const tListing = useTranslations('listing');
   const tCommon = useTranslations('common');
   const isRtl = isRTL(locale);
 
@@ -196,25 +261,58 @@ export const BaseListingDetails = <T extends ListingCategory>({
     return formatFieldValue(field.value, field.type, locale, listingData.metadata);
   };
 
+  // Helper function to get proper Intl locale string
+  const getIntlLocale = useMemo(() => {
+    return (locale: Locale): string => {
+      switch (locale) {
+        case 'en': return 'en-US';
+        case 'fa': return 'fa-IR';
+        case 'ps': return 'ps-AF';
+        default: return 'en-US';
+      }
+    };
+  }, []);
+
+  // Helper function to get date locale
+  const getDateLocale = useMemo(() => {
+    return (locale: Locale): string => {
+      switch (locale) {
+        case 'en': return 'en-US';
+        case 'fa': return 'fa-IR';
+        case 'ps': return 'en-US'; // Pashto uses Gregorian calendar with English month names
+        default: return 'en-US';
+      }
+    };
+  }, []);
+
   // Formatting helpers
   const formattedPrice = useMemo(() => {
-    return new Intl.NumberFormat(locale === 'en' ? 'en-US' : 'fa-AF', {
+    return new Intl.NumberFormat(getIntlLocale(locale), {
       style: 'currency',
       currency: listingData.currency,
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(listingData.price);
-  }, [listingData.price, listingData.currency, locale]);
+  }, [listingData.price, listingData.currency, locale, getIntlLocale]);
 
   const formattedCondition = useMemo(() => {
     const conditionMap: Record<string, string> = {
       new: tCommon('newCondition'),
       like_new: tCommon('likeNew'),
       used: tCommon('used'),
-      for_parts: 'For Parts',
+      for_parts: tCommon('forParts') || 'For Parts',
     };
     return conditionMap[listingData.condition] || listingData.condition;
   }, [listingData.condition, tCommon]);
+
+  // Format created date with proper locale
+  const formattedCreatedDate = useMemo(() => {
+    return new Date(listingData.created_at).toLocaleDateString(getDateLocale(locale), {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  }, [listingData.created_at, locale, getDateLocale]);
 
   const categoryName = useMemo(() => {
     return getCategoryName(listingData.category_id, locale);
@@ -256,7 +354,7 @@ export const BaseListingDetails = <T extends ListingCategory>({
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Breadcrumb */}
       <div className="mb-6 text-sm text-slate-600">
-        <span className="hover:text-blue-600 cursor-pointer">{t('home')}</span>
+        <span className="hover:text-blue-600 cursor-pointer">{tCommon('home')}</span>
         <span className="mx-2">›</span>
         <span className="hover:text-blue-600 cursor-pointer">{categoryName}</span>
         <span className="mx-2">›</span>
@@ -276,14 +374,14 @@ export const BaseListingDetails = <T extends ListingCategory>({
         {/* Main content - left column (2/3) */}
         <div className="lg:col-span-2 space-y-8">
           {/* Image Gallery */}
-          <section className="bg-white border border-slate-200 rounded-lg overflow-hidden">
+          <section className="rounded-2xl border border-slate-200/60 bg-white/80 shadow-lg shadow-slate-900/5 backdrop-blur-xl overflow-hidden">
             <div className="relative">
               <div className="relative h-96 bg-slate-100 cursor-zoom-in">
                 {images.length > 0 ? (
                   <button
                     onClick={() => setIsLightboxOpen(true)}
                     className="w-full h-full"
-                    aria-label={t('openLightbox')}
+                    aria-label={tListing('openLightbox')}
                   >
                     <Image
                       src={images[currentImageIndex]}
@@ -298,7 +396,7 @@ export const BaseListingDetails = <T extends ListingCategory>({
                   <div className="w-full h-full flex items-center justify-center text-slate-400">
                     <div className="text-center">
                       <Tag className="w-12 h-12 mx-auto mb-2" />
-                      <p>{t('noImageAvailable')}</p>
+                      <p>{tListing('noImageAvailable')}</p>
                     </div>
                   </div>
                 )}
@@ -309,16 +407,16 @@ export const BaseListingDetails = <T extends ListingCategory>({
                     <button
                       onClick={prevImage}
                       className={`absolute top-1/2 transform -translate-y-1/2 ${isRtl ? 'right-4' : 'left-4'} bg-white/80 hover:bg-white text-slate-800 rounded-full p-2 shadow-lg transition-colors`}
-                      aria-label={t('previousImage')}
-                      title={t('previousImage')}
+                      aria-label={tListing('previousImage')}
+                      title={tListing('previousImage')}
                     >
                       <ChevronLeft className="w-5 h-5" />
                     </button>
                     <button
                       onClick={nextImage}
                       className={`absolute top-1/2 transform -translate-y-1/2 ${isRtl ? 'left-4' : 'right-4'} bg-white/80 hover:bg-white text-slate-800 rounded-full p-2 shadow-lg transition-colors`}
-                      aria-label={t('nextImage')}
-                      title={t('nextImage')}
+                      aria-label={tListing('nextImage')}
+                      title={tListing('nextImage')}
                     >
                       <ChevronRight className="w-5 h-5" />
                     </button>
@@ -335,8 +433,8 @@ export const BaseListingDetails = <T extends ListingCategory>({
                         key={idx}
                         onClick={() => setCurrentImageIndex(idx)}
                         className={`flex-shrink-0 w-20 h-20 rounded border-2 ${currentImageIndex === idx ? 'border-blue-600' : 'border-transparent'}`}
-                        aria-label={t('viewPhoto', { index: idx + 1 })}
-                        title={t('viewPhoto', { index: idx + 1 })}
+                        aria-label={tListing('viewPhoto', { index: idx + 1 })}
+                        title={tListing('viewPhoto', { index: idx + 1 })}
                       >
                         <div className="relative w-full h-full bg-slate-100">
                           <Image
@@ -356,7 +454,7 @@ export const BaseListingDetails = <T extends ListingCategory>({
           </section>
 
           {/* Title & Metadata */}
-          <section className="bg-white border border-slate-200 rounded-lg p-6">
+          <section className="rounded-2xl border border-slate-200/60 bg-white/80 shadow-lg shadow-slate-900/5 backdrop-blur-xl p-6">
             <h1 className="text-2xl font-bold text-slate-900 mb-4">
               {listingData.title}
             </h1>
@@ -368,11 +466,11 @@ export const BaseListingDetails = <T extends ListingCategory>({
               </div>
               <div className="flex items-center">
                 <Eye className="w-4 h-4 mr-1" />
-                <span>{t('views', { count: listingData.view_count || 0 })}</span>
+                <span>{tListing('views', { count: listingData.view_count || 0 })}</span>
               </div>
               <div className="flex items-center">
                 <Calendar className="w-4 h-4 mr-1" />
-                <span>{new Date(listingData.created_at).toLocaleDateString(locale === 'en' ? 'en-US' : 'fa-IR')}</span>
+                <span>{formattedCreatedDate}</span>
               </div>
               <div className="flex items-center">
                 <CheckCircle className="w-4 h-4 mr-1 text-green-600" />
@@ -387,7 +485,7 @@ export const BaseListingDetails = <T extends ListingCategory>({
               </div>
               {metadata.is_negotiable as boolean && (
                 <div className="text-sm text-slate-600 mt-1">
-                  {t('priceNegotiable')}
+                  {tListing('priceNegotiable')}
                 </div>
               )}
             </div>
@@ -396,14 +494,14 @@ export const BaseListingDetails = <T extends ListingCategory>({
             {highlightsFields.length > 0 && (
               <div className="mb-6">
                 <h3 className="text-lg font-semibold text-slate-800 mb-3">
-                  {t('keyHighlights')}
+                  {tListing('keyHighlights')}
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {highlightsFields.map((field: MappedField) => {
                     const formattedValue = formatMappedFieldValue(field);
                     
                     return (
-                      <div key={field.id} className="flex items-center p-3 bg-blue-50 rounded-lg">
+                      <div key={field.id} className="flex items-center p-3 bg-blue-50/60 rounded-xl backdrop-blur-sm border border-blue-100/60">
                         <div className="flex-1">
                           <div className="text-sm text-slate-600">
                             {t(field.labelKey)}
@@ -422,11 +520,11 @@ export const BaseListingDetails = <T extends ListingCategory>({
 
           {/* Specifications Table */}
           {specsFields.length > 0 && (
-            <section className="bg-white border border-slate-200 rounded-lg p-6">
+            <section className="rounded-2xl border border-slate-200/60 bg-white/80 shadow-lg shadow-slate-900/5 backdrop-blur-xl p-6">
               <h3 className="text-lg font-semibold text-slate-800 mb-4">
-                {t('specifications')}
+                {tListing('specifications')}
               </h3>
-              <div className="overflow-hidden rounded-lg border border-slate-200">
+              <div className="overflow-hidden rounded-xl border border-slate-200/60">
                 <table className="w-full">
                   <tbody>
                     {specsFields.map((field: MappedField, index: number) => {
@@ -453,22 +551,22 @@ export const BaseListingDetails = <T extends ListingCategory>({
           )}
 
           {/* Description */}
-          <section className="bg-white border border-slate-200 rounded-lg p-6">
+          <section className="rounded-2xl border border-slate-200/60 bg-white/80 shadow-lg shadow-slate-900/5 backdrop-blur-xl p-6">
             <h3 className="text-lg font-semibold text-slate-800 mb-4">
-              {t('description')}
+              {tListing('description')}
             </h3>
             <div className="prose prose-slate max-w-none">
               <p className="whitespace-pre-line text-slate-700">
-                {listingData.description || t('noDescription')}
+                {listingData.description || tListing('noDescription')}
               </p>
             </div>
           </section>
 
           {/* Additional Details */}
           {detailsFields.length > 0 && (
-            <section className="bg-white border border-slate-200 rounded-lg p-6">
+            <section className="rounded-2xl border border-slate-200/60 bg-white/80 shadow-lg shadow-slate-900/5 backdrop-blur-xl p-6">
               <h3 className="text-lg font-semibold text-slate-800 mb-4">
-                {t('additionalDetails')}
+                {tListing('additionalDetails')}
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {detailsFields.map((field: MappedField) => {

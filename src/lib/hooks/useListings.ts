@@ -785,15 +785,29 @@ function applyHomeFurnitureFilters(listings: Listing[], hff?: HomeFurnitureFilte
 function applyJobsFilters(listings: Listing[], jf?: JobsFilters): Listing[] {
   if (!jf) return listings;
 
-  const skipFields = new Set(['subcategory', 'keywords', 'condition', 'postedDate', 'sellerType']);
+  const skipFields = new Set(['subcategory', 'keywords', 'postedDate', 'sellerType']);
 
   return listings.filter((l) => {
     const m = l.metadata as Record<string, unknown>;
 
-    if (jf.condition && !matchesLooseToken(m.condition ?? l.condition, jf.condition)) return false;
+    // Handle numeric range filtering for salary
+    if (jf.minSalary && !isNaN(Number(jf.minSalary))) {
+      const listingSalary = Number(m.salary ?? m.minSalary);
+      if (!isNaN(listingSalary) && listingSalary < Number(jf.minSalary)) return false;
+    }
+    if (jf.maxSalary && !isNaN(Number(jf.maxSalary))) {
+      const listingSalary = Number(m.salary ?? m.maxSalary);
+      if (!isNaN(listingSalary) && listingSalary > Number(jf.maxSalary)) return false;
+    }
+
+    // Handle currency matching
+    if (jf.currency && String(m.currency ?? '') !== jf.currency) return false;
 
     for (const [key, rawValue] of Object.entries(jf)) {
       if (skipFields.has(key) || rawValue === undefined || rawValue === '') continue;
+
+      // Skip fields already handled above
+      if (key === 'minSalary' || key === 'maxSalary' || key === 'currency') continue;
 
       const metadataValue = m[key];
 

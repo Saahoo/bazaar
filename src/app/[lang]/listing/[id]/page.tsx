@@ -52,6 +52,24 @@ export default async function ListingPage({ params }: PageProps) {
       member_since: mockSeller.member_since || new Date().toISOString(),
     };
 
+    // Add vehicle-specific metadata for vehicle listings (category_id === 1)
+    const metadata = mockListing.category_id === 1 ? {
+      vehicleType: 'sedan',
+      year: 2020,
+      make: 'Toyota',
+      model: 'Camry',
+      engineType: 'petrol',
+      wheelDriveType: 'fwd',
+      trimLevel: 'standard',
+      mileage: 45000,
+      color: 'Silver',
+      transmission: 'automatic',
+      fuelType: 'petrol',
+      bodyType: 'sedan',
+      doors: 4,
+      seats: 5,
+    } : {};
+
     const listingData = {
       id: mockListing.id,
       user_id: mockListing.user_id,
@@ -69,14 +87,14 @@ export default async function ListingPage({ params }: PageProps) {
       from_owner: Boolean(mockListing.from_owner),
       created_at: mockListing.created_at,
       photos: mockListing.photos || [],
-      metadata: {},
+      metadata,
       price_history: [],
     };
 
     return (
       <>
         <Header locale={locale} />
-        <main className="flex-1 bg-slate-50">
+        <main className="flex-1 bg-gradient-to-b from-slate-50 via-white/30 to-slate-50">
           <ListingDetails listing={listingData} seller={seller} locale={locale} />
         </main>
       </>
@@ -146,7 +164,7 @@ export default async function ListingPage({ params }: PageProps) {
   return (
     <>
       <Header locale={locale} />
-      <main className="flex-1 bg-slate-50">
+      <main className="flex-1 bg-gradient-to-b from-slate-50 via-white/30 to-slate-50">
         <ListingDetails listing={listingData} seller={seller} locale={locale} />
       </main>
     </>

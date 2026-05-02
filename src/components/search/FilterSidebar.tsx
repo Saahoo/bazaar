@@ -1,19 +1,580 @@
-// src/components/search/FilterSidebar.tsx
-'use client';
+﻿'use client';
 
 import React from 'react';
 import { useTranslations } from 'next-intl';
 import { Locale, isRTL } from '@/lib/i18n/config';
-import { MAIN_CATEGORIES, getCategoryName } from '@/lib/constants/categories';
 import { createClient } from '@/lib/supabase/client';
+import { useCities, getManagedCityName } from '@/lib/hooks/useCities';
+import { VehicleFilter, VehicleFilterState } from './VehicleFilter';
+import { SparePartsFilterEnhanced } from './SparePartsFilterEnhanced';
+import { HomeFurnitureFilterEnhanced } from './HomeFurnitureFilterEnhanced';
+import { JobsFilterEnhanced } from './JobsFilterEnhanced';
+import { ServicesFilterEnhanced } from './ServicesFilterEnhanced';
+import { AnimalsFilterEnhanced } from './AnimalsFilterEnhanced';
+import { FoodAgricultureFilterEnhanced } from './FoodAgricultureFilterEnhanced';
+import { BooksEducationFilterEnhanced } from './BooksEducationFilterEnhanced';
+import { BabyKidsFilterEnhanced } from './BabyKidsFilterEnhanced';
+import { BusinessIndustryFilterEnhanced } from './BusinessIndustryFilterEnhanced';
+import { ShoppingGroceriesFilterEnhanced } from './ShoppingGroceriesFilterEnhanced';
 import {
-  WHEEL_DRIVE_TYPES,
-  ENGINE_TYPES,
-  GEAR_TYPES,
-  BODY_TYPES,
-  VEHICLE_COLORS,
-  VEHICLE_DATA,
-} from '@/lib/constants/vehicles';
+  AnimalsLivestockSubcategory,
+} from '@/lib/constants/animals-livestock-wizard';
+import {
+  FoodAgricultureSubcategory,
+} from '@/lib/constants/food-agriculture-wizard';
+import {
+  BooksEducationSubcategory,
+} from '@/lib/constants/books-education-wizard';
+import {
+  BabyKidsSubcategory,
+} from '@/lib/constants/baby-kids-wizard';
+import {
+  BusinessIndustrySubcategory,
+} from '@/lib/constants/business-industry-wizard';
+import {
+  ShoppingGroceriesSubcategory,
+} from '@/lib/constants/shopping-groceries-wizard';
+
+// â”€â”€â”€ Animals & Livestock Filter State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+export interface AnimalsLivestockFilterState {
+  subcategory: AnimalsLivestockSubcategory | '';
+  keywords: string;
+  sellerType: string;
+  postedDate: string;
+  breed: string;
+  quantity: string;
+  age: string;
+  ageUnit: string;
+  healthStatus: string;
+  price: string;
+  priceType: string;
+  color: string;
+  weight: string;
+  gender: string;
+  milkProduction: string;
+  pregnancyStatus: string;
+  hornStatus: string;
+  eggProduction: string;
+  housingType: string;
+  vaccinationRecord: string;
+  woolType: string;
+  meatType: string;
+  height: string;
+  trainingLevel: string;
+  discipline: string;
+  petType: string;
+  vaccinated: string;
+  spayedNeutered: string;
+  microchipped: string;
+  pedigree: string;
+  waterType: string;
+  tankSize: string;
+  breedingStatus: string;
+};
+
+export const EMPTY_ANIMALS_LIVESTOCK_FILTERS: AnimalsLivestockFilterState = {
+  subcategory: '',
+  keywords: '',
+  sellerType: '',
+  postedDate: '',
+  breed: '',
+  quantity: '',
+  age: '',
+  ageUnit: '',
+  healthStatus: '',
+  price: '',
+  priceType: '',
+  color: '',
+  weight: '',
+  gender: '',
+  milkProduction: '',
+  pregnancyStatus: '',
+  hornStatus: '',
+  eggProduction: '',
+  housingType: '',
+  vaccinationRecord: '',
+  woolType: '',
+  meatType: '',
+  height: '',
+  trainingLevel: '',
+  discipline: '',
+  petType: '',
+  vaccinated: '',
+  spayedNeutered: '',
+  microchipped: '',
+  pedigree: '',
+  waterType: '',
+  tankSize: '',
+  breedingStatus: '',
+};
+
+// â”€â”€â”€ Food & Agriculture Filter State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+export interface FoodAgricultureFilterState {
+  subcategory: FoodAgricultureSubcategory | '';
+  keywords: string;
+  sellerType: string;
+  postedDate: string;
+  quantity: string;
+  unit: string;
+  grade: string;
+  freshness: string;
+  origin: string;
+  certification: string;
+  price: string;
+  priceType: string;
+  deliveryAvailable: string;
+  minOrder: string;
+  moistureContent: string;
+  grainVariety: string;
+  packagingType: string;
+  variety: string;
+  ripeness: string;
+  storageType: string;
+  spiceType: string;
+  formType: string;
+  dairyType: string;
+  fatContent: string;
+  poultryType: string;
+  eggSize: string;
+  chemicalType: string;
+  npkRatio: string;
+  applicationMethod: string;
+  equipmentType: string;
+  condition: string;
+  powerSource: string;
+  brand: string;
+  seedType: string;
+  germinationRate: string;
+  maturityPeriod: string;
+  feedType: string;
+  animalType: string;
+  weightPerBag: string;
+  organicCertification: string;
+  productType: string;
+  shelfLife: string;
+  beverageType: string;
+  roastLevel: string;
+  oilType: string;
+  volume: string;
+  preserveType: string;
+  jarSize: string;
+  flavor: string;
+};
+
+export const EMPTY_FOOD_AGRICULTURE_FILTERS: FoodAgricultureFilterState = {
+  subcategory: '',
+  keywords: '',
+  sellerType: '',
+  postedDate: '',
+  quantity: '',
+  unit: '',
+  grade: '',
+  freshness: '',
+  origin: '',
+  certification: '',
+  price: '',
+  priceType: '',
+  deliveryAvailable: '',
+  minOrder: '',
+  moistureContent: '',
+  grainVariety: '',
+  packagingType: '',
+  variety: '',
+  ripeness: '',
+  storageType: '',
+  spiceType: '',
+  formType: '',
+  dairyType: '',
+  fatContent: '',
+  poultryType: '',
+  eggSize: '',
+  chemicalType: '',
+  npkRatio: '',
+  applicationMethod: '',
+  equipmentType: '',
+  condition: '',
+  powerSource: '',
+  brand: '',
+  seedType: '',
+  germinationRate: '',
+  maturityPeriod: '',
+  feedType: '',
+  animalType: '',
+  weightPerBag: '',
+  organicCertification: '',
+  productType: '',
+  shelfLife: '',
+  beverageType: '',
+  roastLevel: '',
+  oilType: '',
+  volume: '',
+  preserveType: '',
+  jarSize: '',
+  flavor: '',
+};
+
+// â”€â”€â”€ Books & Education Filter State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+export interface BooksEducationFilterState {
+  subcategory: BooksEducationSubcategory | '';
+  keywords: string;
+  sellerType: string;
+  postedDate: string;
+  subjectMatter: string;
+  educationLevel: string;
+  language: string;
+  price: string;
+  priceType: string;
+  deliveryAvailable: string;
+  author: string;
+  isbn: string;
+  edition: string;
+  publicationYear: string;
+  publisher: string;
+  bookCondition: string;
+  bookFormat: string;
+  pages: string;
+  isTextbook: string;
+  ebookFormat: string;
+  fileSize: string;
+  drmProtected: string;
+  instructor: string;
+  platform: string;
+  courseDuration: string;
+  experienceLevel: string;
+  certification: string;
+  teachingMode: string;
+  lessonsCount: string;
+  hasLiveSessions: string;
+  hasAssignments: string;
+  tutorName: string;
+  qualification: string;
+  experienceYears: string;
+  sessionDuration: string;
+  availableDays: string;
+  groupTutoring: string;
+  freeTrial: string;
+  supplyType: string;
+  brand: string;
+  quantity: string;
+  itemCondition: string;
+  ageRange: string;
+  color: string;
+};
+
+export const EMPTY_BOOKS_EDUCATION_FILTERS: BooksEducationFilterState = {
+  subcategory: '',
+  keywords: '',
+  sellerType: '',
+  postedDate: '',
+  subjectMatter: '',
+  educationLevel: '',
+  language: '',
+  price: '',
+  priceType: '',
+  deliveryAvailable: '',
+  author: '',
+  isbn: '',
+  edition: '',
+  publicationYear: '',
+  publisher: '',
+  bookCondition: '',
+  bookFormat: '',
+  pages: '',
+  isTextbook: '',
+  ebookFormat: '',
+  fileSize: '',
+  drmProtected: '',
+  instructor: '',
+  platform: '',
+  courseDuration: '',
+  experienceLevel: '',
+  certification: '',
+  teachingMode: '',
+  lessonsCount: '',
+  hasLiveSessions: '',
+  hasAssignments: '',
+  tutorName: '',
+  qualification: '',
+  experienceYears: '',
+  sessionDuration: '',
+  availableDays: '',
+  groupTutoring: '',
+  freeTrial: '',
+  supplyType: '',
+  brand: '',
+  quantity: '',
+  itemCondition: '',
+  ageRange: '',
+  color: '',
+};
+
+// â”€â”€â”€ Baby & Kids Filter State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+export interface BabyKidsFilterState {
+  subcategory: BabyKidsSubcategory | '';
+  keywords: string;
+  sellerType: string;
+  postedDate: string;
+  condition: string;
+  ageRange: string;
+  gender: string;
+  price: string;
+  priceType: string;
+  deliveryAvailable: string;
+  clothingType: string;
+  size: string;
+  material: string;
+  season: string;
+  brand: string;
+  color: string;
+  toyType: string;
+  toyMaterial: string;
+  safetyFeatures: string;
+  gearType: string;
+  adjustable: string;
+  portable: string;
+  feedingType: string;
+  strollerType: string;
+  foldable: string;
+  furnitureType: string;
+  diaperType: string;
+  diaperSize: string;
+  footwearType: string;
+  footwearSize: string;
+  footwearMaterial: string;
+  supplyType: string;
+  gradeLevel: string;
+};
+
+export const EMPTY_BABY_KIDS_FILTERS: BabyKidsFilterState = {
+  subcategory: '',
+  keywords: '',
+  sellerType: '',
+  postedDate: '',
+  condition: '',
+  ageRange: '',
+  gender: '',
+  price: '',
+  priceType: '',
+  deliveryAvailable: '',
+  clothingType: '',
+  size: '',
+  material: '',
+  season: '',
+  brand: '',
+  color: '',
+  toyType: '',
+  toyMaterial: '',
+  safetyFeatures: '',
+  gearType: '',
+  adjustable: '',
+  portable: '',
+  feedingType: '',
+  strollerType: '',
+  foldable: '',
+  furnitureType: '',
+  diaperType: '',
+  diaperSize: '',
+  footwearType: '',
+  footwearSize: '',
+  footwearMaterial: '',
+  supplyType: '',
+  gradeLevel: '',
+};
+
+;
+
+// â”€â”€â”€ Business & Industry Filter State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+export interface BusinessIndustryFilterState {
+  subcategory: BusinessIndustrySubcategory | '';
+  keywords: string;
+  sellerType: string;
+  postedDate: string;
+  condition: string;
+  businessType: string;
+  industrySector: string;
+  price: string;
+  priceType: string;
+  deliveryAvailable: string;
+  warranty: string;
+  certification: string;
+  powerSource: string;
+  machineryType: string;
+  brand: string;
+  model: string;
+  powerRating: string;
+  yearOfManufacture: string;
+  operatingHours: string;
+  equipmentType: string;
+  specifications: string;
+  quantity: string;
+  unit: string;
+  materialType: string;
+  grade: string;
+  origin: string;
+  minOrder: string;
+  serviceType: string;
+  experienceYears: string;
+  teamSize: string;
+  serviceArea: string;
+  availableHours: string;
+  licensed: string;
+  freeConsultation: string;
+  manufacturingType: string;
+  productionCapacity: string;
+  leadTime: string;
+  customOrders: string;
+  wholesaleCategory: string;
+  bulkDiscount: string;
+  safetyType: string;
+  standardCompliance: string;
+  toolsType: string;
+  material: string;
+};
+
+export const EMPTY_BUSINESS_INDUSTRY_FILTERS: BusinessIndustryFilterState = {
+  subcategory: '',
+  keywords: '',
+  sellerType: '',
+  postedDate: '',
+  condition: '',
+  businessType: '',
+  industrySector: '',
+  price: '',
+  priceType: '',
+  deliveryAvailable: '',
+  warranty: '',
+  certification: '',
+  powerSource: '',
+  machineryType: '',
+  brand: '',
+  model: '',
+  powerRating: '',
+  yearOfManufacture: '',
+  operatingHours: '',
+  equipmentType: '',
+  specifications: '',
+  quantity: '',
+  unit: '',
+  materialType: '',
+  grade: '',
+  origin: '',
+  minOrder: '',
+  serviceType: '',
+  experienceYears: '',
+  teamSize: '',
+  serviceArea: '',
+  availableHours: '',
+  licensed: '',
+  freeConsultation: '',
+  manufacturingType: '',
+  productionCapacity: '',
+  leadTime: '',
+  customOrders: '',
+  wholesaleCategory: '',
+  bulkDiscount: '',
+  safetyType: '',
+  standardCompliance: '',
+  toolsType: '',
+  material: '',
+};
+
+// â”€â”€â”€ Shopping & Groceries Filter State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+export interface ShoppingGroceriesFilterState {
+  subcategory: ShoppingGroceriesSubcategory | '';
+  keywords: string;
+  sellerType: string;
+  postedDate: string;
+  quantity: string;
+  unit: string;
+  condition: string;
+  brand: string;
+  price: string;
+  priceType: string;
+  deliveryAvailable: string;
+  minOrder: string;
+  foodType: string;
+  packagingType: string;
+  shelfLife: string;
+  dietaryInfo: string;
+  beverageType: string;
+  volume: string;
+  itemType: string;
+  material: string;
+  dimensions: string;
+  careType: string;
+  skinType: string;
+  snackType: string;
+  flavor: string;
+  productType: string;
+  ageRange: string;
+  safetyCert: string;
+  cleaningType: string;
+  surfaceType: string;
+  bakeryType: string;
+  freshness: string;
+  allergenInfo: string;
+  storageTemp: string;
+  dairyType: string;
+  fatContent: string;
+  storageType: string;
+  variety: string;
+  ripeness: string;
+  origin: string;
+  meatType: string;
+  cutType: string;
+  certification: string;
+  spiceType: string;
+  formType: string;
+}
+
+export const EMPTY_SHOPPING_GROCERIES_FILTERS: ShoppingGroceriesFilterState = {
+  subcategory: '',
+  keywords: '',
+  sellerType: '',
+  postedDate: '',
+  quantity: '',
+  unit: '',
+  condition: '',
+  brand: '',
+  price: '',
+  priceType: '',
+  deliveryAvailable: '',
+  minOrder: '',
+  foodType: '',
+  packagingType: '',
+  shelfLife: '',
+  dietaryInfo: '',
+  beverageType: '',
+  volume: '',
+  itemType: '',
+  material: '',
+  dimensions: '',
+  careType: '',
+  skinType: '',
+  snackType: '',
+  flavor: '',
+  productType: '',
+  ageRange: '',
+  safetyCert: '',
+  cleaningType: '',
+  surfaceType: '',
+  bakeryType: '',
+  freshness: '',
+  allergenInfo: '',
+  storageTemp: '',
+  dairyType: '',
+  fatContent: '',
+  storageType: '',
+  variety: '',
+  ripeness: '',
+  origin: '',
+  meatType: '',
+  cutType: '',
+  certification: '',
+  spiceType: '',
+  formType: '',
+};
+
 import {
   ELECTRONICS_SUBCATEGORIES,
   ElectronicsSubcategory,
@@ -26,97 +587,50 @@ import {
   FASHION_SUBCATEGORIES,
   getFashionFieldTranslationKey,
   getFashionOptionTranslationKey,
-  isFashionClothingSubcategory,
+  getFashionSpecsConfig,
+  FashionSpecField,
 } from '@/lib/constants/fashion-wizard';
 import {
-  SPARE_PARTS_SUBCATEGORIES,
-  SPARE_MAKE_MODELS,
-  VEHICLE_SPARE_SUBCATEGORIES,
-  ELECTRONICS_OR_MACHINERY_SUBCATEGORIES,
   SparePartsSubcategory,
 } from '@/lib/constants/spare-parts-wizard';
 import {
   HealthBeautySubcategory,
   HEALTH_BEAUTY_SUBCATEGORIES,
+  HEALTH_BEAUTY_SUBCATEGORY_LABEL_KEYS,
   getHealthBeautyFieldTranslationKey,
   getHealthBeautyOptionTranslationKey,
 } from '@/lib/constants/health-beauty-wizard';
 import {
-  HomeFurnitureSpecField,
   HomeFurnitureSubcategory,
-  HOME_FURNITURE_SUBCATEGORIES,
-  HOME_FURNITURE_SUBCATEGORY_LABEL_KEYS,
-  getHomeFurnitureSpecsConfig,
-  getHomeFurnitureFieldTranslationKey,
-  getHomeFurnitureOptionTranslationKey,
 } from '@/lib/constants/home-furniture-wizard';
-import { useCities, getManagedCityName } from '@/lib/hooks/useCities';
+
+
 import {
   JobSubcategory,
-  JOB_SUBCATEGORIES,
-  EMPLOYMENT_TYPES,
-  EXPERIENCE_LEVELS,
-  CURRENCIES,
-  BENEFIT_OPTIONS
 } from '@/lib/constants/jobs-wizard';
 import {
   ServicesSubcategory,
-  SERVICES_SUBCATEGORIES,
-  getServicesSpecsConfig,
-  ServicesSpecField
+  ServiceType,
+  PricingType,
 } from '@/lib/constants/services-wizard';
+import {
+  SportsHobbySubcategory,
+  SPORTS_HOBBY_SUBCATEGORIES,
+  SPORTS_HOBBY_SUBCATEGORY_LABEL_KEYS,
+  SPORTS_HOBBY_CONDITIONS,
+  AGE_GROUPS,
+  MATERIALS,
+  CURRENCY_OPTIONS,
+  SELLER_TYPE_OPTIONS,
+  SKILL_LEVELS,
+  getSportsHobbyFieldTranslationKey,
+  getSportsHobbyOptionTranslationKey,
+} from '@/lib/constants/sports-hobby-wizard';
 
-const ELECTRONICS_SUBCATEGORY_LABEL_KEYS: Record<ElectronicsSubcategory, string> = {
-  phones: 'subcategoryPhones',
-  tablets: 'subcategoryTablets',
-  tv: 'subcategoryTv',
-  laptops: 'subcategoryLaptops',
-  desktops: 'subcategoryDesktops',
-  'home-appliances': 'subcategoryHomeAppliances',
-  'music-instruments': 'subcategoryMusicInstruments',
-  'other-electronics': 'subcategoryOther',
-};
 
-// ─── Vehicle Filter State ────────────────────────────────────────────────────
-export interface VehicleFilterState {
-  make: string;
-  model: string;
-  yearMin: string;
-  yearMax: string;
-  fuelTypes: string[];
-  gearTypes: string[];
-  bodyTypes: string[];
-  kmMin: string;
-  kmMax: string;
-  enginePowerRange: string;
-  engineCapacityRange: string;
-  wheelDrive: string;
-  color: string;
-  numberPlateCity: string;
-  fromOwner: string; // '' | 'true' | 'false'
-  keywords: string;
-}
 
-export const EMPTY_VEHICLE_FILTERS: VehicleFilterState = {
-  make: '',
-  model: '',
-  yearMin: '',
-  yearMax: '',
-  fuelTypes: [],
-  gearTypes: [],
-  bodyTypes: [],
-  kmMin: '',
-  kmMax: '',
-  enginePowerRange: '',
-  engineCapacityRange: '',
-  wheelDrive: '',
-  color: '',
-  numberPlateCity: '',
-  fromOwner: '',
-  keywords: '',
-};
 
-// ─── Real Estate Filter State ───────────────────────────────────────────────
+// â”€â”€â”€ Real Estate Filter State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export interface RealEstateFilterState {
   purpose: string;
   propertyType: string;
@@ -189,7 +703,7 @@ export const EMPTY_REAL_ESTATE_FILTERS: RealEstateFilterState = {
   loadingDocks: '',
 };
 
-// ─── Electronics Filter State ──────────────────────────────────────────────
+// â”€â”€â”€ Electronics Filter State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export interface ElectronicsFilterState {
   subcategory: string;
   postedDate: string;
@@ -645,11 +1159,10 @@ export const EMPTY_HOME_FURNITURE_FILTERS: HomeFurnitureFilterState = {
   custom_spec_3_value: '',
 };
 
-// ─── Jobs Filter State ──────────────────────────────────────────────────────
+// â”€â”€â”€ Jobs Filter State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export interface JobsFilterState {
   subcategory: JobSubcategory | '';
   keywords: string;
-  condition: 'New' | 'Used' | 'Refurbished' | '';
   postedDate: '' | 'today' | 'last7' | 'last30';
   sellerType: 'Individual' | 'Dealer' | '';
   employmentType: string;
@@ -667,7 +1180,6 @@ export interface JobsFilterState {
 export const EMPTY_JOBS_FILTERS: JobsFilterState = {
   subcategory: '',
   keywords: '',
-  condition: '',
   postedDate: '',
   sellerType: '',
   employmentType: '',
@@ -682,13 +1194,19 @@ export const EMPTY_JOBS_FILTERS: JobsFilterState = {
   applicationMethod: '',
 };
 
-// ─── Services Filter State ──────────────────────────────────────────────────
+// â”€â”€â”€ Services Filter State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export interface ServicesFilterState {
   subcategory: ServicesSubcategory | '';
   keywords: string;
-  condition: 'New' | 'Used' | 'Refurbished' | '';
   postedDate: '' | 'today' | 'last7' | 'last30';
-  sellerType: 'Individual' | 'Dealer' | '';
+  serviceType: ServiceType | '';
+  pricingType: PricingType | '';
+  priceMin: string;
+  priceMax: string;
+  currency: string;
+  city: string;
+  emergencyAvailable: '' | 'yes' | 'no';
+  // Subcategory-specific spec fields
   service_type: string;
   experience_years: string;
   certification: '' | 'yes' | 'no';
@@ -724,7 +1242,6 @@ export interface ServicesFilterState {
   specialization: string;
   license_verified: '' | 'yes' | 'no';
   clinic_or_home: string;
-  emergency_available: '' | 'yes' | 'no';
   custom_service_type: string;
   description_detail: string;
 }
@@ -732,9 +1249,14 @@ export interface ServicesFilterState {
 export const EMPTY_SERVICES_FILTERS: ServicesFilterState = {
   subcategory: '',
   keywords: '',
-  condition: '',
   postedDate: '',
-  sellerType: '',
+  serviceType: '',
+  pricingType: '',
+  priceMin: '',
+  priceMax: '',
+  currency: '',
+  city: '',
+  emergencyAvailable: '',
   service_type: '',
   experience_years: '',
   certification: '',
@@ -770,9 +1292,119 @@ export const EMPTY_SERVICES_FILTERS: ServicesFilterState = {
   specialization: '',
   license_verified: '',
   clinic_or_home: '',
-  emergency_available: '',
   custom_service_type: '',
   description_detail: '',
+};
+
+// â”€â”€â”€ Sports & Hobby Filter State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+export interface SportsHobbyFilterState {
+  subcategory: string;
+  keywords: string;
+  condition: string;
+  postedDate: string;
+  sellerType: string;
+  brand: string;
+  currency: string;
+  age_group: string;
+  material: string;
+  priceMin: string;
+  priceMax: string;
+  // Sports Equipment specific
+  equipment_type: string;
+  size: string;
+  weight: string;
+  // Fitness Gear specific
+  gear_type: string;
+  max_weight: string;
+  electronic: string;
+  foldable: string;
+  // Outdoor Gear specific
+  waterproof: string;
+  season: string;
+  capacity: string;
+  // Team Sports specific
+  sport: string;
+  team_size: string;
+  league_approved: string;
+  // Water Sports specific
+  sport_type: string;
+  floatation: string;
+  // Winter Sports specific
+  skill_level: string;
+  bindings_included: string;
+  // Collectibles specific
+  collectible_type: string;
+  year: string;
+  authenticity: string;
+  limited_edition: string;
+  // Hobby Tools specific
+  tool_type: string;
+  power_source: string;
+  safety_features: string;
+  // Musical Instruments specific
+  instrument_type: string;
+  accessories_included: string;
+  // Art Supplies specific
+  supply_type: string;
+  quantity: string;
+  non_toxic: string;
+  // Games & Puzzles specific
+  game_type: string;
+  player_count: string;
+  complete_set: string;
+  age_recommendation: string;
+  // Other Sports & Hobby
+  custom_type: string;
+  description: string;
+}
+
+export const EMPTY_SPORTS_HOBBY_FILTERS: SportsHobbyFilterState = {
+  subcategory: '',
+  keywords: '',
+  condition: '',
+  postedDate: '',
+  sellerType: '',
+  brand: '',
+  currency: '',
+  age_group: '',
+  material: '',
+  priceMin: '',
+  priceMax: '',
+  equipment_type: '',
+  size: '',
+  weight: '',
+  gear_type: '',
+  max_weight: '',
+  electronic: '',
+  foldable: '',
+  waterproof: '',
+  season: '',
+  capacity: '',
+  sport: '',
+  team_size: '',
+  league_approved: '',
+  sport_type: '',
+  floatation: '',
+  skill_level: '',
+  bindings_included: '',
+  collectible_type: '',
+  year: '',
+  authenticity: '',
+  limited_edition: '',
+  tool_type: '',
+  power_source: '',
+  safety_features: '',
+  instrument_type: '',
+  accessories_included: '',
+  supply_type: '',
+  quantity: '',
+  non_toxic: '',
+  game_type: '',
+  player_count: '',
+  complete_set: '',
+  age_recommendation: '',
+  custom_type: '',
+  description: '',
 };
 
 const RAM_OPTIONS = ['2GB', '3GB', '4GB', '6GB', '8GB', '12GB', '16GB+'];
@@ -798,58 +1430,18 @@ const AC_TYPE_OPTIONS = ['Split', 'Window'];
 const INSTRUMENT_TYPE_OPTIONS = ['Guitar', 'Piano', 'Drums', 'Violin', 'Keyboard', 'Other'];
 const SKILL_LEVEL_OPTIONS = ['Beginner', 'Intermediate', 'Professional'];
 const OTHER_FEATURE_OPTIONS = ['Bluetooth', 'Wi-Fi', 'NFC', 'Fast Charging', 'Water Resistant'];
-const FASHION_COLOR_OPTIONS = ['Black', 'White', 'Blue', 'Red', 'Green', 'Grey', 'Brown', 'Beige'];
-const FASHION_SIZE_OPTIONS = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
-const SPARE_PART_TYPE_OPTIONS = ['Engine', 'Brake', 'Suspension', 'Electrical', 'Body', 'Interior', 'Other'];
-const SPARE_ENGINE_TYPE_OPTIONS = ['Petrol', 'Diesel', 'Hybrid', 'Electric'];
-const SPARE_TRANSMISSION_OPTIONS = ['Manual', 'Automatic'];
-const SPARE_OEM_OPTIONS = ['Original', 'Aftermarket'];
-const SPARE_AVAILABILITY_OPTIONS = ['In Stock', 'Out of Stock'];
-const SPARE_PLACEMENT_OPTIONS = ['Front', 'Rear', 'Left', 'Right', 'Universal'];
-const SPARE_INSTALLATION_OPTIONS = ['Easy', 'Professional Required'];
-const SPARE_INCLUDED_COMPONENT_OPTIONS = ['Bolts', 'Nuts', 'Wiring', 'Manual', 'Bracket', 'Other'];
+// FASHION_COLOR_OPTIONS and FASHION_SIZE_OPTIONS reserved for future fashion filter enhancements
 
-const FASHION_CLOTHING_BRANDS = Array.from(
-  new Set([
-    ...FASHION_BRANDS_BY_SUBCATEGORY['men-clothing'],
-    ...FASHION_BRANDS_BY_SUBCATEGORY['women-clothing'],
-    ...FASHION_BRANDS_BY_SUBCATEGORY['kids-clothing'],
-  ])
-);
 
-const FASHION_BRANDS_BY_FILTER_SUBCATEGORY: Record<FashionSubcategory, string[]> = {
-  'men-clothing': FASHION_CLOTHING_BRANDS,
-  'women-clothing': FASHION_CLOTHING_BRANDS,
-  'kids-clothing': FASHION_CLOTHING_BRANDS,
-  shoes: FASHION_BRANDS_BY_SUBCATEGORY.shoes,
-  bags: FASHION_BRANDS_BY_SUBCATEGORY.bags,
-  accessories: FASHION_BRANDS_BY_SUBCATEGORY.accessories,
-  watches: FASHION_BRANDS_BY_SUBCATEGORY.watches,
-  jewelry: FASHION_BRANDS_BY_SUBCATEGORY.jewelry,
-};
 
-// ─── Engine power / capacity bucket definitions ──────────────────────────────
-const ENGINE_POWER_BUCKETS = [
-  { key: 'up_50',    label: '≤ 50 hp' },
-  { key: '51_75',    label: '51 – 75 hp' },
-  { key: '76_100',   label: '76 – 100 hp' },
-  { key: '101_150',  label: '101 – 150 hp' },
-  { key: '151_200',  label: '151 – 200 hp' },
-  { key: '201_300',  label: '201 – 300 hp' },
-  { key: '300_plus', label: '300+ hp' },
-];
-
-const ENGINE_CAP_BUCKETS = [
-  { key: 'up_1.3',   label: '≤ 1300 cc' },
-  { key: '1.3_1.6',  label: '1301 – 1600 cc' },
-  { key: '1.6_2.0',  label: '1601 – 2000 cc' },
-  { key: '2.0_2.5',  label: '2001 – 2500 cc' },
-  { key: '2.5_3.0',  label: '2501 – 3000 cc' },
-  { key: '3.0_plus', label: '3000+ cc' },
-];
-
-// ─── Props ───────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Props â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 interface FilterSidebarProps {
+    animalsLivestockFilters: AnimalsLivestockFilterState;
+    onAnimalsLivestockFiltersChange: (filters: AnimalsLivestockFilterState) => void;
+    onAnimalsLivestockClear?: () => void;
+    onAnimalsLivestockSearch?: () => void;
+  vehicleFilters: VehicleFilterState;
+  onVehicleFiltersChange: (filters: VehicleFilterState) => void;
   locale: Locale;
   selectedCategory: number | null;
   onCategoryChange: (categoryId: number | null) => void;
@@ -861,10 +1453,6 @@ interface FilterSidebarProps {
   onConditionsChange: (conditions: string[]) => void;
   selectedCity: string;
   onCityChange: (city: string) => void;
-  selectedWheelDriveType: string;
-  onWheelDriveTypeChange: (value: string) => void;
-  vehicleFilters: VehicleFilterState;
-  onVehicleFiltersChange: (filters: VehicleFilterState) => void;
   realEstateFilters: RealEstateFilterState;
   onRealEstateFiltersChange: (filters: RealEstateFilterState) => void;
   electronicsFilters: ElectronicsFilterState;
@@ -895,6 +1483,30 @@ interface FilterSidebarProps {
   onServicesFiltersChange: (filters: ServicesFilterState) => void;
   onServicesClear?: () => void;
   onServicesSearch?: () => void;
+  sportsHobbyFilters: SportsHobbyFilterState;
+  onSportsHobbyFiltersChange: (filters: SportsHobbyFilterState) => void;
+  onSportsHobbyClear?: () => void;
+  onSportsHobbySearch?: () => void;
+  foodAgricultureFilters: FoodAgricultureFilterState;
+  onFoodAgricultureFiltersChange: (filters: FoodAgricultureFilterState) => void;
+  onFoodAgricultureClear?: () => void;
+  onFoodAgricultureSearch?: () => void;
+  booksEducationFilters: BooksEducationFilterState;
+  onBooksEducationFiltersChange: (filters: BooksEducationFilterState) => void;
+  onBooksEducationClear?: () => void;
+  onBooksEducationSearch?: () => void;
+  babyKidsFilters: BabyKidsFilterState;
+  onBabyKidsFiltersChange: (filters: BabyKidsFilterState) => void;
+  onBabyKidsClear?: () => void;
+  onBabyKidsSearch?: () => void;
+  businessIndustryFilters: BusinessIndustryFilterState;
+  onBusinessIndustryFiltersChange: (filters: BusinessIndustryFilterState) => void;
+  onBusinessIndustryClear?: () => void;
+  onBusinessIndustrySearch?: () => void;
+  shoppingGroceriesFilters: ShoppingGroceriesFilterState;
+  onShoppingGroceriesFiltersChange: (filters: ShoppingGroceriesFilterState) => void;
+  onShoppingGroceriesClear?: () => void;
+  onShoppingGroceriesSearch?: () => void;
 }
 
 const CONDITIONS = [
@@ -904,7 +1516,7 @@ const CONDITIONS = [
   { value: 'fair',     translationKey: 'fair' },
 ] as const;
 
-// ─── Sub-components ──────────────────────────────────────────────────────────
+// â”€â”€â”€ Sub-components â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const Section: React.FC<{ label: string; isRtl: boolean; children: React.ReactNode }> = ({ label, isRtl, children }) => (
   <div>
     <p className={`text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 ${isRtl ? 'text-right' : 'text-left'}`}>
@@ -914,30 +1526,6 @@ const Section: React.FC<{ label: string; isRtl: boolean; children: React.ReactNo
   </div>
 );
 
-const Sel: React.FC<{
-  id?: string; label?: string; value: string; onChange: (v: string) => void; isRtl: boolean; children: React.ReactNode;
-}> = ({ id, label = 'Filter', value, onChange, isRtl, children }) => {
-  const fallbackId = React.useId();
-  const selectId = id || fallbackId;
-  const labelId = `${selectId}-label`;
-
-  return (
-    <>
-      <label id={labelId} htmlFor={selectId} className="sr-only">{label}</label>
-      <select
-        id={selectId}
-        aria-labelledby={labelId}
-        aria-label={label}
-        title={label}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
-      >
-        {children}
-      </select>
-    </>
-  );
-};
 
 const MultiCheck: React.FC<{
   options: { value: string; label: string }[];
@@ -995,8 +1583,14 @@ interface DbCategory {
   sort_order: number | null;
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+// â”€â”€â”€ Main Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
+
 export const FilterSidebar: React.FC<FilterSidebarProps> = ({
+  animalsLivestockFilters,
+  onAnimalsLivestockFiltersChange,
+  onAnimalsLivestockClear,
+  onAnimalsLivestockSearch,
   locale,
   selectedCategory,
   onCategoryChange,
@@ -1008,10 +1602,6 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
   onConditionsChange,
   selectedCity,
   onCityChange,
-  selectedWheelDriveType,
-  onWheelDriveTypeChange,
-  vehicleFilters,
-  onVehicleFiltersChange,
   realEstateFilters,
   onRealEstateFiltersChange,
   electronicsFilters,
@@ -1042,50 +1632,64 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
   onServicesFiltersChange,
   onServicesClear,
   onServicesSearch,
+  sportsHobbyFilters,
+  onSportsHobbyFiltersChange,
+  onSportsHobbyClear,
+  onSportsHobbySearch,
+  foodAgricultureFilters,
+  onFoodAgricultureFiltersChange,
+  onFoodAgricultureClear,
+  onFoodAgricultureSearch,
+  booksEducationFilters,
+  onBooksEducationFiltersChange,
+  onBooksEducationClear,
+  onBooksEducationSearch,
+  babyKidsFilters,
+  onBabyKidsFiltersChange,
+  onBabyKidsClear,
+  onBabyKidsSearch,
+  businessIndustryFilters,
+  onBusinessIndustryFiltersChange,
+  onBusinessIndustryClear,
+  onBusinessIndustrySearch,
+  shoppingGroceriesFilters,
+  onShoppingGroceriesFiltersChange,
+  onShoppingGroceriesClear,
+  onShoppingGroceriesSearch,
+  vehicleFilters,
+  onVehicleFiltersChange,
 }) => {
-  const supabase = createClient();
-  const t = useTranslations('search');
-  const tCommon = useTranslations('common');
-  const tVH = useTranslations('postAd.vehicles');
-  const tRE = useTranslations('postAd.realEstate');
-  const tEL = useTranslations('postAd.electronics');
-  const tFA = useTranslations('postAd.fashion');
-  const tSP = useTranslations('postAd.spareParts');
-  const tHB = useTranslations('postAd.healthBeauty');
-  const tHF = useTranslations('postAd.homeFurniture');
-  const tJO = useTranslations('postAd.jobs');
-  const tSR = useTranslations('postAd.services');
-  const isRtl = isRTL(locale);
+
+  // Hooks and helpers must be inside the function body
   const { cities } = useCities();
 
+  // dbCategories state
   const [dbCategories, setDbCategories] = React.useState<DbCategory[]>([]);
-
   React.useEffect(() => {
-    let mounted = true;
+    const fetchCategories = async () => {
+      try {
+        const supabase = createClient();
+        const { data } = await supabase
+          .from('categories')
+          .select('id, name_en, name_ps, name_fa, slug, parent_id, sort_order')
+          .is('parent_id', null)
+          .order('sort_order', { ascending: true });
 
-    const loadCategories = async () => {
-      const { data } = await supabase
-        .from('categories')
-        .select('id, name_en, name_ps, name_fa, slug, parent_id, sort_order')
-        .is('parent_id', null)
-        .order('sort_order', { ascending: true });
-
-      if (!mounted) return;
-      setDbCategories(
-        ((data as DbCategory[]) || []).filter((c) => {
-          const slug = (c.slug || '').toLowerCase();
-          return slug !== 'mobile-phones' && slug !== 'phones';
-        })
-      );
+        if (!data) return;
+        setDbCategories(
+          ((data as DbCategory[]) || []).filter(
+            (c) => c.slug !== 'mobile-phones' && c.slug !== 'phones'
+          )
+        );
+      } catch (error) {
+        console.error('Failed to load categories for filter sidebar:', error);
+      }
     };
 
-    loadCategories();
+    fetchCategories();
+  }, []);
 
-    return () => {
-      mounted = false;
-    };
-  }, [supabase]);
-
+  // Fallback for getLocalizedDbCategoryName
   const getLocalizedDbCategoryName = (category: DbCategory): string => {
     switch (locale) {
       case 'ps':
@@ -1098,73 +1702,105 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
     }
   };
 
-  const dedupedDbCategories = React.useMemo(() => {
-    if (dbCategories.length === 0) return dbCategories;
+  // The rest of the function body continues...
 
-    const normalize = (value: string | null | undefined): string =>
-      (value || '')
-        .toLowerCase()
-        .replace(/[&]/g, 'and')
-        .replace(/[\s\-_/\\]+/g, '')
-        .trim();
+  const t = useTranslations('search');
 
-    const fashionAliases = new Set([
-      'fashion',
-      'fashionclothing',
-      'fashionandclothing',
-      'فیشناوجامې',
-      'فېشناوکالي',
-      'مدولباس',
-    ]);
+  const tCommon = useTranslations('common');
+  const tPostAd = useTranslations('postAd');
+  const isRtl = isRTL(locale);
 
-    const keyFor = (category: DbCategory): string => {
-      const slug = normalize(category.slug);
-      const enName = normalize(category.name_en);
-      const psName = normalize(category.name_ps);
-      const faName = normalize(category.name_fa);
-
-      if (
-        slug === 'fashion' ||
-        slug === 'fashionclothing' ||
-        slug === 'fashionandclothing' ||
-        fashionAliases.has(enName) ||
-        fashionAliases.has(psName) ||
-        fashionAliases.has(faName)
-      ) {
-        return 'fashion-family';
-      }
-
-      if (slug) return `slug-${slug}`;
-      if (enName) return `name-en-${enName}`;
-      if (psName) return `name-ps-${psName}`;
-      if (faName) return `name-fa-${faName}`;
-      return `id-${category.id}`;
-    };
-
-    const bestByKey = new Map<string, DbCategory>();
-
-    for (const category of dbCategories) {
-      const key = keyFor(category);
-      const prev = bestByKey.get(key);
-      if (!prev) {
-        bestByKey.set(key, category);
-        continue;
-      }
-
-      const prevSort = prev.sort_order ?? Number.MAX_SAFE_INTEGER;
-      const nextSort = category.sort_order ?? Number.MAX_SAFE_INTEGER;
-      if (nextSort < prevSort || (nextSort === prevSort && category.id < prev.id)) {
-        bestByKey.set(key, category);
-      }
+  // Translation helpers for vehicles and real estate (must be before any JSX that uses them)
+  // Translation helpers and dedupedDbCategories fallback (must be after t and dbCategories are defined)
+  // Note: sportsHobby, healthBeauty, spareParts keys live under postAd namespace, not common
+  const tSH = (key: string) => {
+    const fullKey = `sportsHobby.${key}` as Parameters<typeof tPostAd>[0];
+    const translated = tPostAd(fullKey);
+    if (translated === fullKey || translated.includes('sportsHobby.')) {
+      const lastPart = key.split('.').pop() || key;
+      const words = lastPart.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim();
+      return words.charAt(0).toUpperCase() + words.slice(1);
     }
+    return translated;
+  }; tSH.has = (key: string) => {
+    const fullKey = `sportsHobby.${key}` as Parameters<typeof tPostAd>[0];
+    return tPostAd.has(fullKey);
+  };
+  const tHB = (key: string) => {
+    const fullKey = `healthBeauty.${key}` as Parameters<typeof tPostAd>[0];
+    const translated = tPostAd(fullKey);
+    // If translation returns the key itself (no translation found), try to extract a fallback
+    if (translated === fullKey || translated.includes('healthBeauty.')) {
+      const lastPart = key.split('.').pop() || key;
+      const words = lastPart.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim();
+      return words.charAt(0).toUpperCase() + words.slice(1);
+    }
+    return translated;
+  }; tHB.has = (_key: string) => true;
+  const tFA = (key: string) => {
+    const fullKey = `fashion.${key}` as Parameters<typeof tCommon>[0];
+    const translated = tCommon(fullKey);
+    // If translation returns the key itself (no translation found), try to extract a fallback
+    if (translated === fullKey || translated.includes('fashion.')) {
+      // Try to extract a reasonable fallback from the key
+      const lastPart = key.split('.').pop() || key;
+      // Convert camelCase or snake_case to spaced words
+      const words = lastPart.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim();
+      return words.charAt(0).toUpperCase() + words.slice(1);
+    }
+    return translated;
+  }; tFA.has = (_key: string) => true;
+  const tSP = (key: string) => {
+    const fullKey = `spareParts.${key}` as Parameters<typeof tPostAd>[0];
+    const translated = tPostAd(fullKey);
+    if (translated === fullKey || translated.includes('spareParts.')) {
+      const lastPart = key.split('.').pop() || key;
+      const words = lastPart.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim();
+      return words.charAt(0).toUpperCase() + words.slice(1);
+    }
+    return translated;
+  }; tSP.has = (_key: string) => true;
+  const tRE = (key: string) => tCommon((`realEstate.${key}`) as Parameters<typeof tCommon>[0]); tRE.has = (_key: string) => true;
+  const tJO = (key: string) => {
+    const fullKey = `jobs.${key}` as Parameters<typeof tPostAd>[0];
+    const translated = tPostAd(fullKey);
+    if (translated === fullKey || translated.includes('jobs.')) {
+      const lastPart = key.split('.').pop() || key;
+      const words = lastPart.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim();
+      return words.charAt(0).toUpperCase() + words.slice(1);
+    }
+    return translated;
+  }; tJO.has = (_key: string) => true;
+  const tEL = (key: string) => tCommon((`electronics.${key}`) as Parameters<typeof tCommon>[0]); tEL.has = (_key: string) => true;
+  
+  // Sel component with localized default label
+  const Sel: React.FC<{
+    id?: string; label?: string; value: string; onChange: (v: string) => void; isRtl: boolean; children: React.ReactNode;
+  }> = ({ id, label = t('filter'), value, onChange, isRtl, children }) => {
+    const fallbackId = React.useId();
+    const selectId = id || fallbackId;
+    const labelId = `${selectId}-label`;
 
-    return Array.from(bestByKey.values()).sort((a, b) => {
-      const aSort = a.sort_order ?? Number.MAX_SAFE_INTEGER;
-      const bSort = b.sort_order ?? Number.MAX_SAFE_INTEGER;
-      if (aSort !== bSort) return aSort - bSort;
-      return a.id - b.id;
-    });
-  }, [dbCategories]);
+    return (
+      <>
+        <label id={labelId} htmlFor={selectId} className="sr-only">{label}</label>
+        <select
+          id={selectId}
+          aria-labelledby={labelId}
+          aria-label={label}
+          title={label}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+        >
+          {children}
+        </select>
+      </>
+    );
+  };
+
+  // dedupedDbCategories fallback
+  const dedupedDbCategories = typeof dbCategories !== 'undefined' ? dbCategories : [];
 
   // Correct selected category ID if it's wrong
   const correctedSelectedCategory = React.useMemo(() => {
@@ -1183,6 +1819,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
   const isElectronics = correctedSelectedCategory === 3;
   const isFashion = correctedSelectedCategory === 4;
   const isSpareParts = correctedSelectedCategory === 5;
+  const isAnimalsLivestock = correctedSelectedCategory === 10 || selectedCategorySlug === 'animals-livestock';
   const isJobs = correctedSelectedCategory === 8;
   const isServices = correctedSelectedCategory === 9 || selectedCategorySlug === 'services';
   // Health & Beauty detection: check IDs first, then slugs, but exclude Jobs category
@@ -1196,20 +1833,40 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
     selectedCategorySlug === 'home-and-furniture' ||
     correctedSelectedCategory === 6;
     
+  const isSportsHobby =
+    selectedCategorySlug === 'sports-hobby' ||
+    selectedCategorySlug === 'sports-and-hobby' ||
+    correctedSelectedCategory === 14;
+
+  const isFoodAgriculture =
+    selectedCategorySlug === 'food-agriculture' ||
+    selectedCategorySlug === 'food-and-agriculture' ||
+    correctedSelectedCategory === 11;
+
+  const isBooksEducation =
+    selectedCategorySlug === 'books-education' ||
+    selectedCategorySlug === 'books-and-education' ||
+    correctedSelectedCategory === 12;
+
+  const isBabyKids =
+    selectedCategorySlug === 'kids-baby' ||
+    selectedCategorySlug === 'baby-kids' ||
+    correctedSelectedCategory === 15;
+
+  const isBusinessIndustry =
+    selectedCategorySlug === 'business-industry' ||
+    correctedSelectedCategory === 16;
+
+  const isShoppingGroceries =
+    selectedCategorySlug === 'shopping-groceries' ||
+    correctedSelectedCategory === 17;
 
   const [fashionGeneralOpen, setFashionGeneralOpen] = React.useState(true);
   const [fashionSpecificOpen, setFashionSpecificOpen] = React.useState(true);
-  const [spareGeneralOpen, setSpareGeneralOpen] = React.useState(true);
-  const [spareCompatibilityOpen, setSpareCompatibilityOpen] = React.useState(true);
-  const [spareSpecsOpen, setSpareSpecsOpen] = React.useState(true);
   const [hbGeneralOpen, setHbGeneralOpen] = React.useState(true);
   const [hbSpecificOpen, setHbSpecificOpen] = React.useState(true);
-  const [hfGeneralOpen, setHfGeneralOpen] = React.useState(true);
-  const [hfSpecificOpen, setHfSpecificOpen] = React.useState(true);
-  const [servicesSpecificOpen, setServicesSpecificOpen] = React.useState(true);
-
-  const setVF = (patch: Partial<VehicleFilterState>) =>
-    onVehicleFiltersChange({ ...vehicleFilters, ...patch });
+  const [sportsHobbyGeneralOpen, setSportsHobbyGeneralOpen] = React.useState(true);
+  const [sportsHobbySpecificOpen, setSportsHobbySpecificOpen] = React.useState(true);
 
   const setREF = (patch: Partial<RealEstateFilterState>) =>
     onRealEstateFiltersChange({ ...realEstateFilters, ...patch });
@@ -1220,51 +1877,30 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
   const setFF = (patch: Partial<FashionFilterState>) =>
     onFashionFiltersChange({ ...fashionFilters, ...patch });
 
-  const setSP = (patch: Partial<SparePartsFilterState>) =>
-    onSparePartsFiltersChange({ ...sparePartsFilters, ...patch });
-
   const setHB = (patch: Partial<HealthBeautyFilterState>) =>
     onHealthBeautyFiltersChange({ ...healthBeautyFilters, ...patch });
 
-  const setHF = (patch: Partial<HomeFurnitureFilterState>) =>
-    onHomeFurnitureFiltersChange({ ...homeFurnitureFilters, ...patch });
+  const setSH = (patch: Partial<SportsHobbyFilterState>) =>
+    onSportsHobbyFiltersChange({ ...sportsHobbyFilters, ...patch });
 
-  const setJF = (patch: Partial<JobsFilterState>) =>
-    onJobsFiltersChange({ ...jobsFilters, ...patch });
-
-  const setSF = (patch: Partial<ServicesFilterState>) =>
-    onServicesFiltersChange({ ...servicesFilters, ...patch });
-
-  const getHFFieldLabel = (field: string, fallbackLabel?: string) => {
-    const translationKey = getHomeFurnitureFieldTranslationKey(field);
-    const fullKey = translationKey as Parameters<typeof tHF>[0];
-    return tHF.has(fullKey) ? tHF(fullKey) : (fallbackLabel || field);
+  const getSHFieldLabel = (field: string) => {
+    const translationKey = getSportsHobbyFieldTranslationKey(field);
+    return tSH(translationKey);
   };
 
-  const getHFOptionLabel = (option: string) => {
-    const translationKey = getHomeFurnitureOptionTranslationKey(option);
-    const fullKey = translationKey as Parameters<typeof tHF>[0];
-    return tHF.has(fullKey) ? tHF(fullKey) : option;
-  };
-
-  const toggleHomeFurnitureMulti = (field: 'color', value: string) => {
-    const current = homeFurnitureFilters[field];
-    const next = current.includes(value)
-      ? current.filter((item) => item !== value)
-      : [...current, value];
-    setHF({ [field]: next } as Partial<HomeFurnitureFilterState>);
+  const getSHOptionLabel = (option: string) => {
+    const translationKey = getSportsHobbyOptionTranslationKey(option);
+    return tSH(translationKey);
   };
 
   const getHBFieldLabel = (field: string) => {
     const translationKey = getHealthBeautyFieldTranslationKey(field);
-    const fullKey = translationKey as Parameters<typeof tHB>[0];
-    return tHB.has(fullKey) ? tHB(fullKey) : field;
+    return tHB(translationKey);
   };
 
   const getHBOptionLabel = (option: string) => {
     const translationKey = getHealthBeautyOptionTranslationKey(option);
-    const fullKey = translationKey as Parameters<typeof tHB>[0];
-    return tHB.has(fullKey) ? tHB(fullKey) : option;
+    return tHB(translationKey);
   };
 
   const toggleFashionMulti = (field: 'size' | 'color', value: string) => {
@@ -1275,46 +1911,26 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
     setFF({ [field]: next });
   };
 
-  const selectedFashionBrandOptions = fashionFilters.subcategory
-    ? FASHION_BRANDS_BY_FILTER_SUBCATEGORY[fashionFilters.subcategory]
-    : [];
+
+  // fashionBrands reserved for future fashion filter enhancements
 
   const getFashionFieldLabel = (field: string) => {
     const translationKey = getFashionFieldTranslationKey(field);
-    return tFA.has(translationKey as Parameters<typeof tFA>[0])
-      ? tFA(translationKey as Parameters<typeof tFA>[0])
-      : field;
+    return tFA(translationKey as Parameters<typeof tFA>[0]);
   };
 
   const getFashionOptionLabel = (option: string) => {
     const translationKey = getFashionOptionTranslationKey(option);
-    return tFA.has(translationKey as Parameters<typeof tFA>[0])
-      ? tFA(translationKey as Parameters<typeof tFA>[0])
-      : option;
-  };
-
-  const getSpareLabel = (key: string, fallback: string) => {
-    return tSP.has(key as Parameters<typeof tSP>[0])
-      ? tSP(key as Parameters<typeof tSP>[0])
-      : fallback;
-  };
-
-  const getSpareOptionLabel = (option: string) => {
-    const normalized = option
-      .toLowerCase()
-      .replace(/\s+/g, '_')
-      .replace(/\//g, '_')
-      .replace(/-/g, '_');
-    const key = `optionLabels.${normalized}`;
-    return tSP.has(key as Parameters<typeof tSP>[0])
-      ? tSP(key as Parameters<typeof tSP>[0])
-      : option;
-  };
-
-  const toggleMulti = (field: 'fuelTypes' | 'gearTypes' | 'bodyTypes', value: string) => {
-    const current = vehicleFilters[field] as string[];
-    const next = current.includes(value) ? current.filter((v) => v !== value) : [...current, value];
-    setVF({ [field]: next });
+    try {
+      const translated = tFA(translationKey as Parameters<typeof tFA>[0]);
+      // If translation returns the key itself (contains dots), fall back to original option
+      if (translated.includes('.') && translated.includes('optionLabels')) {
+        return option;
+      }
+      return translated;
+    } catch {
+      return option;
+    }
   };
 
   const handleConditionToggle = (condition: string) => {
@@ -1325,61 +1941,23 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
     }
   };
 
-  const allMakes = Object.keys(VEHICLE_DATA).sort((a, b) => {
-    if (a === 'Other') return 1;
-    if (b === 'Other') return -1;
-    return a.localeCompare(b, 'en', { sensitivity: 'base' });
-  });
-
-  const selectedMakeName = allMakes.find(
-    (name) => VEHICLE_DATA[name]?.makeKey === vehicleFilters.make
-  );
-  const selectedMakeEntry = selectedMakeName ? VEHICLE_DATA[selectedMakeName] : undefined;
-  const modelsForMake = selectedMakeEntry
-    ? selectedMakeEntry.models.map((modelName) => ({
-      key: selectedMakeEntry.modelKeyMap[modelName] || modelName,
-      label: modelName,
-    }))
-    : [];
-
   const currentYear = new Date().getFullYear();
   const years: number[] = [];
   for (let y = currentYear + 1; y >= 1980; y--) years.push(y);
 
-  const spareModels = sparePartsFilters.make ? SPARE_MAKE_MODELS[sparePartsFilters.make] || [] : [];
-  const isVehicleSpare = VEHICLE_SPARE_SUBCATEGORIES.includes(sparePartsFilters.subcategory as SparePartsSubcategory);
-  const isDeviceSpare = ELECTRONICS_OR_MACHINERY_SUBCATEGORIES.includes(sparePartsFilters.subcategory as SparePartsSubcategory);
-  const isElectronicsSpare = sparePartsFilters.subcategory === 'electronics-parts';
-  const isMachinerySpare = sparePartsFilters.subcategory === 'machinery-parts';
 
-  const toggleSpareMulti = (field: 'part_type' | 'included_components', value: string) => {
-    const current = sparePartsFilters[field];
-    const next = current.includes(value)
-      ? current.filter((item) => item !== value)
-      : [...current, value];
-    setSP({ [field]: next });
-  };
-
-  const homeFurnitureSpecFields = homeFurnitureFilters.subcategory
-    ? getHomeFurnitureSpecsConfig(homeFurnitureFilters.subcategory)
-    : [];
-
-  const servicesSpecFields = servicesFilters.subcategory
-    ? getServicesSpecsConfig(servicesFilters.subcategory)
-    : [];
-
-  const renderHomeFurnitureField = (field: HomeFurnitureSpecField) => {
-    const key = field.key as keyof HomeFurnitureFilterState;
-    const label = getHFFieldLabel(field.key, field.label);
+  const renderFashionField = (field: FashionSpecField) => {
+    const key = field.key as keyof FashionFilterState;
+    const label = getFashionFieldLabel(field.key);
 
     if (field.type === 'multiselect') {
-      const selected = homeFurnitureFilters[key] as string[];
+      const selected = fashionFilters[key] as string[];
       return (
         <Section key={field.key} label={label} isRtl={isRtl}>
           <MultiCheck
-            options={(field.options || []).map((option) => ({ value: option, label: getHFOptionLabel(option) }))}
+            options={(field.options || []).map((option) => ({ value: option, label: getFashionOptionLabel(option) }))}
             selected={selected || []}
-            onToggle={(v) => toggleHomeFurnitureMulti('color', v)}
+            onToggle={(v) => toggleFashionMulti(key as 'size' | 'color', v)}
             isRtl={isRtl}
           />
         </Section>
@@ -1387,12 +1965,12 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
     }
 
     if (field.type === 'toggle') {
-      const value = String(homeFurnitureFilters[key] || '');
+      const value = String(fashionFilters[key] || '');
       return (
         <Section key={field.key} label={label} isRtl={isRtl}>
           <Sel
             value={value}
-            onChange={(v) => setHF({ [key]: v } as Partial<HomeFurnitureFilterState>)}
+            onChange={(v) => setFF({ [key]: v } as Partial<FashionFilterState>)}
             isRtl={isRtl}
           >
             <option value="">{tCommon('all')}</option>
@@ -1404,31 +1982,30 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
     }
 
     if (field.type === 'select') {
-      const value = String(homeFurnitureFilters[key] || '');
+      const value = String(fashionFilters[key] || '');
       return (
         <Section key={field.key} label={label} isRtl={isRtl}>
           <Sel
             value={value}
-            onChange={(v) => setHF({ [key]: v } as Partial<HomeFurnitureFilterState>)}
+            onChange={(v) => setFF({ [key]: v } as Partial<FashionFilterState>)}
             isRtl={isRtl}
           >
             <option value="">{tCommon('all')}</option>
             {(field.options || []).map((option) => (
-              <option key={option} value={option}>{getHFOptionLabel(option)}</option>
+              <option key={option} value={option}>{getFashionOptionLabel(option)}</option>
             ))}
           </Sel>
         </Section>
       );
     }
 
-    const value = String(homeFurnitureFilters[key] || '');
-    const inputType = field.type === 'number' ? 'number' : 'text';
+    const value = String(fashionFilters[key] || '');
     return (
       <Section key={field.key} label={label} isRtl={isRtl}>
         <input
-          type={inputType}
+          type="text"
           value={value}
-          onChange={(e) => setHF({ [key]: e.target.value } as Partial<HomeFurnitureFilterState>)}
+          onChange={(e) => setFF({ [key]: e.target.value } as Partial<FashionFilterState>)}
           placeholder={label}
           className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
         />
@@ -1436,139 +2013,20 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
     );
   };
 
-  const renderServicesField = (field: ServicesSpecField) => {
-    const key = field.key as keyof ServicesFilterState;
-    const label = tSR(`fields.${field.key}` as Parameters<typeof tSR>[0]);
-
-    if (field.type === 'multiselect') {
-      const selected = servicesFilters[key] as string[];
-      return (
-        <Section key={field.key} label={label} isRtl={isRtl}>
-          <MultiCheck
-            options={(field.options || []).map((option: { value: string; labelKey: string }) => ({
-              value: option.value,
-              label: tSR(`options.${option.value}` as Parameters<typeof tSR>[0]) || option.labelKey
-            }))}
-            selected={selected || []}
-            onToggle={(v) => {
-              const current = servicesFilters[key] as string[];
-              const next = current.includes(v)
-                ? current.filter((x) => x !== v)
-                : [...current, v];
-              setSF({ [key]: next } as Partial<ServicesFilterState>);
-            }}
-            isRtl={isRtl}
-          />
-        </Section>
-      );
-    }
-
-    if (field.type === 'toggle') {
-      const value = String(servicesFilters[key] || '');
-      return (
-        <Section key={field.key} label={label} isRtl={isRtl}>
-          <Sel
-            value={value}
-            onChange={(v) => setSF({ [key]: v } as Partial<ServicesFilterState>)}
-            isRtl={isRtl}
-          >
-            <option value="">{tCommon('all')}</option>
-            <option value="yes">{tCommon('yes')}</option>
-            <option value="no">{tCommon('no')}</option>
-          </Sel>
-        </Section>
-      );
-    }
-
-    if (field.type === 'select') {
-      const value = String(servicesFilters[key] || '');
-      return (
-        <Section key={field.key} label={label} isRtl={isRtl}>
-          <Sel
-            value={value}
-            onChange={(v) => setSF({ [key]: v } as Partial<ServicesFilterState>)}
-            isRtl={isRtl}
-          >
-            <option value="">{tCommon('all')}</option>
-            {(field.options || []).map((option: { value: string; labelKey: string }) => (
-              <option key={option.value} value={option.value}>
-                {tSR(`options.${option.value}` as Parameters<typeof tSR>[0]) || option.labelKey}
-              </option>
-            ))}
-          </Sel>
-        </Section>
-      );
-    }
-
-    const value = String(servicesFilters[key] || '');
-    const inputType = field.type === 'number' ? 'number' : 'text';
-    const placeholder = field.type === 'textarea' ? tSR('fields.descriptionPlaceholder') : label;
-    return (
-      <Section key={field.key} label={label} isRtl={isRtl}>
-        {field.type === 'textarea' ? (
-          <textarea
-            value={value}
-            onChange={(e) => setSF({ [key]: e.target.value } as Partial<ServicesFilterState>)}
-            placeholder={placeholder}
-            className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
-            rows={3}
-          />
-        ) : (
-          <input
-            type={inputType}
-            value={value}
-            onChange={(e) => setSF({ [key]: e.target.value } as Partial<ServicesFilterState>)}
-            placeholder={placeholder}
-            className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
-          />
-        )}
-      </Section>
-    );
-  };
-
-  const renderFashionSelect = (label: string, key: keyof FashionFilterState, options: string[]) => (
-    <Section label={getFashionFieldLabel(label)} isRtl={isRtl}>
-      <Sel
-        value={String(fashionFilters[key] || '')}
-        onChange={(v) => setFF({ [key]: v } as Partial<FashionFilterState>)}
-        isRtl={isRtl}
-      >
-        <option value="">{tCommon('all')}</option>
-        {options.map((option) => (
-          <option key={option} value={option}>{getFashionOptionLabel(option)}</option>
-        ))}
-      </Sel>
-    </Section>
-  );
-
-  const renderFashionYesNo = (label: string, key: keyof FashionFilterState) => (
-    <Section label={getFashionFieldLabel(label)} isRtl={isRtl}>
-      <Sel
-        value={String(fashionFilters[key] || '')}
-        onChange={(v) => setFF({ [key]: v } as Partial<FashionFilterState>)}
-        isRtl={isRtl}
-      >
-        <option value="">{tCommon('all')}</option>
-        <option value="yes">{tCommon('yes')}</option>
-        <option value="no">{tCommon('no')}</option>
-      </Sel>
-    </Section>
-  );
+  const fashionSpecFields = fashionFilters.subcategory
+    ? getFashionSpecsConfig(fashionFilters.subcategory)
+    : [];
 
   return (
-    <div className="bg-white rounded-lg border border-slate-200 p-4 space-y-5">
+    <div className="rounded-2xl border border-slate-200/60 bg-white/80 p-4 shadow-lg shadow-slate-900/5 backdrop-blur-xl space-y-5">
 
       {/* Category */}
       <Section label={t('filter')} isRtl={isRtl}>
         <Sel id="category-filter" value={selectedCategory?.toString() ?? ''} onChange={(v) => onCategoryChange(v === '' ? null : Number(v))} isRtl={isRtl}>
           <option value="">{tCommon('all')}</option>
-          {dedupedDbCategories.length > 0
-            ? dedupedDbCategories.map((cat) => (
-                <option key={cat.id} value={cat.id}>{getLocalizedDbCategoryName(cat)}</option>
-              ))
-            : MAIN_CATEGORIES.map((cat) => (
-              <option key={cat.id} value={cat.id}>{getCategoryName(cat.id, locale)}</option>
-            ))}
+          {dbCategories.map((cat) => (
+            <option key={cat.id} value={cat.id}>{getLocalizedDbCategoryName(cat)}</option>
+          ))}
         </Sel>
       </Section>
 
@@ -1582,18 +2040,20 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
         </Sel>
       </Section>
 
-      {/* Price Range */}
-      <Section label={t('priceRange')} isRtl={isRtl}>
-        <div className={`flex gap-2 ${isRtl ? 'flex-row-reverse' : ''}`}>
-          <input type="number" placeholder={t('minPrice')} value={priceMin} onChange={(e) => onPriceMinChange(e.target.value)} min="0"
-            className={`w-1/2 px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`} />
-          <input type="number" placeholder={t('maxPrice')} value={priceMax} onChange={(e) => onPriceMaxChange(e.target.value)} min="0"
-            className={`w-1/2 px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`} />
-        </div>
-      </Section>
+      {/* Price Range (only for generic/non-category-specific searches) */}
+      {!isVehicles && !isRealEstate && !isElectronics && !isFashion && !isSpareParts && !isAnimalsLivestock && !isHealthBeauty && !isHomeFurniture && !isJobs && !isServices && !isSportsHobby && !isFoodAgriculture && !isBooksEducation && !isBabyKids && !isBusinessIndustry && !isShoppingGroceries && (
+        <Section label={t('priceRange')} isRtl={isRtl}>
+          <div className={`flex gap-2 ${isRtl ? 'flex-row-reverse' : ''}`}>
+            <input type="number" placeholder={t('minPrice')} value={priceMin} onChange={(e) => onPriceMinChange(e.target.value)} min="0"
+              className={`w-1/2 px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`} />
+            <input type="number" placeholder={t('maxPrice')} value={priceMax} onChange={(e) => onPriceMaxChange(e.target.value)} min="0"
+              className={`w-1/2 px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`} />
+          </div>
+        </Section>
+      )}
 
       {/* Condition (non-vehicle/non-real-estate/non-electronics) */}
-      {!isVehicles && !isRealEstate && !isElectronics && !isFashion && !isSpareParts && !isHealthBeauty && !isHomeFurniture && !isJobs && !isServices && (
+      {!isVehicles && !isRealEstate && !isElectronics && !isFashion && !isSpareParts && !isAnimalsLivestock && !isHealthBeauty && !isHomeFurniture && !isJobs && !isServices && !isSportsHobby && !isFoodAgriculture && !isBooksEducation && !isBabyKids && !isBusinessIndustry && !isShoppingGroceries && (
         <Section label={t('condition')} isRtl={isRtl}>
           <div className="space-y-2">
             {CONDITIONS.map(({ value, translationKey }) => (
@@ -1607,21 +2067,20 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
         </Section>
       )}
 
-      {/* Wheel drive (non-vehicle/non-real-estate/non-electronics) */}
-      {!isVehicles && !isRealEstate && !isElectronics && !isFashion && !isSpareParts && !isHealthBeauty && !isHomeFurniture && !isJobs && !isServices && (
-        <Section label={t('wheelDrive')} isRtl={isRtl}>
-          <Sel id="wheel-drive-filter" value={selectedWheelDriveType} onChange={onWheelDriveTypeChange} isRtl={isRtl}>
-            <option value="">{t('anyWheelDrive')}</option>
-            {WHEEL_DRIVE_TYPES.map((wd) => (
-              <option key={wd} value={wd}>{tVH((`wd_${wd}`) as Parameters<typeof tVH>[0])}</option>
-            ))}
-          </Sel>
-        </Section>
+      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+          VEHICLE-ONLY FILTERS
+         â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+      {isVehicles && (
+        <VehicleFilter
+          locale={locale}
+          vehicleFilters={vehicleFilters}
+          onVehicleFiltersChange={onVehicleFiltersChange}
+        />
       )}
 
-      {/* ═══════════════════════════════════════════════════
+      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
           REAL ESTATE-ONLY FILTERS
-         ═══════════════════════════════════════════════════ */}
+         â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       {isRealEstate && (
         <>
           {/* Purpose */}
@@ -1952,7 +2411,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                 type="text"
                 value={realEstateFilters.ceilingHeight}
                 onChange={(e) => setREF({ ceilingHeight: e.target.value })}
-                placeholder="e.g. 5 meters"
+                placeholder={tRE('ceilingHeightPlaceholder')}
                 className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
               />
             </Section>
@@ -1972,180 +2431,34 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
         </>
       )}
 
-      {/* ═══════════════════════════════════════════════════
-          VEHICLE-ONLY FILTERS
-         ═══════════════════════════════════════════════════ */}
-      {isVehicles && (
-        <>
-          {/* Make */}
-          <Section label={tVH('make')} isRtl={isRtl}>
-            <Sel value={vehicleFilters.make} onChange={(v) => setVF({ make: v, model: '' })} isRtl={isRtl}>
-              <option value="">{tVH('selectMake')}</option>
-              {allMakes.map((name) => (
-                <option key={name} value={VEHICLE_DATA[name].makeKey}>{name}</option>
-              ))}
-            </Sel>
-          </Section>
 
-          {/* Model */}
-          <Section label={tVH('model')} isRtl={isRtl}>
-            {modelsForMake.length > 0 ? (
-              <Sel value={vehicleFilters.model} onChange={(v) => setVF({ model: v })} isRtl={isRtl}>
-                <option value="">{tVH('selectModel')}</option>
-                {modelsForMake.map((m) => <option key={m.key} value={m.key}>{m.label}</option>)}
-              </Sel>
-            ) : (
-              <input type="text" value={vehicleFilters.model} onChange={(e) => setVF({ model: e.target.value })}
-                placeholder={vehicleFilters.make ? tVH('selectModel') : tVH('selectMakeFirst')}
-                className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`} />
-            )}
-          </Section>
-
-          {/* Year Range */}
-          <Section label={t('yearRange')} isRtl={isRtl}>
-            <div className={`flex gap-2 ${isRtl ? 'flex-row-reverse' : ''}`}>
-              <Sel value={vehicleFilters.yearMin} onChange={(v) => setVF({ yearMin: v })} isRtl={isRtl}>
-                <option value="">Min</option>
-                {years.map((y) => <option key={y} value={y}>{y}</option>)}
-              </Sel>
-              <Sel value={vehicleFilters.yearMax} onChange={(v) => setVF({ yearMax: v })} isRtl={isRtl}>
-                <option value="">Max</option>
-                {years.map((y) => <option key={y} value={y}>{y}</option>)}
-              </Sel>
-            </div>
-          </Section>
-
-          {/* Fuel Type */}
-          <Section label={tVH('engineType')} isRtl={isRtl}>
-            <MultiCheck
-              options={ENGINE_TYPES.map((k) => ({ value: k, label: tVH(k as Parameters<typeof tVH>[0]) }))}
-              selected={vehicleFilters.fuelTypes}
-              onToggle={(v) => toggleMulti('fuelTypes', v)}
-              isRtl={isRtl}
-            />
-          </Section>
-
-          {/* Gear Type */}
-          <Section label={tVH('gearType')} isRtl={isRtl}>
-            <MultiCheck
-              options={GEAR_TYPES.map((k) => ({ value: k, label: tVH(k as Parameters<typeof tVH>[0]) }))}
-              selected={vehicleFilters.gearTypes}
-              onToggle={(v) => toggleMulti('gearTypes', v)}
-              isRtl={isRtl}
-            />
-          </Section>
-
-          {/* Body Type */}
-          <Section label={tVH('bodyType')} isRtl={isRtl}>
-            <MultiCheck
-              options={BODY_TYPES.map((k) => {
-                let label: string = k;
-                try { label = tVH(k as Parameters<typeof tVH>[0]); } catch { /* use key */ }
-                return { value: k, label };
-              })}
-              selected={vehicleFilters.bodyTypes}
-              onToggle={(v) => toggleMulti('bodyTypes', v)}
-              isRtl={isRtl}
-            />
-          </Section>
-
-          {/* Km Driven */}
-          <Section label={t('kmRange')} isRtl={isRtl}>
-            <div className={`flex gap-2 ${isRtl ? 'flex-row-reverse' : ''}`}>
-              <input type="number" placeholder="Min km" value={vehicleFilters.kmMin} onChange={(e) => setVF({ kmMin: e.target.value })} min="0"
-                className={`w-1/2 px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`} />
-              <input type="number" placeholder="Max km" value={vehicleFilters.kmMax} onChange={(e) => setVF({ kmMax: e.target.value })} min="0"
-                className={`w-1/2 px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`} />
-            </div>
-          </Section>
-
-          {/* Engine Power */}
-          <Section label={t('enginePowerRange')} isRtl={isRtl}>
-            <Sel value={vehicleFilters.enginePowerRange} onChange={(v) => setVF({ enginePowerRange: v })} isRtl={isRtl}>
-              <option value="">Any</option>
-              {ENGINE_POWER_BUCKETS.map(({ key, label }) => <option key={key} value={key}>{label}</option>)}
-            </Sel>
-          </Section>
-
-          {/* Engine Capacity */}
-          <Section label={t('engineCapacityRange')} isRtl={isRtl}>
-            <Sel value={vehicleFilters.engineCapacityRange} onChange={(v) => setVF({ engineCapacityRange: v })} isRtl={isRtl}>
-              <option value="">Any</option>
-              {ENGINE_CAP_BUCKETS.map(({ key, label }) => <option key={key} value={key}>{label}</option>)}
-            </Sel>
-          </Section>
-
-          {/* Wheel Drive */}
-          <Section label={tVH('wheelDriveType')} isRtl={isRtl}>
-            <MultiCheck
-              options={WHEEL_DRIVE_TYPES.map((k) => ({ value: k, label: tVH((`wd_${k}`) as Parameters<typeof tVH>[0]) }))}
-              selected={vehicleFilters.wheelDrive ? [vehicleFilters.wheelDrive] : []}
-              onToggle={(v) => setVF({ wheelDrive: vehicleFilters.wheelDrive === v ? '' : v })}
-              isRtl={isRtl}
-            />
-          </Section>
-
-          {/* Color */}
-          <Section label={tVH('color')} isRtl={isRtl}>
-            <Sel value={vehicleFilters.color} onChange={(v) => setVF({ color: v })} isRtl={isRtl}>
-              <option value="">{t('anyColor')}</option>
-              {VEHICLE_COLORS.map((c) => (
-                <option key={c} value={c}>{tVH((`color_${c}`) as Parameters<typeof tVH>[0])}</option>
-              ))}
-            </Sel>
-          </Section>
-
-          {/* Number Plate City */}
-          <Section label={tVH('numberPlateCity')} isRtl={isRtl}>
-            <Sel value={vehicleFilters.numberPlateCity} onChange={(v) => setVF({ numberPlateCity: v })} isRtl={isRtl}>
-              <option value="">{t('anyPlateCity')}</option>
-              {cities.map((c) => <option key={c.name_en} value={c.name_en}>{getManagedCityName(c, locale)}</option>)}
-            </Sel>
-          </Section>
-
-          {/* Seller Type */}
-          <Section label={t('sellerType')} isRtl={isRtl}>
-            <div className={`flex gap-1.5 ${isRtl ? 'flex-row-reverse' : ''}`}>
-              {[
-                { value: '', label: tCommon('all') },
-                { value: 'true', label: t('ownerOnly') },
-                { value: 'false', label: t('dealerOnly') },
-              ].map(({ value, label }) => (
-                <button key={value} type="button" onClick={() => setVF({ fromOwner: value })}
-                  className={`flex-1 py-1.5 rounded-md text-xs font-medium border transition ${
-                    vehicleFilters.fromOwner === value
-                      ? 'bg-primary-600 border-primary-600 text-white'
-                      : 'bg-white border-slate-300 text-slate-600 hover:border-primary-400'
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </Section>
-
-          {/* Keywords */}
-          <Section label={t('keywords')} isRtl={isRtl}>
-            <input type="text" value={vehicleFilters.keywords} onChange={(e) => setVF({ keywords: e.target.value })}
-              placeholder={t('keywords')}
-              className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`} />
-          </Section>
-        </>
-      )}
-
-      {/* ═══════════════════════════════════════════════════
+      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
           ELECTRONICS-ONLY FILTERS
-         ═══════════════════════════════════════════════════ */}
+         â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       {isElectronics && (
         <>
           <Section label={t('subcategory')} isRtl={isRtl}>
-            <Sel id="electronics-subcategory-filter" value={electronicsFilters.subcategory} onChange={(v) => setEF({ ...EMPTY_ELECTRONICS_FILTERS, subcategory: v })} isRtl={isRtl}>
+            <Sel id="electronics-subcategory-filter" value={electronicsFilters.subcategory} onChange={(v) => setEF({ ...EMPTY_ELECTRONICS_FILTERS, subcategory: v as ElectronicsSubcategory | '' })} isRtl={isRtl}>
               <option value="">{tCommon('all')}</option>
-              {ELECTRONICS_SUBCATEGORIES.map((sub) => (
-                <option key={sub.value} value={sub.value}>
-                  {tEL(ELECTRONICS_SUBCATEGORY_LABEL_KEYS[sub.value as ElectronicsSubcategory] as Parameters<typeof tEL>[0])}
-                </option>
-              ))}
+              {ELECTRONICS_SUBCATEGORIES.map((sub) => {
+                // Convert subcategory value to translation key
+                // e.g., 'phones' -> 'subcategoryPhones', 'home-appliances' -> 'subcategoryHomeAppliances'
+                // Special case: 'other-electronics' -> 'subcategoryOther' (not 'subcategoryOtherElectronics')
+                const toCamelCase = (str: string) => {
+                  return str.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
+                };
+                let baseKey = toCamelCase(sub.value);
+                // Handle special case
+                if (sub.value === 'other-electronics') {
+                  baseKey = 'other';
+                }
+                const translationKey = `subcategory${baseKey.charAt(0).toUpperCase() + baseKey.slice(1)}` as const;
+                return (
+                  <option key={sub.value} value={sub.value}>
+                    {tEL(translationKey)}
+                  </option>
+                );
+              })}
             </Sel>
           </Section>
 
@@ -2218,56 +2531,56 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                   isRtl={isRtl}
                 />
               </Section>
-              <Section label="Internal Storage" isRtl={isRtl}>
+              <Section label={t('internalStorage')} isRtl={isRtl}>
                 <Sel value={electronicsFilters.internalStorage} onChange={(v) => setEF({ internalStorage: v })} isRtl={isRtl}>
                   <option value="">{tCommon('all')}</option>
                   {STORAGE_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
                 </Sel>
               </Section>
-              <Section label="Battery Capacity" isRtl={isRtl}>
-                <input type="text" value={electronicsFilters.batteryCapacity} onChange={(e) => setEF({ batteryCapacity: e.target.value })} placeholder="Enter value" title="Filter value"
+              <Section label={t('batteryCapacity')} isRtl={isRtl}>
+                <input type="text" value={electronicsFilters.batteryCapacity} onChange={(e) => setEF({ batteryCapacity: e.target.value })} placeholder={t('enterValue')} title="Filter value"
                   className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`} />
               </Section>
               <Section label={t('screenSize')} isRtl={isRtl}>
-                <input type="text" value={electronicsFilters.screenSize} onChange={(e) => setEF({ screenSize: e.target.value })} placeholder="Enter value" title="Filter value"
+                <input type="text" value={electronicsFilters.screenSize} onChange={(e) => setEF({ screenSize: e.target.value })} placeholder={t('enterValue')} title="Filter value"
                   className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`} />
               </Section>
-              <Section label="Refresh Rate" isRtl={isRtl}>
+              <Section label={t('refreshRate')} isRtl={isRtl}>
                 <Sel value={electronicsFilters.refreshRate} onChange={(v) => setEF({ refreshRate: v })} isRtl={isRtl}>
                   <option value="">{tCommon('all')}</option>
                   {REFRESH_RATE_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
                 </Sel>
               </Section>
-              <Section label="Camera (Rear MP)" isRtl={isRtl}>
-                <input type="text" value={electronicsFilters.cameraRearMp} onChange={(e) => setEF({ cameraRearMp: e.target.value })} placeholder="Enter value" title="Filter value"
+              <Section label={t('cameraRear')} isRtl={isRtl}>
+                <input type="text" value={electronicsFilters.cameraRearMp} onChange={(e) => setEF({ cameraRearMp: e.target.value })} placeholder={t('enterValue')} title="Filter value"
                   className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`} />
               </Section>
-              <Section label="Camera (Front MP)" isRtl={isRtl}>
-                <input type="text" value={electronicsFilters.cameraFrontMp} onChange={(e) => setEF({ cameraFrontMp: e.target.value })} placeholder="Enter value" title="Filter value"
+              <Section label={t('cameraFront')} isRtl={isRtl}>
+                <input type="text" value={electronicsFilters.cameraFrontMp} onChange={(e) => setEF({ cameraFrontMp: e.target.value })} placeholder={t('enterValue')} title="Filter value"
                   className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`} />
               </Section>
-              <Section label="5G Supported" isRtl={isRtl}>
+              <Section label={t('fiveG')} isRtl={isRtl}>
                 <Sel value={electronicsFilters.supports5g} onChange={(v) => setEF({ supports5g: v })} isRtl={isRtl}>
                   <option value="">{tCommon('all')}</option>
                   <option value="yes">{tCommon('yes')}</option>
                   <option value="no">{tCommon('no')}</option>
                 </Sel>
               </Section>
-              <Section label="Dual SIM" isRtl={isRtl}>
+              <Section label={t('dualSim')} isRtl={isRtl}>
                 <Sel value={electronicsFilters.dualSim} onChange={(v) => setEF({ dualSim: v })} isRtl={isRtl}>
                   <option value="">{tCommon('all')}</option>
                   <option value="yes">{tCommon('yes')}</option>
                   <option value="no">{tCommon('no')}</option>
                 </Sel>
               </Section>
-              <Section label="Operating System" isRtl={isRtl}>
+              <Section label={t('operatingSystem')} isRtl={isRtl}>
                 <Sel value={electronicsFilters.operatingSystem} onChange={(v) => setEF({ operatingSystem: v })} isRtl={isRtl}>
                   <option value="">{tCommon('all')}</option>
                   {OS_MOBILE_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
                 </Sel>
               </Section>
               <Section label={t('color')} isRtl={isRtl}>
-                <input type="text" value={electronicsFilters.color} onChange={(e) => setEF({ color: e.target.value })} placeholder="Enter value" title="Filter value"
+                <input type="text" value={electronicsFilters.color} onChange={(e) => setEF({ color: e.target.value })} placeholder={t('enterValue')} title="Filter value"
                   className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`} />
               </Section>
               <Section label={t('warranty')} isRtl={isRtl}>
@@ -2277,14 +2590,14 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                   <option value="no">{tCommon('no')}</option>
                 </Sel>
               </Section>
-              <Section label="Accessories Included" isRtl={isRtl}>
+              <Section label={t('accessoriesIncluded')} isRtl={isRtl}>
                 <Sel value={electronicsFilters.accessoriesIncluded} onChange={(v) => setEF({ accessoriesIncluded: v })} isRtl={isRtl}>
                   <option value="">{tCommon('all')}</option>
                   <option value="yes">{tCommon('yes')}</option>
                   <option value="no">{tCommon('no')}</option>
                 </Sel>
               </Section>
-              <Section label="Box Available" isRtl={isRtl}>
+              <Section label={t('boxAvailable')} isRtl={isRtl}>
                 <Sel value={electronicsFilters.boxAvailable} onChange={(v) => setEF({ boxAvailable: v })} isRtl={isRtl}>
                   <option value="">{tCommon('all')}</option>
                   <option value="yes">{tCommon('yes')}</option>
@@ -2297,45 +2610,45 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
           {electronicsFilters.subcategory === 'tv' && (
             <>
               <Section label={t('screenSize')} isRtl={isRtl}>
-                <input type="text" value={electronicsFilters.screenSize} onChange={(e) => setEF({ screenSize: e.target.value })} placeholder="Enter value" title="Filter value"
+                <input type="text" value={electronicsFilters.screenSize} onChange={(e) => setEF({ screenSize: e.target.value })} placeholder={t('enterValue')} title="Filter value"
                   className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`} />
               </Section>
-              <Section label="Resolution" isRtl={isRtl}>
+              <Section label={t('resolution')} isRtl={isRtl}>
                 <Sel value={electronicsFilters.resolution} onChange={(v) => setEF({ resolution: v })} isRtl={isRtl}>
                   <option value="">{tCommon('all')}</option>
                   {TV_RESOLUTION_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
                 </Sel>
               </Section>
-              <Section label="Smart TV" isRtl={isRtl}>
+              <Section label={t('smartTv')} isRtl={isRtl}>
                 <Sel value={electronicsFilters.smartTv} onChange={(v) => setEF({ smartTv: v })} isRtl={isRtl}>
                   <option value="">{tCommon('all')}</option>
                   <option value="yes">{tCommon('yes')}</option>
                   <option value="no">{tCommon('no')}</option>
                 </Sel>
               </Section>
-              <Section label="Panel Type" isRtl={isRtl}>
+              <Section label={t('panelType')} isRtl={isRtl}>
                 <Sel value={electronicsFilters.panelType} onChange={(v) => setEF({ panelType: v })} isRtl={isRtl}>
                   <option value="">{tCommon('all')}</option>
                   {TV_PANEL_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
                 </Sel>
               </Section>
-              <Section label="Refresh Rate" isRtl={isRtl}>
+              <Section label={t('refreshRate')} isRtl={isRtl}>
                 <Sel value={electronicsFilters.refreshRate} onChange={(v) => setEF({ refreshRate: v })} isRtl={isRtl}>
                   <option value="">{tCommon('all')}</option>
                   {REFRESH_RATE_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
                 </Sel>
               </Section>
-              <Section label="HDMI Ports" isRtl={isRtl}>
-                <input type="text" value={electronicsFilters.hdmiPorts} onChange={(e) => setEF({ hdmiPorts: e.target.value })} placeholder="Enter value" title="Filter value"
+              <Section label={t('hdmiPorts')} isRtl={isRtl}>
+                <input type="text" value={electronicsFilters.hdmiPorts} onChange={(e) => setEF({ hdmiPorts: e.target.value })} placeholder={t('enterValue')} title="Filter value"
                   className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`} />
               </Section>
-              <Section label="Operating System" isRtl={isRtl}>
+              <Section label={t('operatingSystem')} isRtl={isRtl}>
                 <Sel value={electronicsFilters.operatingSystem} onChange={(v) => setEF({ operatingSystem: v })} isRtl={isRtl}>
                   <option value="">{tCommon('all')}</option>
                   {TV_OS_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
                 </Sel>
               </Section>
-              <Section label="Wall Mount Included" isRtl={isRtl}>
+              <Section label={t('wallMountIncluded')} isRtl={isRtl}>
                 <Sel value={electronicsFilters.wallMountIncluded} onChange={(v) => setEF({ wallMountIncluded: v })} isRtl={isRtl}>
                   <option value="">{tCommon('all')}</option>
                   <option value="yes">{tCommon('yes')}</option>
@@ -2354,7 +2667,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
 
           {(electronicsFilters.subcategory === 'laptops' || electronicsFilters.subcategory === 'desktops') && (
             <>
-              <Section label="Processor" isRtl={isRtl}>
+              <Section label={t('processor')} isRtl={isRtl}>
                 <Sel value={electronicsFilters.processor} onChange={(v) => setEF({ processor: v })} isRtl={isRtl}>
                   <option value="">{tCommon('all')}</option>
                   {LAPTOP_PROCESSOR_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
@@ -2366,19 +2679,19 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                   {['4GB', '8GB', '16GB', '32GB', '64GB'].map((v) => <option key={v} value={v}>{v}</option>)}
                 </Sel>
               </Section>
-              <Section label="Storage Type" isRtl={isRtl}>
+              <Section label={t('storageType')} isRtl={isRtl}>
                 <Sel value={electronicsFilters.storageType} onChange={(v) => setEF({ storageType: v })} isRtl={isRtl}>
                   <option value="">{tCommon('all')}</option>
                   {STORAGE_TYPE_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
                 </Sel>
               </Section>
-              <Section label="Storage Size" isRtl={isRtl}>
+              <Section label={t('storageSize')} isRtl={isRtl}>
                 <Sel value={electronicsFilters.storageSize} onChange={(v) => setEF({ storageSize: v })} isRtl={isRtl}>
                   <option value="">{tCommon('all')}</option>
                   {STORAGE_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
                 </Sel>
               </Section>
-              <Section label="GPU" isRtl={isRtl}>
+              <Section label={t('gpu')} isRtl={isRtl}>
                 <Sel value={electronicsFilters.gpu} onChange={(v) => setEF({ gpu: v })} isRtl={isRtl}>
                   <option value="">{tCommon('all')}</option>
                   {GPU_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
@@ -2388,28 +2701,28 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
               {electronicsFilters.subcategory === 'laptops' && (
                 <>
                   <Section label={t('screenSize')} isRtl={isRtl}>
-                    <input type="text" value={electronicsFilters.screenSize} onChange={(e) => setEF({ screenSize: e.target.value })} placeholder="Enter value" title="Filter value"
+                    <input type="text" value={electronicsFilters.screenSize} onChange={(e) => setEF({ screenSize: e.target.value })} placeholder={t('enterValue')} title="Filter value"
                       className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`} />
                   </Section>
-                  <Section label="Resolution" isRtl={isRtl}>
+                  <Section label={t('resolution')} isRtl={isRtl}>
                     <Sel value={electronicsFilters.resolution} onChange={(v) => setEF({ resolution: v })} isRtl={isRtl}>
                       <option value="">{tCommon('all')}</option>
                       {LAPTOP_RESOLUTION_OPTIONS.map((v) => <option key={v} value={v}>{v}</option>)}
                     </Sel>
                   </Section>
-                  <Section label="Touchscreen" isRtl={isRtl}>
+                  <Section label={t('touchscreen')} isRtl={isRtl}>
                     <Sel value={electronicsFilters.touchscreen} onChange={(v) => setEF({ touchscreen: v })} isRtl={isRtl}>
                       <option value="">{tCommon('all')}</option>
                       <option value="yes">{tCommon('yes')}</option>
                       <option value="no">{tCommon('no')}</option>
                     </Sel>
                   </Section>
-                  <Section label="Battery Life" isRtl={isRtl}>
-                    <input type="text" value={electronicsFilters.batteryLife} onChange={(e) => setEF({ batteryLife: e.target.value })} placeholder="Enter value" title="Filter value"
+                  <Section label={t('batteryLife')} isRtl={isRtl}>
+                    <input type="text" value={electronicsFilters.batteryLife} onChange={(e) => setEF({ batteryLife: e.target.value })} placeholder={t('enterValue')} title="Filter value"
                       className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`} />
                   </Section>
-                  <Section label="Operating System" isRtl={isRtl}>
-                    <input type="text" value={electronicsFilters.operatingSystem} onChange={(e) => setEF({ operatingSystem: e.target.value })} placeholder="Enter value" title="Filter value"
+                  <Section label={t('operatingSystem')} isRtl={isRtl}>
+                    <input type="text" value={electronicsFilters.operatingSystem} onChange={(e) => setEF({ operatingSystem: e.target.value })} placeholder={t('enterValue')} title="Filter value"
                       className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`} />
                   </Section>
                   <Section label="Usage Type" isRtl={isRtl}>
@@ -2444,7 +2757,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                     </Sel>
                   </Section>
                   <Section label="Operating System" isRtl={isRtl}>
-                    <input type="text" value={electronicsFilters.operatingSystem} onChange={(e) => setEF({ operatingSystem: e.target.value })} placeholder="Enter value" title="Filter value"
+                    <input type="text" value={electronicsFilters.operatingSystem} onChange={(e) => setEF({ operatingSystem: e.target.value })} placeholder={t('enterValue')} title="Filter value"
                       className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`} />
                   </Section>
                   <Section label="Monitor Included" isRtl={isRtl}>
@@ -2498,7 +2811,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
               {electronicsFilters.applianceType === 'Refrigerator' && (
                 <>
                   <Section label="Capacity (Liters)" isRtl={isRtl}>
-                    <input type="text" value={electronicsFilters.refrigeratorCapacityLiters} onChange={(e) => setEF({ refrigeratorCapacityLiters: e.target.value })} placeholder="Enter value" title="Filter value"
+                    <input type="text" value={electronicsFilters.refrigeratorCapacityLiters} onChange={(e) => setEF({ refrigeratorCapacityLiters: e.target.value })} placeholder={t('enterValue')} title="Filter value"
                       className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`} />
                   </Section>
                   <Section label="Type" isRtl={isRtl}>
@@ -2532,11 +2845,11 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                     </Sel>
                   </Section>
                   <Section label="Capacity (kg)" isRtl={isRtl}>
-                    <input type="text" value={electronicsFilters.washingMachineCapacityKg} onChange={(e) => setEF({ washingMachineCapacityKg: e.target.value })} placeholder="Enter value" title="Filter value"
+                    <input type="text" value={electronicsFilters.washingMachineCapacityKg} onChange={(e) => setEF({ washingMachineCapacityKg: e.target.value })} placeholder={t('enterValue')} title="Filter value"
                       className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`} />
                   </Section>
                   <Section label="Spin Speed" isRtl={isRtl}>
-                    <input type="text" value={electronicsFilters.spinSpeed} onChange={(e) => setEF({ spinSpeed: e.target.value })} placeholder="Enter value" title="Filter value"
+                    <input type="text" value={electronicsFilters.spinSpeed} onChange={(e) => setEF({ spinSpeed: e.target.value })} placeholder={t('enterValue')} title="Filter value"
                       className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`} />
                   </Section>
                   <Section label="Automatic/Semi" isRtl={isRtl}>
@@ -2557,7 +2870,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                     </Sel>
                   </Section>
                   <Section label="Capacity (BTU/Ton)" isRtl={isRtl}>
-                    <input type="text" value={electronicsFilters.acCapacity} onChange={(e) => setEF({ acCapacity: e.target.value })} placeholder="Enter value" title="Filter value"
+                    <input type="text" value={electronicsFilters.acCapacity} onChange={(e) => setEF({ acCapacity: e.target.value })} placeholder={t('enterValue')} title="Filter value"
                       className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`} />
                   </Section>
                   <Section label="Inverter" isRtl={isRtl}>
@@ -2568,7 +2881,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                     </Sel>
                   </Section>
                   <Section label="Cooling Area" isRtl={isRtl}>
-                    <input type="text" value={electronicsFilters.coolingArea} onChange={(e) => setEF({ coolingArea: e.target.value })} placeholder="Enter value" title="Filter value"
+                    <input type="text" value={electronicsFilters.coolingArea} onChange={(e) => setEF({ coolingArea: e.target.value })} placeholder={t('enterValue')} title="Filter value"
                       className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`} />
                   </Section>
                 </>
@@ -2617,7 +2930,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
           {electronicsFilters.subcategory === 'other-electronics' && (
             <>
               <Section label="Device Type" isRtl={isRtl}>
-                <input type="text" value={electronicsFilters.deviceType} onChange={(e) => setEF({ deviceType: e.target.value })} placeholder="Enter value" title="Filter value"
+                <input type="text" value={electronicsFilters.deviceType} onChange={(e) => setEF({ deviceType: e.target.value })} placeholder={t('enterValue')} title="Filter value"
                   className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`} />
               </Section>
               <Section label="Features" isRtl={isRtl}>
@@ -2665,13 +2978,93 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
         </>
       )}
 
+      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+          ANIMALS & LIVESTOCK FILTERS (Enhanced)
+         â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+      {isAnimalsLivestock && (
+        <AnimalsFilterEnhanced
+          locale={locale}
+          filters={animalsLivestockFilters}
+          onFiltersChange={onAnimalsLivestockFiltersChange}
+          onClear={onAnimalsLivestockClear}
+          onSearch={onAnimalsLivestockSearch}
+        />
+      )}
+
+      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+          FOOD & AGRICULTURE FILTERS (Enhanced)
+         â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+      {isFoodAgriculture && (
+        <FoodAgricultureFilterEnhanced
+          locale={locale}
+          filters={foodAgricultureFilters}
+          onFiltersChange={onFoodAgricultureFiltersChange}
+          onClear={onFoodAgricultureClear}
+          onSearch={onFoodAgricultureSearch}
+        />
+      )}
+
+      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+          BOOKS & EDUCATION FILTERS (Enhanced)
+         â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+      {isBooksEducation && (
+        <BooksEducationFilterEnhanced
+          locale={locale}
+          filters={booksEducationFilters}
+          onFiltersChange={onBooksEducationFiltersChange}
+          onClear={onBooksEducationClear}
+          onSearch={onBooksEducationSearch}
+        />
+      )}
+
+      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+          BABY & KIDS FILTERS (Enhanced)
+         â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+      {isBabyKids && (
+        <BabyKidsFilterEnhanced
+          locale={locale}
+          filters={babyKidsFilters}
+          onFiltersChange={onBabyKidsFiltersChange}
+          onClear={onBabyKidsClear}
+          onSearch={onBabyKidsSearch}
+        />
+      )}
+
+      {isBusinessIndustry && (
+        <BusinessIndustryFilterEnhanced
+          locale={locale}
+          filters={businessIndustryFilters}
+          onFiltersChange={onBusinessIndustryFiltersChange}
+          onClear={onBusinessIndustryClear}
+          onSearch={onBusinessIndustrySearch}
+        />
+      )}
+
+      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+          SHOPPING & GROCERIES FILTERS (Enhanced)
+         â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+      {isShoppingGroceries && (
+        <ShoppingGroceriesFilterEnhanced
+          locale={locale}
+          filters={shoppingGroceriesFilters}
+          onFiltersChange={onShoppingGroceriesFiltersChange}
+          onClear={onShoppingGroceriesClear}
+          onSearch={onShoppingGroceriesSearch}
+        />
+      )}
+
+      {/* END of Fashion filter block -- close fragment before starting Services */}
+
+      {/* Ensure previous fragments/blocks are closed before this block */}
+
       {isFashion && (
         <>
           <div className="rounded-lg border border-slate-200 bg-slate-50">
             <button
               type="button"
               onClick={() => setFashionGeneralOpen((v) => !v)}
-              className={`w-full px-3 py-2 text-sm font-semibold text-slate-700 ${isRtl ? 'text-right' : 'text-left'}`}
+              aria-expanded={fashionGeneralOpen ? "true" : "false"}
+              className={`w-full px-3 py-2 text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
             >
               {t('generalFilters')}
             </button>
@@ -2679,14 +3072,20 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
               <div className="space-y-4 px-3 pb-3">
                 <Section label={t('subcategory')} isRtl={isRtl}>
                   <Sel
+                    id="fashion-subcategory-filter"
                     value={fashionFilters.subcategory}
                     onChange={(v) => setFF({ ...EMPTY_FASHION_FILTERS, subcategory: v as FashionSubcategory | '' })}
                     isRtl={isRtl}
                   >
                     <option value="">{tCommon('all')}</option>
-                    {FASHION_SUBCATEGORIES.map((sub) => (
-                      <option key={sub.value} value={sub.value}>{tFA(FASHION_SUBCATEGORY_LABEL_KEYS[sub.value] as Parameters<typeof tFA>[0])}</option>
-                    ))}
+                    {FASHION_SUBCATEGORIES.map((sub) => {
+                      const translationKey = FASHION_SUBCATEGORY_LABEL_KEYS[sub.value];
+                      return (
+                        <option key={sub.value} value={sub.value}>
+                          {tFA(translationKey)}
+                        </option>
+                      );
+                    })}
                   </Sel>
                 </Section>
 
@@ -2701,221 +3100,115 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                 </Section>
 
                 <Section label={t('condition')} isRtl={isRtl}>
-                  <Sel value={fashionFilters.condition} onChange={(v) => setFF({ condition: v as 'New' | 'Used' | '' })} isRtl={isRtl}>
+                  <Sel
+                    id="fashion-condition-filter"
+                    value={fashionFilters.condition}
+                    onChange={(v) => setFF({ condition: v as FashionFilterState['condition'] })}
+                    isRtl={isRtl}
+                  >
                     <option value="">{tCommon('all')}</option>
-                    <option value="New">{tFA('optionLabels.new')}</option>
-                    <option value="Used">{tFA('optionLabels.used')}</option>
-                  </Sel>
-                </Section>
-
-                <Section label={tFA('brand')} isRtl={isRtl}>
-                  <Sel value={fashionFilters.brand} onChange={(v) => setFF({ brand: v })} isRtl={isRtl}>
-                    <option value="">{tCommon('all')}</option>
-                    {selectedFashionBrandOptions.map((brand) => (
-                      <option key={brand} value={brand}>{getFashionOptionLabel(brand)}</option>
-                    ))}
-                  </Sel>
-                </Section>
-
-                <Section label={t('sellerType')} isRtl={isRtl}>
-                  <Sel value={fashionFilters.sellerType} onChange={(v) => setFF({ sellerType: v as 'Individual' | 'Dealer' | '' })} isRtl={isRtl}>
-                    <option value="">{tCommon('all')}</option>
-                    <option value="Individual">{tFA('sellerTypeIndividual')}</option>
-                    <option value="Dealer">{tFA('sellerTypeDealer')}</option>
+                    <option value="new">{tCommon('newCondition')}</option>
+                    <option value="used">{tCommon('used')}</option>
                   </Sel>
                 </Section>
 
                 <Section label={t('postedDate')} isRtl={isRtl}>
-                  <Sel value={fashionFilters.postedDate} onChange={(v) => setFF({ postedDate: v })} isRtl={isRtl}>
+                  <Sel
+                    value={fashionFilters.postedDate}
+                    onChange={(v) => setFF({ postedDate: v })}
+                    isRtl={isRtl}
+                  >
                     <option value="">{tCommon('all')}</option>
                     <option value="today">{t('today')}</option>
                     <option value="last7">{t('last7Days')}</option>
                     <option value="last30">{t('last30Days')}</option>
                   </Sel>
                 </Section>
-              </div>
-            )}
-      
-          </div>
-          <div className="rounded-lg border border-slate-200 bg-slate-50">
-            <button
-              type="button"
-              onClick={() => setFashionSpecificOpen((v) => !v)}
-              className={`w-full px-3 py-2 text-sm font-semibold text-slate-700 ${isRtl ? 'text-right' : 'text-left'}`}
-            >
-              {t('subcategoryFilters')}
-            </button>
-            {fashionSpecificOpen && (
-              <div className="space-y-4 px-3 pb-3">
-                {fashionFilters.subcategory && isFashionClothingSubcategory(fashionFilters.subcategory) && (
-                  <>
-                    {renderFashionSelect('clothingType', 'clothingType', ['T-shirt', 'Shirt', 'Jeans', 'Dress', 'Jacket', 'Hoodie'])}
-                    {renderFashionSelect('gender', 'gender', ['Men', 'Women', 'Kids', 'Unisex'])}
-                    <Section label={getFashionFieldLabel('size')} isRtl={isRtl}>
-                      <MultiCheck
-                        options={FASHION_SIZE_OPTIONS.map((v) => ({ value: v, label: getFashionOptionLabel(v) }))}
-                        selected={fashionFilters.size}
-                        onToggle={(v) => toggleFashionMulti('size', v)}
-                        isRtl={isRtl}
-                      />
-                    </Section>
-                    {renderFashionSelect('fitType', 'fitType', ['Slim', 'Regular', 'Oversized'])}
-                    <Section label={getFashionFieldLabel('color')} isRtl={isRtl}>
-                      <MultiCheck
-                        options={FASHION_COLOR_OPTIONS.map((v) => ({ value: v, label: getFashionOptionLabel(v) }))}
-                        selected={fashionFilters.color}
-                        onToggle={(v) => toggleFashionMulti('color', v)}
-                        isRtl={isRtl}
-                      />
-                    </Section>
-                    {renderFashionSelect('material', 'material', ['Cotton', 'Polyester', 'Wool', 'Denim', 'Leather', 'Silk', 'Linen'])}
-                    {renderFashionSelect('sleeveType', 'sleeveType', ['Short', 'Long', 'Sleeveless'])}
-                    {renderFashionSelect('pattern', 'pattern', ['Solid', 'Printed', 'Striped', 'Checked'])}
-                    {renderFashionSelect('season', 'season', ['Summer', 'Winter', 'All Season'])}
-                    {renderFashionSelect('occasion', 'occasion', ['Casual', 'Formal', 'Party', 'Sportswear'])}
-                    {renderFashionSelect('authenticity', 'authenticity', ['Original', 'Replica'])}
-                    {renderFashionYesNo('tagsAvailable', 'tagsAvailable')}
-                    {renderFashionYesNo('warranty', 'warranty')}
-                  </>
-                )}
 
-                {fashionFilters.subcategory === 'shoes' && (
-                  <>
-                    {renderFashionSelect('model', 'model', ['Air Max', 'Classic', 'Runner', 'Street'])}
-                    {renderFashionSelect('shoeType', 'shoeType', ['Sneakers', 'Formal', 'Boots', 'Sandals', 'Heels', 'Sports'])}
-                    {renderFashionSelect('gender', 'gender', ['Men', 'Women', 'Unisex'])}
-                    <Section label={getFashionFieldLabel('size')} isRtl={isRtl}>
-                      <MultiCheck
-                        options={['36', '37', '38', '39', '40', '41', '42', '43', '44', '45'].map((v) => ({ value: v, label: v }))}
-                        selected={fashionFilters.size}
-                        onToggle={(v) => toggleFashionMulti('size', v)}
-                        isRtl={isRtl}
-                      />
-                    </Section>
-                    <Section label={getFashionFieldLabel('color')} isRtl={isRtl}>
-                      <MultiCheck
-                        options={FASHION_COLOR_OPTIONS.map((v) => ({ value: v, label: getFashionOptionLabel(v) }))}
-                        selected={fashionFilters.color}
-                        onToggle={(v) => toggleFashionMulti('color', v)}
-                        isRtl={isRtl}
-                      />
-                    </Section>
-                    {renderFashionSelect('material', 'material', ['Leather', 'Synthetic', 'Mesh', 'Canvas'])}
-                    {renderFashionYesNo('originalBox', 'originalBox')}
-                    {renderFashionYesNo('warranty', 'warranty')}
-                    {renderFashionSelect('usageType', 'usageType', ['Running', 'Casual', 'Formal', 'Hiking'])}
-                  </>
-                )}
+                <Section label={t('sellerType')} isRtl={isRtl}>
+                  <Sel
+                    value={fashionFilters.sellerType}
+                    onChange={(v) => setFF({ sellerType: v as FashionFilterState['sellerType'] })}
+                    isRtl={isRtl}
+                  >
+                    <option value="">{tCommon('all')}</option>
+                    <option value="Individual">{t('individual')}</option>
+                    <option value="Dealer">{t('dealer')}</option>
+                  </Sel>
+                </Section>
 
-                {fashionFilters.subcategory === 'bags' && (
-                  <>
-                    {renderFashionSelect('bagType', 'bagType', ['Handbag', 'Backpack', 'Travel Bag', 'Laptop Bag', 'Wallet'])}
-                    {renderFashionSelect('material', 'material', ['Leather', 'Synthetic', 'Canvas', 'Nylon'])}
-                    <Section label={getFashionFieldLabel('color')} isRtl={isRtl}>
-                      <MultiCheck
-                        options={FASHION_COLOR_OPTIONS.map((v) => ({ value: v, label: getFashionOptionLabel(v) }))}
-                        selected={fashionFilters.color}
-                        onToggle={(v) => toggleFashionMulti('color', v)}
-                        isRtl={isRtl}
-                      />
-                    </Section>
-                    <Section label={getFashionFieldLabel('size')} isRtl={isRtl}>
-                      <MultiCheck
-                        options={['Small', 'Medium', 'Large'].map((v) => ({ value: v, label: getFashionOptionLabel(v) }))}
-                        selected={fashionFilters.size}
-                        onToggle={(v) => toggleFashionMulti('size', v)}
-                        isRtl={isRtl}
-                      />
-                    </Section>
-                    {renderFashionSelect('closureType', 'closureType', ['Zipper', 'Magnetic', 'Buckle'])}
-                    {renderFashionSelect('strapType', 'strapType', ['Single', 'Double', 'Adjustable'])}
-                    {renderFashionYesNo('waterproof', 'waterproof')}
-                    {renderFashionSelect('authenticity', 'authenticity', ['Original', 'Replica'])}
-                    {renderFashionYesNo('warranty', 'warranty')}
-                  </>
-                )}
-
-                {fashionFilters.subcategory === 'watches' && (
-                  <>
-                    {renderFashionSelect('model', 'model', ['Classic', 'Sport', 'Smart Pro', 'Vintage'])}
-                    {renderFashionSelect('gender', 'gender', ['Men', 'Women', 'Unisex'])}
-                    {renderFashionSelect('displayType', 'displayType', ['Analog', 'Digital', 'Smart'])}
-                    {renderFashionSelect('strapMaterial', 'strapMaterial', ['Leather', 'Metal', 'Rubber', 'Fabric'])}
-                    {renderFashionSelect('dialShape', 'dialShape', ['Round', 'Square', 'Rectangle'])}
-                    {renderFashionSelect('movement', 'movement', ['Quartz', 'Automatic'])}
-                    {renderFashionYesNo('waterResistant', 'waterResistant')}
-                    {renderFashionYesNo('originalBox', 'originalBox')}
-                    {renderFashionYesNo('warranty', 'warranty')}
-                  </>
-                )}
-
-                {fashionFilters.subcategory === 'jewelry' && (
-                  <>
-                    {renderFashionSelect('type', 'type', ['Ring', 'Necklace', 'Bracelet', 'Earrings'])}
-                    {renderFashionSelect('material', 'material', ['Gold', 'Silver', 'Diamond', 'Platinum', 'Artificial'])}
-                    {renderFashionSelect('gender', 'gender', ['Men', 'Women', 'Unisex'])}
-                    <Section label={getFashionFieldLabel('size')} isRtl={isRtl}>
-                      <MultiCheck
-                        options={['XS', 'S', 'M', 'L', 'XL'].map((v) => ({ value: v, label: getFashionOptionLabel(v) }))}
-                        selected={fashionFilters.size}
-                        onToggle={(v) => toggleFashionMulti('size', v)}
-                        isRtl={isRtl}
-                      />
-                    </Section>
-                    {renderFashionSelect('stoneType', 'stoneType', ['None', 'Diamond', 'Ruby', 'Emerald', 'Sapphire'])}
-                    {renderFashionYesNo('certification', 'certification')}
-                    {renderFashionSelect('authenticity', 'authenticity', ['Original', 'Replica'])}
-                    {renderFashionYesNo('warranty', 'warranty')}
-                  </>
-                )}
-
-                {fashionFilters.subcategory === 'accessories' && (
-                  <>
-                    {renderFashionSelect('type', 'type', ['Belt', 'Hat', 'Sunglasses', 'Scarf'])}
-                    {renderFashionSelect('material', 'material', ['Leather', 'Cotton', 'Metal', 'Plastic'])}
-                    <Section label={getFashionFieldLabel('color')} isRtl={isRtl}>
-                      <MultiCheck
-                        options={FASHION_COLOR_OPTIONS.map((v) => ({ value: v, label: getFashionOptionLabel(v) }))}
-                        selected={fashionFilters.color}
-                        onToggle={(v) => toggleFashionMulti('color', v)}
-                        isRtl={isRtl}
-                      />
-                    </Section>
-                    {renderFashionSelect('gender', 'gender', ['Men', 'Women', 'Unisex'])}
-                    {renderFashionSelect('style', 'style', ['Casual', 'Formal'])}
-                    {renderFashionYesNo('warranty', 'warranty')}
-                  </>
+                {fashionFilters.subcategory && (
+                  <Section label={getFashionFieldLabel('brand')} isRtl={isRtl}>
+                    <Sel
+                      value={fashionFilters.brand}
+                      onChange={(v) => setFF({ brand: v })}
+                      isRtl={isRtl}
+                    >
+                      <option value="">{tCommon('all')}</option>
+                      {FASHION_BRANDS_BY_SUBCATEGORY[fashionFilters.subcategory]?.map((brand) => (
+                        <option key={brand} value={brand}>{getFashionOptionLabel(brand)}</option>
+                      ))}
+                    </Sel>
+                  </Section>
                 )}
               </div>
             )}
           </div>
+
+          {fashionFilters.subcategory && fashionSpecFields.length > 0 && (
+            <div className="rounded-lg border border-slate-200 bg-slate-50">
+              <button
+                type="button"
+                onClick={() => setFashionSpecificOpen((v) => !v)}
+                aria-expanded={fashionSpecificOpen ? "true" : "false"}
+                className={`w-full px-3 py-2 text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+              >
+                {t('subcategoryFilters')}
+              </button>
+              {fashionSpecificOpen && (
+                <div className="space-y-4 px-3 pb-3">
+                  {fashionSpecFields.map((field) => renderFashionField(field))}
+                </div>
+              )}
+            </div>
+          )}
 
           <Section label={t('priceSlider')} isRtl={isRtl}>
-            <div className="space-y-2">
-              <input
-                type="range"
-                min="0"
-                max="200000"
-                step="100"
-                value={priceMin ? Number(priceMin) : 0}
-                onChange={(e) => onPriceMinChange(e.target.value)}
-                aria-label={t('minPrice')}
-                title={t('minPrice')}
-                className="w-full"
-              />
-              <input
-                type="range"
-                min="0"
-                max="200000"
-                step="100"
-                value={priceMax ? Number(priceMax) : 200000}
-                onChange={(e) => onPriceMaxChange(e.target.value)}
-                aria-label={t('maxPrice')}
-                title={t('maxPrice')}
-                className="w-full"
-              />
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-slate-600">{t('minPrice')}: {priceMin ? Number(priceMin).toLocaleString() : 0}</span>
+                <span className="text-sm text-slate-600">{t('maxPrice')}: {priceMax ? Number(priceMax).toLocaleString() : 200000}</span>
+              </div>
+              <div className="space-y-2">
+                <input
+                  type="range"
+                  min="0"
+                  max="200000"
+                  step="100"
+                  value={priceMin ? Number(priceMin) : 0}
+                  onChange={(e) => onPriceMinChange(e.target.value)}
+                  aria-label={t('minPrice')}
+                  title={t('minPrice')}
+                  className="w-full"
+                />
+                <input
+                  type="range"
+                  min="0"
+                  max="200000"
+                  step="100"
+                  value={priceMax ? Number(priceMax) : 200000}
+                  onChange={(e) => onPriceMaxChange(e.target.value)}
+                  aria-label={t('maxPrice')}
+                  title={t('maxPrice')}
+                  className="w-full"
+                />
+              </div>
+              <div className="text-xs text-slate-500 text-center">
+                {t('dragSlidersToAdjust')}
+              </div>
             </div>
           </Section>
+
 
           <div className={`flex gap-2 ${isRtl ? 'flex-row-reverse' : ''}`}>
             <button
@@ -2940,980 +3233,59 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
       )}
 
       {isServices && (
-        <>
-          <div className="rounded-lg border border-slate-200 bg-slate-50">
-            {/* ═══════════════════════════════════════════════════
-                SERVICES-ONLY FILTERS
-               ═══════════════════════════════════════════════════ */}
-            <Section label={t('subcategory')} isRtl={isRtl}>
-              <Sel id="services-subcategory-filter" value={servicesFilters.subcategory} onChange={(v) => setSF({ ...EMPTY_SERVICES_FILTERS, subcategory: v as ServicesSubcategory | '' })} isRtl={isRtl}>
-                <option value="">{tCommon('all')}</option>
-                {SERVICES_SUBCATEGORIES.map((sub) => (
-                  <option key={sub.value} value={sub.value}>
-                    {tSR(`subcategories.${sub.value}` as Parameters<typeof tSR>[0])}
-                  </option>
-                ))}
-              </Sel>
-            </Section>
-
-            <Section label={t('keywords')} isRtl={isRtl}>
-              <input
-                type="text"
-                value={servicesFilters.keywords}
-                onChange={(e) => setSF({ keywords: e.target.value })}
-                placeholder={t('keywords')}
-                className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
-              />
-            </Section>
-
-            <Section label={t('condition')} isRtl={isRtl}>
-              <Sel id="services-condition-filter" value={servicesFilters.condition} onChange={(v) => setSF({ condition: v as 'New' | 'Used' | 'Refurbished' | '' })} isRtl={isRtl}>
-                <option value="">{tCommon('all')}</option>
-                <option value="new">{tCommon('newCondition')}</option>
-                <option value="used">{tCommon('used')}</option>
-                <option value="refurbished">{tCommon('refurbished')}</option>
-              </Sel>
-            </Section>
-
-            <Section label={t('postedDate')} isRtl={isRtl}>
-              <Sel value={servicesFilters.postedDate} onChange={(v) => setSF({ postedDate: v as '' | 'today' | 'last7' | 'last30' })} isRtl={isRtl}>
-                <option value="">{tCommon('all')}</option>
-                <option value="today">{t('today')}</option>
-                <option value="last7">{t('last7Days')}</option>
-                <option value="last30">{t('last30Days')}</option>
-              </Sel>
-            </Section>
-
-            <Section label={t('sellerType')} isRtl={isRtl}>
-              <Sel value={servicesFilters.sellerType} onChange={(v) => setSF({ sellerType: v as 'Individual' | 'Dealer' | '' })} isRtl={isRtl}>
-                <option value="">{tCommon('all')}</option>
-                <option value="individual">{t('individual')}</option>
-                <option value="dealer">{t('dealer')}</option>
-              </Sel>
-            </Section>
-
-            {servicesFilters.subcategory && (
-              <div className="rounded-lg border border-slate-200 bg-slate-50">
-                <button
-                  type="button"
-                  onClick={() => setServicesSpecificOpen((v) => !v)}
-                  className={`w-full px-3 py-2 text-sm font-semibold text-slate-700 ${isRtl ? 'text-right' : 'text-left'}`}
-                >
-                  {t('subcategoryFilters')}
-                </button>
-                {servicesSpecificOpen && (
-                  <div className="space-y-4 px-3 pb-3">
-                    {servicesSpecFields.map((field) => renderServicesField(field))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            <div className={`flex gap-2 ${isRtl ? 'flex-row-reverse' : ''}`}>
-              <button
-                type="button"
-                onClick={() => {
-                  setSF(EMPTY_SERVICES_FILTERS);
-                  onServicesClear?.();
-                }}
-                className="w-1/2 px-3 py-2 rounded-md border border-slate-300 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50"
-              >
-                {t('clearFilters')}
-              </button>
-              <button
-                type="button"
-                onClick={() => onServicesSearch?.()}
-                className="w-1/2 px-3 py-2 rounded-md border border-primary-600 bg-primary-600 text-sm font-medium text-white hover:bg-primary-700"
-              >
-                {t('applyFilters')}
-              </button>
-            </div>
-          </div>
-        </>
+        <ServicesFilterEnhanced
+          locale={locale}
+          filters={servicesFilters}
+          onFiltersChange={onServicesFiltersChange}
+          onClear={onServicesClear}
+          onSearch={onServicesSearch}
+        />
       )}
 
       {isJobs && (
-        <>
-          <div className="rounded-lg border border-slate-200 bg-slate-50">
-            {/* ═══════════════════════════════════════════════════
-                JOBS-ONLY FILTERS
-               ═══════════════════════════════════════════════════ */}
-            <Section label={t('subcategory')} isRtl={isRtl}>
-              <Sel id="jobs-subcategory-filter" value={jobsFilters.subcategory} onChange={(v) => setJF({ ...EMPTY_JOBS_FILTERS, subcategory: v as JobSubcategory | '' })} isRtl={isRtl}>
-                <option value="">{tCommon('all')}</option>
-                {JOB_SUBCATEGORIES.map((sub) => (
-                  <option key={sub} value={sub}>
-                    {tJO(`subcategories.${sub}` as Parameters<typeof tJO>[0])}
-                  </option>
-                ))}
-              </Sel>
-            </Section>
-
-            <Section label={t('keywords')} isRtl={isRtl}>
-              <input
-                type="text"
-                value={jobsFilters.keywords}
-                onChange={(e) => setJF({ keywords: e.target.value })}
-                placeholder={t('keywords')}
-                className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
-              />
-            </Section>
-
-            <Section label={t('condition')} isRtl={isRtl}>
-              <Sel id="jobs-condition-filter" value={jobsFilters.condition} onChange={(v) => setJF({ condition: v as 'New' | 'Used' | 'Refurbished' | '' })} isRtl={isRtl}>
-                <option value="">{tCommon('all')}</option>
-                <option value="new">{tCommon('newCondition')}</option>
-                <option value="used">{tCommon('used')}</option>
-                <option value="refurbished">{tCommon('refurbished')}</option>
-              </Sel>
-            </Section>
-
-            <Section label={t('postedDate')} isRtl={isRtl}>
-              <Sel value={jobsFilters.postedDate} onChange={(v) => setJF({ postedDate: v as '' | 'today' | 'last7' | 'last30' })} isRtl={isRtl}>
-                <option value="">{tCommon('all')}</option>
-                <option value="today">{t('today')}</option>
-                <option value="last7">{t('last7Days')}</option>
-                <option value="last30">{t('last30Days')}</option>
-              </Sel>
-            </Section>
-
-            <Section label={t('sellerType')} isRtl={isRtl}>
-              <Sel value={jobsFilters.sellerType} onChange={(v) => setJF({ sellerType: v as 'Individual' | 'Dealer' | '' })} isRtl={isRtl}>
-                <option value="">{tCommon('all')}</option>
-                <option value="individual">{t('individual')}</option>
-                <option value="dealer">{t('dealer')}</option>
-              </Sel>
-            </Section>
-
-            <Section label={tJO('employmentType')} isRtl={isRtl}>
-              <Sel value={jobsFilters.employmentType} onChange={(v) => setJF({ employmentType: v })} isRtl={isRtl}>
-                <option value="">{tCommon('all')}</option>
-                {EMPLOYMENT_TYPES.map((type) => (
-                  <option key={type} value={type}>
-                    {tJO(`employmentTypes.${type}` as Parameters<typeof tJO>[0])}
-                  </option>
-                ))}
-              </Sel>
-            </Section>
-
-            <Section label={tJO('experienceLevel')} isRtl={isRtl}>
-              <Sel value={jobsFilters.experienceLevel} onChange={(v) => setJF({ experienceLevel: v })} isRtl={isRtl}>
-                <option value="">{tCommon('all')}</option>
-                {EXPERIENCE_LEVELS.map((level) => (
-                  <option key={level.value} value={level.value}>
-                    {tJO(`experienceLevels.${level.value}` as Parameters<typeof tJO>[0])}
-                  </option>
-                ))}
-              </Sel>
-            </Section>
-
-
-            <Section label={tJO('currency')} isRtl={isRtl}>
-              <Sel value={jobsFilters.currency} onChange={(v) => setJF({ currency: v })} isRtl={isRtl}>
-                <option value="">{tCommon('all')}</option>
-                {CURRENCIES.map((currency) => (
-                  <option key={currency} value={currency}>{currency}</option>
-                ))}
-              </Sel>
-            </Section>
-
-            <Section label={tJO('benefitsLabel')} isRtl={isRtl}>
-              <div className="flex flex-wrap gap-1.5">
-                {BENEFIT_OPTIONS.map((benefit) => {
-                  const active = jobsFilters.benefits.includes(benefit.value);
-                  return (
-                    <button
-                      key={benefit.value}
-                      type="button"
-                      onClick={() => {
-                        const next = active
-                          ? jobsFilters.benefits.filter((b) => b !== benefit.value)
-                          : [...jobsFilters.benefits, benefit.value];
-                        setJF({ benefits: next });
-                      }}
-                      className={`px-3 py-1.5 rounded-full text-xs font-medium border ${active
-                          ? 'border-primary-600 bg-primary-50 text-primary-700'
-                          : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
-                        }`}
-                    >
-                      {tJO(`benefits.${benefit.value}` as Parameters<typeof tJO>[0])}
-                    </button>
-                  );
-                })}
-              </div>
-            </Section>
-
-            <Section label={tJO('remotePosition')} isRtl={isRtl}>
-              <Sel value={jobsFilters.isRemote} onChange={(v) => setJF({ isRemote: v as '' | 'yes' | 'no' })} isRtl={isRtl}>
-                <option value="">{tCommon('all')}</option>
-                <option value="yes">{tCommon('yes')}</option>
-                <option value="no">{tCommon('no')}</option>
-              </Sel>
-            </Section>
-
-
-
-            <Section label={tJO('applicationMethod')} isRtl={isRtl}>
-              <Sel value={jobsFilters.applicationMethod} onChange={(v) => setJF({ applicationMethod: v })} isRtl={isRtl}>
-                <option value="">{tCommon('all')}</option>
-                <option value="email">{tJO('applicationMethods.email')}</option>
-                <option value="phone">{tJO('applicationMethods.phone')}</option>
-                <option value="website">{tJO('applicationMethods.website')}</option>
-                <option value="in_person">{tJO('applicationMethods.in_person')}</option>
-              </Sel>
-            </Section>
-
-            <div className={`flex gap-2 ${isRtl ? 'flex-row-reverse' : ''}`}>
-              <button
-                type="button"
-                onClick={() => {
-                  setJF(EMPTY_JOBS_FILTERS);
-                  onJobsClear?.();
-                }}
-                className="w-1/2 px-3 py-2 rounded-md border border-slate-300 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50"
-              >
-                {t('clearFilters')}
-              </button>
-              <button
-                type="button"
-                onClick={() => onJobsSearch?.()}
-                className="w-1/2 px-3 py-2 rounded-md border border-primary-600 bg-primary-600 text-sm font-medium text-white hover:bg-primary-700"
-              >
-                {t('applyFilters')}
-              </button>
-            </div>
-          </div>
-        </>
+        <JobsFilterEnhanced
+          locale={locale}
+          filters={jobsFilters}
+          onFiltersChange={onJobsFiltersChange}
+          onClear={onJobsClear}
+          onSearch={onJobsSearch}
+        />
       )}
 
       {isSpareParts && (
-        <>
-          <div className="rounded-lg border border-slate-200 bg-slate-50">
-            <button
-              type="button"
-              onClick={() => setSpareGeneralOpen((v) => !v)}
-              className={`w-full px-3 py-2 text-sm font-semibold text-slate-700 ${isRtl ? 'text-right' : 'text-left'}`}
-            >
-              {t('generalFilters')}
-            </button>
-            {spareGeneralOpen && (
-              <div className="space-y-4 px-3 pb-3">
-                <Section label={t('subcategory')} isRtl={isRtl}>
-                  <Sel
-                    value={sparePartsFilters.subcategory}
-                    onChange={(v) => setSP({ ...EMPTY_SPARE_PARTS_FILTERS, subcategory: v as SparePartsSubcategory | '' })}
-                    isRtl={isRtl}
-                  >
-                    <option value="">{tCommon('all')}</option>
-                    {SPARE_PARTS_SUBCATEGORIES.map((sub) => (
-                      <option key={sub.value} value={sub.value}>{getSpareLabel(`subcategories.${sub.value}`, sub.label)}</option>
-                    ))}
-                  </Sel>
-                </Section>
-
-                <Section label={t('keywords')} isRtl={isRtl}>
-                  <input
-                    type="text"
-                    value={sparePartsFilters.keyword}
-                    onChange={(e) => setSP({ keyword: e.target.value })}
-                    placeholder={t('keywords')}
-                    className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
-                  />
-                </Section>
-
-                <Section label={getSpareLabel('condition', 'Condition')} isRtl={isRtl}>
-                  <Sel
-                    value={sparePartsFilters.condition}
-                    onChange={(v) => setSP({ condition: v as SparePartsFilterState['condition'] })}
-                    isRtl={isRtl}
-                  >
-                    <option value="">{tCommon('all')}</option>
-                    <option value="New">{getSpareOptionLabel('new')}</option>
-                    <option value="Used">{getSpareOptionLabel('used')}</option>
-                    <option value="Refurbished">{getSpareOptionLabel('refurbished')}</option>
-                  </Sel>
-                </Section>
-
-                <Section label={getSpareLabel('brand', 'Brand / Manufacturer')} isRtl={isRtl}>
-                  <input
-                    type="text"
-                    value={sparePartsFilters.brand}
-                    onChange={(e) => setSP({ brand: e.target.value })}
-                    placeholder={getSpareLabel('brand', 'Brand / Manufacturer')}
-                    className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
-                  />
-                </Section>
-
-                <Section label={t('sellerType')} isRtl={isRtl}>
-                  <Sel
-                    value={sparePartsFilters.seller_type}
-                    onChange={(v) => setSP({ seller_type: v as SparePartsFilterState['seller_type'] })}
-                    isRtl={isRtl}
-                  >
-                    <option value="">{tCommon('all')}</option>
-                    <option value="Individual">{getSpareLabel('sellerTypeIndividual', t('individual'))}</option>
-                    <option value="Dealer">{getSpareLabel('sellerTypeDealer', t('dealer'))}</option>
-                  </Sel>
-                </Section>
-
-                <Section label={t('postedDate')} isRtl={isRtl}>
-                  <Sel
-                    value={sparePartsFilters.postedDate}
-                    onChange={(v) => setSP({ postedDate: v as SparePartsFilterState['postedDate'] })}
-                    isRtl={isRtl}
-                  >
-                    <option value="">{tCommon('all')}</option>
-                    <option value="today">{t('today')}</option>
-                    <option value="last7">{t('last7Days')}</option>
-                    <option value="last30">{t('last30Days')}</option>
-                  </Sel>
-                </Section>
-              </div>
-            )}
-          </div>
-
-          <div className="rounded-lg border border-slate-200 bg-slate-50">
-            <button
-              type="button"
-              onClick={() => setSpareCompatibilityOpen((v) => !v)}
-              className={`w-full px-3 py-2 text-sm font-semibold text-slate-700 ${isRtl ? 'text-right' : 'text-left'}`}
-            >
-              {getSpareLabel('stepCompatibility', 'Compatibility')}
-            </button>
-            {spareCompatibilityOpen && (
-              <div className="space-y-4 px-3 pb-3">
-                {isVehicleSpare && (
-                  <>
-                    <Section label={getSpareLabel('make', 'Make')} isRtl={isRtl}>
-                      <Sel
-                        value={sparePartsFilters.make}
-                        onChange={(v) => setSP({ make: v, model: '' })}
-                        isRtl={isRtl}
-                      >
-                        <option value="">{tCommon('all')}</option>
-                        {Object.keys(SPARE_MAKE_MODELS).map((make) => (
-                          <option key={make} value={make}>{make}</option>
-                        ))}
-                      </Sel>
-                    </Section>
-
-                    <Section label={getSpareLabel('model', 'Model')} isRtl={isRtl}>
-                      <Sel
-                        value={sparePartsFilters.model}
-                        onChange={(v) => setSP({ model: v })}
-                        isRtl={isRtl}
-                      >
-                        <option value="">{tCommon('all')}</option>
-                        {spareModels.map((model) => (
-                          <option key={model} value={model}>{model}</option>
-                        ))}
-                      </Sel>
-                    </Section>
-
-                    <Section label={getSpareLabel('year_from', 'From Year')} isRtl={isRtl}>
-                      <Sel value={sparePartsFilters.year_from} onChange={(v) => setSP({ year_from: v })} isRtl={isRtl}>
-                        <option value="">{tCommon('all')}</option>
-                        {years.map((y) => <option key={`from-${y}`} value={String(y)}>{y}</option>)}
-                      </Sel>
-                    </Section>
-
-                    <Section label={getSpareLabel('year_to', 'To Year')} isRtl={isRtl}>
-                      <Sel value={sparePartsFilters.year_to} onChange={(v) => setSP({ year_to: v })} isRtl={isRtl}>
-                        <option value="">{tCommon('all')}</option>
-                        {years.map((y) => <option key={`to-${y}`} value={String(y)}>{y}</option>)}
-                      </Sel>
-                    </Section>
-
-                    <Section label={getSpareLabel('engine_type', 'Engine Type')} isRtl={isRtl}>
-                      <Sel
-                        value={sparePartsFilters.engine_type}
-                        onChange={(v) => setSP({ engine_type: v as SparePartsFilterState['engine_type'] })}
-                        isRtl={isRtl}
-                      >
-                        <option value="">{tCommon('all')}</option>
-                        {SPARE_ENGINE_TYPE_OPTIONS.map((option) => (
-                          <option key={option} value={option}>{getSpareOptionLabel(option)}</option>
-                        ))}
-                      </Sel>
-                    </Section>
-
-                    <Section label={getSpareLabel('transmission', 'Transmission')} isRtl={isRtl}>
-                      <Sel
-                        value={sparePartsFilters.transmission}
-                        onChange={(v) => setSP({ transmission: v as SparePartsFilterState['transmission'] })}
-                        isRtl={isRtl}
-                      >
-                        <option value="">{tCommon('all')}</option>
-                        {SPARE_TRANSMISSION_OPTIONS.map((option) => (
-                          <option key={option} value={option}>{getSpareOptionLabel(option)}</option>
-                        ))}
-                      </Sel>
-                    </Section>
-                  </>
-                )}
-
-                {isDeviceSpare && (
-                  <>
-                    <Section label={getSpareLabel('device_type', 'Device Type')} isRtl={isRtl}>
-                      <input
-                        type="text"
-                        value={sparePartsFilters.device_type}
-                        onChange={(e) => setSP({ device_type: e.target.value })}
-                        placeholder={getSpareLabel('device_type', 'Device Type')}
-                        className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
-                      />
-                    </Section>
-                    <Section label={getSpareLabel('compatible_brand', 'Compatible Brand')} isRtl={isRtl}>
-                      <input
-                        type="text"
-                        value={sparePartsFilters.compatible_brand}
-                        onChange={(e) => setSP({ compatible_brand: e.target.value })}
-                        placeholder={getSpareLabel('compatible_brand', 'Compatible Brand')}
-                        className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
-                      />
-                    </Section>
-                    <Section label={getSpareLabel('compatible_model', 'Compatible Model')} isRtl={isRtl}>
-                      <input
-                        type="text"
-                        value={sparePartsFilters.compatible_model}
-                        onChange={(e) => setSP({ compatible_model: e.target.value })}
-                        placeholder={getSpareLabel('compatible_model', 'Compatible Model')}
-                        className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
-                      />
-                    </Section>
-                    <Section label={getSpareLabel('version_series', 'Version / Series')} isRtl={isRtl}>
-                      <input
-                        type="text"
-                        value={sparePartsFilters.version_series}
-                        onChange={(e) => setSP({ version_series: e.target.value })}
-                        placeholder={getSpareLabel('version_series', 'Version / Series')}
-                        className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
-                      />
-                    </Section>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-
-          <div className="rounded-lg border border-slate-200 bg-slate-50">
-            <button
-              type="button"
-              onClick={() => setSpareSpecsOpen((v) => !v)}
-              className={`w-full px-3 py-2 text-sm font-semibold text-slate-700 ${isRtl ? 'text-right' : 'text-left'}`}
-            >
-              {getSpareLabel('stepSpecs', 'Part Specifications')}
-            </button>
-            {spareSpecsOpen && (
-              <div className="space-y-4 px-3 pb-3">
-                <Section label={getSpareLabel('specFields.part_name', 'Part Name')} isRtl={isRtl}>
-                  <input
-                    type="text"
-                    value={sparePartsFilters.part_name}
-                    onChange={(e) => setSP({ part_name: e.target.value })}
-                    placeholder={getSpareLabel('specFields.part_name', 'Part Name')}
-                    className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
-                  />
-                </Section>
-
-                <Section label={getSpareLabel('specFields.part_type', 'Part Type')} isRtl={isRtl}>
-                  <MultiCheck
-                    options={SPARE_PART_TYPE_OPTIONS.map((option) => ({ value: option, label: getSpareOptionLabel(option) }))}
-                    selected={sparePartsFilters.part_type}
-                    onToggle={(v) => toggleSpareMulti('part_type', v)}
-                    isRtl={isRtl}
-                  />
-                </Section>
-
-                <Section label={getSpareLabel('specFields.part_number', 'Part Number / SKU')} isRtl={isRtl}>
-                  <input
-                    type="text"
-                    value={sparePartsFilters.part_number}
-                    onChange={(e) => setSP({ part_number: e.target.value })}
-                    placeholder={getSpareLabel('specFields.part_number', 'Part Number / SKU')}
-                    className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
-                  />
-                </Section>
-
-                <Section label={getSpareLabel('specFields.oem_aftermarket', 'OEM / Aftermarket')} isRtl={isRtl}>
-                  <Sel
-                    value={sparePartsFilters.oem_aftermarket}
-                    onChange={(v) => setSP({ oem_aftermarket: v as SparePartsFilterState['oem_aftermarket'] })}
-                    isRtl={isRtl}
-                  >
-                    <option value="">{tCommon('all')}</option>
-                    {SPARE_OEM_OPTIONS.map((option) => (
-                      <option key={option} value={option}>{getSpareOptionLabel(option)}</option>
-                    ))}
-                  </Sel>
-                </Section>
-
-                <Section label={getSpareLabel('specFields.material', 'Material')} isRtl={isRtl}>
-                  <input
-                    type="text"
-                    value={sparePartsFilters.material}
-                    onChange={(e) => setSP({ material: e.target.value })}
-                    placeholder={getSpareLabel('specFields.material', 'Material')}
-                    className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
-                  />
-                </Section>
-
-                <Section label={getSpareLabel('specFields.color', 'Color')} isRtl={isRtl}>
-                  <input
-                    type="text"
-                    value={sparePartsFilters.color}
-                    onChange={(e) => setSP({ color: e.target.value })}
-                    placeholder={getSpareLabel('specFields.color', 'Color')}
-                    className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
-                  />
-                </Section>
-
-                <Section label={getSpareLabel('specFields.weight', 'Weight Range')} isRtl={isRtl}>
-                  <div className={`flex gap-2 ${isRtl ? 'flex-row-reverse' : ''}`}>
-                    <input
-                      type="number"
-                      min="0"
-                      value={sparePartsFilters.weight_min}
-                      onChange={(e) => setSP({ weight_min: e.target.value })}
-                      placeholder={t('minPrice')}
-                      className={`w-1/2 px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
-                    />
-                    <input
-                      type="number"
-                      min="0"
-                      value={sparePartsFilters.weight_max}
-                      onChange={(e) => setSP({ weight_max: e.target.value })}
-                      placeholder={t('maxPrice')}
-                      className={`w-1/2 px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
-                    />
-                  </div>
-                </Section>
-
-                <Section label={getSpareLabel('specFields.dimension_length', 'Length')} isRtl={isRtl}>
-                  <input
-                    type="text"
-                    value={sparePartsFilters.dimension_length}
-                    onChange={(e) => setSP({ dimension_length: e.target.value })}
-                    placeholder={getSpareLabel('specFields.dimension_length', 'Length')}
-                    className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
-                  />
-                </Section>
-
-                <Section label={getSpareLabel('specFields.dimension_width', 'Width')} isRtl={isRtl}>
-                  <input
-                    type="text"
-                    value={sparePartsFilters.dimension_width}
-                    onChange={(e) => setSP({ dimension_width: e.target.value })}
-                    placeholder={getSpareLabel('specFields.dimension_width', 'Width')}
-                    className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
-                  />
-                </Section>
-
-                <Section label={getSpareLabel('specFields.dimension_height', 'Height')} isRtl={isRtl}>
-                  <input
-                    type="text"
-                    value={sparePartsFilters.dimension_height}
-                    onChange={(e) => setSP({ dimension_height: e.target.value })}
-                    placeholder={getSpareLabel('specFields.dimension_height', 'Height')}
-                    className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
-                  />
-                </Section>
-
-                <Section label={getSpareLabel('specFields.warranty', 'Warranty')} isRtl={isRtl}>
-                  <Sel
-                    value={sparePartsFilters.warranty}
-                    onChange={(v) => setSP({ warranty: v as SparePartsFilterState['warranty'] })}
-                    isRtl={isRtl}
-                  >
-                    <option value="">{tCommon('all')}</option>
-                    <option value="yes">{tCommon('yes')}</option>
-                    <option value="no">{tCommon('no')}</option>
-                  </Sel>
-                </Section>
-
-                <Section label={getSpareLabel('specFields.availability', 'Availability')} isRtl={isRtl}>
-                  <Sel
-                    value={sparePartsFilters.availability}
-                    onChange={(v) => setSP({ availability: v as SparePartsFilterState['availability'] })}
-                    isRtl={isRtl}
-                  >
-                    <option value="">{tCommon('all')}</option>
-                    {SPARE_AVAILABILITY_OPTIONS.map((option) => (
-                      <option key={option} value={option}>{getSpareOptionLabel(option)}</option>
-                    ))}
-                  </Sel>
-                </Section>
-
-                {isVehicleSpare && (
-                  <>
-                    <Section label={getSpareLabel('specFields.placement', 'Placement')} isRtl={isRtl}>
-                      <Sel
-                        value={sparePartsFilters.placement}
-                        onChange={(v) => setSP({ placement: v as SparePartsFilterState['placement'] })}
-                        isRtl={isRtl}
-                      >
-                        <option value="">{tCommon('all')}</option>
-                        {SPARE_PLACEMENT_OPTIONS.map((option) => (
-                          <option key={option} value={option}>{getSpareOptionLabel(option)}</option>
-                        ))}
-                      </Sel>
-                    </Section>
-                    <Section label={getSpareLabel('specFields.mileage', 'Mileage')} isRtl={isRtl}>
-                      <input
-                        type="number"
-                        min="0"
-                        value={sparePartsFilters.mileage}
-                        onChange={(e) => setSP({ mileage: e.target.value })}
-                        placeholder={getSpareLabel('specFields.mileage', 'Mileage')}
-                        className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
-                      />
-                    </Section>
-                    <Section label={getSpareLabel('specFields.installation_type', 'Installation Type')} isRtl={isRtl}>
-                      <Sel
-                        value={sparePartsFilters.installation_type}
-                        onChange={(v) => setSP({ installation_type: v as SparePartsFilterState['installation_type'] })}
-                        isRtl={isRtl}
-                      >
-                        <option value="">{tCommon('all')}</option>
-                        {SPARE_INSTALLATION_OPTIONS.map((option) => (
-                          <option key={option} value={option}>{getSpareOptionLabel(option)}</option>
-                        ))}
-                      </Sel>
-                    </Section>
-                    <Section label={getSpareLabel('specFields.included_components', 'Included Components')} isRtl={isRtl}>
-                      <MultiCheck
-                        options={SPARE_INCLUDED_COMPONENT_OPTIONS.map((option) => ({ value: option, label: getSpareOptionLabel(option) }))}
-                        selected={sparePartsFilters.included_components}
-                        onToggle={(v) => toggleSpareMulti('included_components', v)}
-                        isRtl={isRtl}
-                      />
-                    </Section>
-                    <Section label={getSpareLabel('specFields.certification', 'Certification')} isRtl={isRtl}>
-                      <input
-                        type="text"
-                        value={sparePartsFilters.certification}
-                        onChange={(e) => setSP({ certification: e.target.value })}
-                        placeholder={getSpareLabel('specFields.certification', 'Certification')}
-                        className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
-                      />
-                    </Section>
-                  </>
-                )}
-
-                {isElectronicsSpare && (
-                  <>
-                    <Section label={getSpareLabel('specFields.voltage', 'Voltage')} isRtl={isRtl}>
-                      <input
-                        type="text"
-                        value={sparePartsFilters.voltage}
-                        onChange={(e) => setSP({ voltage: e.target.value })}
-                        placeholder={getSpareLabel('specFields.voltage', 'Voltage')}
-                        className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
-                      />
-                    </Section>
-                    <Section label={getSpareLabel('specFields.power_rating', 'Power Rating')} isRtl={isRtl}>
-                      <input
-                        type="text"
-                        value={sparePartsFilters.power_rating}
-                        onChange={(e) => setSP({ power_rating: e.target.value })}
-                        placeholder={getSpareLabel('specFields.power_rating', 'Power Rating')}
-                        className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
-                      />
-                    </Section>
-                    <Section label={getSpareLabel('specFields.connector_type', 'Connector Type')} isRtl={isRtl}>
-                      <input
-                        type="text"
-                        value={sparePartsFilters.connector_type}
-                        onChange={(e) => setSP({ connector_type: e.target.value })}
-                        placeholder={getSpareLabel('specFields.connector_type', 'Connector Type')}
-                        className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
-                      />
-                    </Section>
-                    <Section label={getSpareLabel('specFields.compatibility_type', 'Compatibility Type')} isRtl={isRtl}>
-                      <input
-                        type="text"
-                        value={sparePartsFilters.compatibility_type}
-                        onChange={(e) => setSP({ compatibility_type: e.target.value })}
-                        placeholder={getSpareLabel('specFields.compatibility_type', 'Compatibility Type')}
-                        className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
-                      />
-                    </Section>
-                    <Section label={getSpareLabel('specFields.safety_certification', 'Safety Certification')} isRtl={isRtl}>
-                      <input
-                        type="text"
-                        value={sparePartsFilters.safety_certification}
-                        onChange={(e) => setSP({ safety_certification: e.target.value })}
-                        placeholder={getSpareLabel('specFields.safety_certification', 'Safety Certification')}
-                        className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
-                      />
-                    </Section>
-                  </>
-                )}
-
-                {isMachinerySpare && (
-                  <>
-                    <Section label={getSpareLabel('specFields.machine_type', 'Machine Type')} isRtl={isRtl}>
-                      <input
-                        type="text"
-                        value={sparePartsFilters.machine_type}
-                        onChange={(e) => setSP({ machine_type: e.target.value })}
-                        placeholder={getSpareLabel('specFields.machine_type', 'Machine Type')}
-                        className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
-                      />
-                    </Section>
-                    <Section label={getSpareLabel('specFields.load_capacity', 'Load Capacity')} isRtl={isRtl}>
-                      <input
-                        type="text"
-                        value={sparePartsFilters.load_capacity}
-                        onChange={(e) => setSP({ load_capacity: e.target.value })}
-                        placeholder={getSpareLabel('specFields.load_capacity', 'Load Capacity')}
-                        className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
-                      />
-                    </Section>
-                    <Section label={getSpareLabel('specFields.operating_pressure', 'Operating Pressure')} isRtl={isRtl}>
-                      <input
-                        type="text"
-                        value={sparePartsFilters.operating_pressure}
-                        onChange={(e) => setSP({ operating_pressure: e.target.value })}
-                        placeholder={getSpareLabel('specFields.operating_pressure', 'Operating Pressure')}
-                        className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
-                      />
-                    </Section>
-                    <Section label={getSpareLabel('specFields.temperature_range', 'Temperature Range')} isRtl={isRtl}>
-                      <input
-                        type="text"
-                        value={sparePartsFilters.temperature_range}
-                        onChange={(e) => setSP({ temperature_range: e.target.value })}
-                        placeholder={getSpareLabel('specFields.temperature_range', 'Temperature Range')}
-                        className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
-                      />
-                    </Section>
-                    <Section label={getSpareLabel('specFields.industrial_grade', 'Industrial Grade')} isRtl={isRtl}>
-                      <Sel
-                        value={sparePartsFilters.industrial_grade}
-                        onChange={(v) => setSP({ industrial_grade: v as SparePartsFilterState['industrial_grade'] })}
-                        isRtl={isRtl}
-                      >
-                        <option value="">{tCommon('all')}</option>
-                        <option value="yes">{tCommon('yes')}</option>
-                        <option value="no">{tCommon('no')}</option>
-                      </Sel>
-                    </Section>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-
-          <Section label={t('priceSlider')} isRtl={isRtl}>
-            <div className="space-y-2">
-              <input
-                type="range"
-                min="0"
-                max="200000"
-                step="100"
-                value={priceMin ? Number(priceMin) : 0}
-                onChange={(e) => onPriceMinChange(e.target.value)}
-                aria-label={t('minPrice')}
-                title={t('minPrice')}
-                className="w-full"
-              />
-              <input
-                type="range"
-                min="0"
-                max="200000"
-                step="100"
-                value={priceMax ? Number(priceMax) : 200000}
-                onChange={(e) => onPriceMaxChange(e.target.value)}
-                aria-label={t('maxPrice')}
-                title={t('maxPrice')}
-                className="w-full"
-              />
-            </div>
-          </Section>
-
-          <div className={`flex gap-2 ${isRtl ? 'flex-row-reverse' : ''}`}>
-            <button
-              type="button"
-              onClick={() => {
-                setSP(EMPTY_SPARE_PARTS_FILTERS);
-                onSparePartsClear?.();
-              }}
-              className="w-1/2 px-3 py-2 rounded-md border border-slate-300 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50"
-            >
-              {t('clearFilters')}
-            </button>
-            <button
-              type="button"
-              onClick={() => onSparePartsSearch?.()}
-              className="w-1/2 px-3 py-2 rounded-md border border-primary-600 bg-primary-600 text-sm font-medium text-white hover:bg-primary-700"
-            >
-              {t('applyFilters')}
-            </button>
-          </div>
-        </>
+        <SparePartsFilterEnhanced
+          locale={locale}
+          filters={sparePartsFilters}
+          onFiltersChange={onSparePartsFiltersChange}
+          onClear={onSparePartsClear}
+          onSearch={onSparePartsSearch}
+          priceMin={priceMin}
+          priceMax={priceMax}
+          onPriceMinChange={onPriceMinChange}
+          onPriceMaxChange={onPriceMaxChange}
+        />
       )}
 
-      {/* ═══════════════════════════════════════════════════
-          HOME & FURNITURE FILTERS
-         ═══════════════════════════════════════════════════ */}
+      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+          HOME & FURNITURE FILTERS (Enhanced)
+         â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       {isHomeFurniture && (
-        <>
-          <div className="rounded-lg border border-slate-200 bg-slate-50">
-            <button
-              type="button"
-              onClick={() => setHfGeneralOpen((v) => !v)}
-              className={`w-full px-3 py-2 text-sm font-semibold text-slate-700 ${isRtl ? 'text-right' : 'text-left'}`}
-            >
-              {t('generalFilters')}
-            </button>
-            {hfGeneralOpen && (
-              <div className="space-y-4 px-3 pb-3">
-                <Section label={t('subcategory')} isRtl={isRtl}>
-                  <Sel
-                    value={homeFurnitureFilters.subcategory}
-                    onChange={(v) => setHF({ ...EMPTY_HOME_FURNITURE_FILTERS, subcategory: v as HomeFurnitureSubcategory | '' })}
-                    isRtl={isRtl}
-                  >
-                    <option value="">{tCommon('all')}</option>
-                    {HOME_FURNITURE_SUBCATEGORIES.map((sub) => (
-                      <option key={sub.value} value={sub.value}>
-                        {tHF(HOME_FURNITURE_SUBCATEGORY_LABEL_KEYS[sub.value] as Parameters<typeof tHF>[0])}
-                      </option>
-                    ))}
-                  </Sel>
-                </Section>
-
-                <Section label={t('keywords')} isRtl={isRtl}>
-                  <input
-                    type="text"
-                    value={homeFurnitureFilters.keywords}
-                    onChange={(e) => setHF({ keywords: e.target.value })}
-                    placeholder={t('keywords')}
-                    className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
-                  />
-                </Section>
-
-                <Section label={t('condition')} isRtl={isRtl}>
-                  <Sel
-                    value={homeFurnitureFilters.condition}
-                    onChange={(v) => setHF({ condition: v as HomeFurnitureFilterState['condition'] })}
-                    isRtl={isRtl}
-                  >
-                    <option value="">{tCommon('all')}</option>
-                    <option value="New">{getHFOptionLabel('New')}</option>
-                    <option value="Used">{getHFOptionLabel('Used')}</option>
-                    <option value="Refurbished">{getHFOptionLabel('Refurbished')}</option>
-                  </Sel>
-                </Section>
-
-                <Section label={getHFFieldLabel('brand')} isRtl={isRtl}>
-                  <input
-                    type="text"
-                    value={homeFurnitureFilters.brand}
-                    onChange={(e) => setHF({ brand: e.target.value })}
-                    placeholder={getHFFieldLabel('brand')}
-                    className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
-                  />
-                </Section>
-
-                <Section label={t('sellerType')} isRtl={isRtl}>
-                  <Sel
-                    value={homeFurnitureFilters.sellerType}
-                    onChange={(v) => setHF({ sellerType: v as HomeFurnitureFilterState['sellerType'] })}
-                    isRtl={isRtl}
-                  >
-                    <option value="">{tCommon('all')}</option>
-                    <option value="Individual">{tHF('sellerTypeIndividual')}</option>
-                    <option value="Dealer">{tHF('sellerTypeDealer')}</option>
-                  </Sel>
-                </Section>
-
-                <Section label={t('postedDate')} isRtl={isRtl}>
-                  <Sel
-                    value={homeFurnitureFilters.postedDate}
-                    onChange={(v) => setHF({ postedDate: v as HomeFurnitureFilterState['postedDate'] })}
-                    isRtl={isRtl}
-                  >
-                    <option value="">{tCommon('all')}</option>
-                    <option value="today">{t('today')}</option>
-                    <option value="last7">{t('last7Days')}</option>
-                    <option value="last30">{t('last30Days')}</option>
-                  </Sel>
-                </Section>
-              </div>
-            )}
-          </div>
-
-          {homeFurnitureFilters.subcategory && (
-            <div className="rounded-lg border border-slate-200 bg-slate-50">
-              <button
-                type="button"
-                onClick={() => setHfSpecificOpen((v) => !v)}
-                className={`w-full px-3 py-2 text-sm font-semibold text-slate-700 ${isRtl ? 'text-right' : 'text-left'}`}
-              >
-                {t('subcategoryFilters')}
-              </button>
-              {hfSpecificOpen && (
-                <div className="space-y-4 px-3 pb-3">
-                  {homeFurnitureSpecFields.map((field) => renderHomeFurnitureField(field))}
-                </div>
-              )}
-            </div>
-          )}
-
-          <Section label={t('priceSlider')} isRtl={isRtl}>
-            <div className="space-y-2">
-              <input
-                type="range"
-                min="0"
-                max="200000"
-                step="100"
-                value={priceMin ? Number(priceMin) : 0}
-                onChange={(e) => onPriceMinChange(e.target.value)}
-                aria-label={t('minPrice')}
-                title={t('minPrice')}
-                className="w-full"
-              />
-              <input
-                type="range"
-                min="0"
-                max="200000"
-                step="100"
-                value={priceMax ? Number(priceMax) : 200000}
-                onChange={(e) => onPriceMaxChange(e.target.value)}
-                aria-label={t('maxPrice')}
-                title={t('maxPrice')}
-                className="w-full"
-              />
-            </div>
-          </Section>
-
-          <div className={`flex gap-2 ${isRtl ? 'flex-row-reverse' : ''}`}>
-            <button
-              type="button"
-              onClick={() => {
-                setHF(EMPTY_HOME_FURNITURE_FILTERS);
-                onHomeFurnitureClear?.();
-              }}
-              className="w-1/2 px-3 py-2 rounded-md border border-slate-300 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50"
-            >
-              {t('clearFilters')}
-            </button>
-            <button
-              type="button"
-              onClick={() => onHomeFurnitureSearch?.()}
-              className="w-1/2 px-3 py-2 rounded-md border border-primary-600 bg-primary-600 text-sm font-medium text-white hover:bg-primary-700"
-            >
-              {t('applyFilters')}
-            </button>
-          </div>
-        </>
+        <HomeFurnitureFilterEnhanced
+          locale={locale}
+          filters={homeFurnitureFilters}
+          onFiltersChange={onHomeFurnitureFiltersChange}
+          onClear={onHomeFurnitureClear}
+          onSearch={onHomeFurnitureSearch}
+          priceMin={priceMin}
+          priceMax={priceMax}
+          onPriceMinChange={onPriceMinChange}
+          onPriceMaxChange={onPriceMaxChange}
+        />
       )}
 
-      {/* ═══════════════════════════════════════════════════
+      {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
           HEALTH & BEAUTY FILTERS
-         ═══════════════════════════════════════════════════ */}
+         â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
       {isHealthBeauty && (
         <>
           {/* General Filters */}
@@ -3934,13 +3306,14 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                     isRtl={isRtl}
                   >
                     <option value="">{tCommon('all')}</option>
-                    {HEALTH_BEAUTY_SUBCATEGORIES.map((sub) => (
-                      <option key={sub.value} value={sub.value}>
-                        {tHB.has((`subcategories.${sub.value}`) as Parameters<typeof tHB>[0])
-                          ? tHB((`subcategories.${sub.value}`) as Parameters<typeof tHB>[0])
-                          : sub.label}
-                      </option>
-                    ))}
+                    {HEALTH_BEAUTY_SUBCATEGORIES.map((sub) => {
+                      const translationKey = HEALTH_BEAUTY_SUBCATEGORY_LABEL_KEYS[sub.value];
+                      return (
+                        <option key={sub.value} value={sub.value}>
+                          {tHB(translationKey as Parameters<typeof tHB>[0])}
+                        </option>
+                      );
+                    })}
                   </Sel>
                 </Section>
 
@@ -3976,8 +3349,8 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                 <Section label={t('sellerType')} isRtl={isRtl}>
                   <Sel value={healthBeautyFilters.sellerType} onChange={(v) => setHB({ sellerType: v as HealthBeautyFilterState['sellerType'] })} isRtl={isRtl}>
                     <option value="">{tCommon('all')}</option>
-                    <option value="Individual">{tHB('sellerTypeIndividual')}</option>
-                    <option value="Dealer">{tHB('sellerTypeDealer')}</option>
+                    <option value="Individual">{t('individual')}</option>
+                    <option value="Dealer">{t('dealer')}</option>
                   </Sel>
                 </Section>
 
@@ -4013,7 +3386,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                         <Sel value={healthBeautyFilters.product_type} onChange={(v) => setHB({ product_type: v })} isRtl={isRtl}>
                           <option value="">{tCommon('all')}</option>
                           {['Cleanser', 'Moisturizer', 'Serum', 'Sunscreen', 'Toner', 'Face Mask', 'Exfoliator', 'Other'].map((o) => (
-                            <option key={o} value={o}>{o}</option>
+                            <option key={o} value={o}>{getHBOptionLabel(o)}</option>
                           ))}
                         </Sel>
                       </Section>
@@ -4029,7 +3402,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                         <Sel value={healthBeautyFilters.concern} onChange={(v) => setHB({ concern: v })} isRtl={isRtl}>
                           <option value="">{tCommon('all')}</option>
                           {['Acne', 'Anti-aging', 'Hydration', 'Brightening', 'Pigmentation', 'Pores', 'Redness'].map((o) => (
-                            <option key={o} value={o}>{o}</option>
+                            <option key={o} value={o}>{getHBOptionLabel(o)}</option>
                           ))}
                         </Sel>
                       </Section>
@@ -4080,7 +3453,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                         <Sel value={healthBeautyFilters.product_type} onChange={(v) => setHB({ product_type: v })} isRtl={isRtl}>
                           <option value="">{tCommon('all')}</option>
                           {['Shampoo', 'Conditioner', 'Hair Oil', 'Serum', 'Mask', 'Leave-in', 'Other'].map((o) => (
-                            <option key={o} value={o}>{o}</option>
+                            <option key={o} value={o}>{getHBOptionLabel(o)}</option>
                           ))}
                         </Sel>
                       </Section>
@@ -4096,7 +3469,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                         <Sel value={healthBeautyFilters.concern} onChange={(v) => setHB({ concern: v })} isRtl={isRtl}>
                           <option value="">{tCommon('all')}</option>
                           {['Hair Fall', 'Dandruff', 'Growth', 'Repair', 'Frizz Control'].map((o) => (
-                            <option key={o} value={o}>{o}</option>
+                            <option key={o} value={o}>{getHBOptionLabel(o)}</option>
                           ))}
                         </Sel>
                       </Section>
@@ -4132,7 +3505,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                         <Sel value={healthBeautyFilters.product_type} onChange={(v) => setHB({ product_type: v })} isRtl={isRtl}>
                           <option value="">{tCommon('all')}</option>
                           {['Foundation', 'Lipstick', 'Mascara', 'Concealer', 'Blush', 'Eyeliner', 'Powder', 'Other'].map((o) => (
-                            <option key={o} value={o}>{o}</option>
+                            <option key={o} value={o}>{getHBOptionLabel(o)}</option>
                           ))}
                         </Sel>
                       </Section>
@@ -4177,7 +3550,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                         <Sel value={healthBeautyFilters.product_type} onChange={(v) => setHB({ product_type: v })} isRtl={isRtl}>
                           <option value="">{tCommon('all')}</option>
                           {['Perfume', 'Body Spray', 'Deodorant'].map((o) => (
-                            <option key={o} value={o}>{o}</option>
+                            <option key={o} value={o}>{getHBOptionLabel(o)}</option>
                           ))}
                         </Sel>
                       </Section>
@@ -4215,7 +3588,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                         <Sel value={healthBeautyFilters.product_type} onChange={(v) => setHB({ product_type: v })} isRtl={isRtl}>
                           <option value="">{tCommon('all')}</option>
                           {['Soap', 'Body Wash', 'Toothpaste', 'Shaving', 'Sanitary', 'Other'].map((o) => (
-                            <option key={o} value={o}>{o}</option>
+                            <option key={o} value={o}>{getHBOptionLabel(o)}</option>
                           ))}
                         </Sel>
                       </Section>
@@ -4244,7 +3617,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                         <Sel value={healthBeautyFilters.product_type} onChange={(v) => setHB({ product_type: v })} isRtl={isRtl}>
                           <option value="">{tCommon('all')}</option>
                           {['Vitamins', 'Supplements', 'Medical Items', 'Other'].map((o) => (
-                            <option key={o} value={o}>{o}</option>
+                            <option key={o} value={o}>{getHBOptionLabel(o)}</option>
                           ))}
                         </Sel>
                       </Section>
@@ -4265,7 +3638,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
                         <Sel value={healthBeautyFilters.product_type} onChange={(v) => setHB({ product_type: v })} isRtl={isRtl}>
                           <option value="">{tCommon('all')}</option>
                           {['Hair Dryer', 'Trimmer', 'Facial Device', 'Massager', 'Other'].map((o) => (
-                            <option key={o} value={o}>{o}</option>
+                            <option key={o} value={o}>{getHBOptionLabel(o)}</option>
                           ))}
                         </Sel>
                       </Section>
@@ -4314,6 +3687,590 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
             <button
               type="button"
               onClick={() => onHealthBeautySearch?.()}
+              className="w-1/2 px-3 py-2 rounded-md border border-primary-600 bg-primary-600 text-sm font-medium text-white hover:bg-primary-700"
+            >
+              {t('applyFilters')}
+            </button>
+          </div>
+        </>
+      )}
+
+      {isSportsHobby && (
+        <>
+          {/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+              SPORTS & HOBBY FILTERS
+             â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
+          {/* General Filters */}
+          <div className="rounded-lg border border-amber-200 bg-amber-50">
+            <button
+              type="button"
+              onClick={() => setSportsHobbyGeneralOpen((v) => !v)}
+              className={`w-full px-3 py-2 text-sm font-semibold text-amber-800 ${isRtl ? 'text-right' : 'text-left'}`}
+            >
+              {t('generalFilters')}
+            </button>
+            {sportsHobbyGeneralOpen && (
+              <div className="space-y-4 px-3 pb-3">
+                <Section label={t('subcategory')} isRtl={isRtl}>
+                  <Sel
+                    value={sportsHobbyFilters.subcategory}
+                    onChange={(v) => setSH({ ...EMPTY_SPORTS_HOBBY_FILTERS, subcategory: v as SportsHobbySubcategory | '' })}
+                    isRtl={isRtl}
+                  >
+                    <option value="">{tCommon('all')}</option>
+                    {SPORTS_HOBBY_SUBCATEGORIES.map((sub) => (
+                      <option key={sub.value} value={sub.value}>
+                        {tSH(SPORTS_HOBBY_SUBCATEGORY_LABEL_KEYS[sub.value as SportsHobbySubcategory] as Parameters<typeof tSH>[0])}
+                      </option>
+                    ))}
+                  </Sel>
+                </Section>
+
+                <Section label={t('keywords')} isRtl={isRtl}>
+                  <input
+                    type="text"
+                    value={sportsHobbyFilters.keywords}
+                    onChange={(e) => setSH({ keywords: e.target.value })}
+                    placeholder={t('keywords')}
+                    className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                  />
+                </Section>
+
+                <Section label={t('condition')} isRtl={isRtl}>
+                  <Sel value={sportsHobbyFilters.condition} onChange={(v) => setSH({ condition: v as SportsHobbyFilterState['condition'] })} isRtl={isRtl}>
+                    <option value="">{tCommon('all')}</option>
+                    {SPORTS_HOBBY_CONDITIONS.map((cond) => (
+                      <option key={cond} value={cond}>{getSHOptionLabel(cond)}</option>
+                    ))}
+                  </Sel>
+                </Section>
+
+                <Section label={t('sellerType')} isRtl={isRtl}>
+                  <Sel value={sportsHobbyFilters.sellerType} onChange={(v) => setSH({ sellerType: v as SportsHobbyFilterState['sellerType'] })} isRtl={isRtl}>
+                    <option value="">{tCommon('all')}</option>
+                    {SELLER_TYPE_OPTIONS.map((st) => (
+                      <option key={st} value={st}>{getSHOptionLabel(st)}</option>
+                    ))}
+                  </Sel>
+                </Section>
+
+                <Section label={t('postedDate')} isRtl={isRtl}>
+                  <Sel value={sportsHobbyFilters.postedDate} onChange={(v) => setSH({ postedDate: v as SportsHobbyFilterState['postedDate'] })} isRtl={isRtl}>
+                    <option value="">{tCommon('all')}</option>
+                    <option value="today">{t('today')}</option>
+                    <option value="last7">{t('last7Days')}</option>
+                    <option value="last30">{t('last30Days')}</option>
+                  </Sel>
+                </Section>
+
+                <Section label={getSHFieldLabel('brand')} isRtl={isRtl}>
+                  <input
+                    type="text"
+                    value={sportsHobbyFilters.brand}
+                    onChange={(e) => setSH({ brand: e.target.value })}
+                    placeholder={getSHFieldLabel('brand')}
+                    className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                  />
+                </Section>
+
+                <Section label={getSHFieldLabel('age_group')} isRtl={isRtl}>
+                  <Sel value={sportsHobbyFilters.age_group} onChange={(v) => setSH({ age_group: v })} isRtl={isRtl}>
+                    <option value="">{tCommon('all')}</option>
+                    {AGE_GROUPS.map((age) => (
+                      <option key={age} value={age}>{getSHOptionLabel(age)}</option>
+                    ))}
+                  </Sel>
+                </Section>
+
+                <Section label={getSHFieldLabel('material')} isRtl={isRtl}>
+                  <Sel value={sportsHobbyFilters.material} onChange={(v) => setSH({ material: v })} isRtl={isRtl}>
+                    <option value="">{tCommon('all')}</option>
+                    {MATERIALS.map((mat) => (
+                      <option key={mat} value={mat}>{getSHOptionLabel(mat)}</option>
+                    ))}
+                  </Sel>
+                </Section>
+
+                <Section label={t('price')} isRtl={isRtl}>
+                  <div className={`flex gap-2 ${isRtl ? 'flex-row-reverse' : ''}`}>
+                    <input
+                      type="number"
+                      placeholder={t('minPrice')}
+                      value={sportsHobbyFilters.priceMin || ''}
+                      onChange={(e) => setSH({ priceMin: e.target.value })}
+                      min="0"
+                      className={`w-1/2 px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                    />
+                    <input
+                      type="number"
+                      placeholder={t('maxPrice')}
+                      value={sportsHobbyFilters.priceMax || ''}
+                      onChange={(e) => setSH({ priceMax: e.target.value })}
+                      min="0"
+                      className={`w-1/2 px-3 py-2 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                    />
+                  </div>
+                </Section>
+
+                <Section label={getSHFieldLabel('currency')} isRtl={isRtl}>
+                  <Sel value={sportsHobbyFilters.currency} onChange={(v) => setSH({ currency: v })} isRtl={isRtl}>
+                    <option value="">{tCommon('all')}</option>
+                    {CURRENCY_OPTIONS.map((cur) => (
+                      <option key={cur} value={cur}>{getSHOptionLabel(cur)}</option>
+                    ))}
+                  </Sel>
+                </Section>
+              </div>
+            )}
+          </div>
+
+          {/* Subcategory-specific filters */}
+          {sportsHobbyFilters.subcategory && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50">
+              <button
+                type="button"
+                onClick={() => setSportsHobbySpecificOpen((v) => !v)}
+                className={`w-full px-3 py-2 text-sm font-semibold text-amber-800 ${isRtl ? 'text-right' : 'text-left'}`}
+              >
+                {t('subcategoryFilters')}
+              </button>
+              {sportsHobbySpecificOpen && (
+                <div className="space-y-4 px-3 pb-3">
+
+                  {/* Sports Equipment */}
+                  {sportsHobbyFilters.subcategory === 'sports-equipment' && (
+                    <>
+                      <Section label={getSHFieldLabel('equipment_type')} isRtl={isRtl}>
+                        <Sel value={sportsHobbyFilters.equipment_type} onChange={(v) => setSH({ equipment_type: v })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          {['Ball Sports', 'Racket Sports', 'Goal Posts', 'Nets', 'Training Equipment', 'Protective Gear', 'Other'].map((o) => (
+                            <option key={o} value={o}>{getSHOptionLabel(o)}</option>
+                          ))}
+                        </Sel>
+                      </Section>
+                      <Section label={getSHFieldLabel('size')} isRtl={isRtl}>
+                        <input
+                          type="text"
+                          value={sportsHobbyFilters.size}
+                          onChange={(e) => setSH({ size: e.target.value })}
+                          placeholder="e.g., Medium, Size 5, 27 inches"
+                          className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                        />
+                      </Section>
+                      <Section label={getSHFieldLabel('weight')} isRtl={isRtl}>
+                        <input
+                          type="number"
+                          value={sportsHobbyFilters.weight || ''}
+                          onChange={(e) => setSH({ weight: e.target.value })}
+                          min="0"
+                          placeholder="0"
+                          className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                        />
+                      </Section>
+                    </>
+                  )}
+
+                  {/* Fitness Gear */}
+                  {sportsHobbyFilters.subcategory === 'fitness-gear' && (
+                    <>
+                      <Section label={getSHFieldLabel('gear_type')} isRtl={isRtl}>
+                        <Sel value={sportsHobbyFilters.gear_type} onChange={(v) => setSH({ gear_type: v })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          {['Treadmill', 'Exercise Bike', 'Elliptical', 'Rowing Machine', 'Weight Bench', 'Dumbbells', 'Resistance Bands', 'Yoga Mat', 'Other'].map((o) => (
+                            <option key={o} value={o}>{getSHOptionLabel(o)}</option>
+                          ))}
+                        </Sel>
+                      </Section>
+                      <Section label={getSHFieldLabel('max_weight')} isRtl={isRtl}>
+                        <input
+                          type="number"
+                          value={sportsHobbyFilters.max_weight || ''}
+                          onChange={(e) => setSH({ max_weight: e.target.value })}
+                          min="0"
+                          placeholder="0"
+                          className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                        />
+                      </Section>
+                      <Section label={getSHFieldLabel('electronic')} isRtl={isRtl}>
+                        <Sel value={sportsHobbyFilters.electronic} onChange={(v) => setSH({ electronic: v as SportsHobbyFilterState['electronic'] })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          <option value="yes">{tCommon('yes')}</option>
+                          <option value="no">{tCommon('no')}</option>
+                        </Sel>
+                      </Section>
+                      <Section label={getSHFieldLabel('foldable')} isRtl={isRtl}>
+                        <Sel value={sportsHobbyFilters.foldable} onChange={(v) => setSH({ foldable: v as SportsHobbyFilterState['foldable'] })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          <option value="yes">{tCommon('yes')}</option>
+                          <option value="no">{tCommon('no')}</option>
+                        </Sel>
+                      </Section>
+                    </>
+                  )}
+
+                  {/* Outdoor Gear */}
+                  {sportsHobbyFilters.subcategory === 'outdoor-gear' && (
+                    <>
+                      <Section label={getSHFieldLabel('gear_type')} isRtl={isRtl}>
+                        <Sel value={sportsHobbyFilters.gear_type} onChange={(v) => setSH({ gear_type: v })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          {['Tent', 'Sleeping Bag', 'Backpack', 'Camping Stove', 'Hiking Poles', 'Climbing Gear', 'Fishing Gear', 'Other'].map((o) => (
+                            <option key={o} value={o}>{getSHOptionLabel(o)}</option>
+                          ))}
+                        </Sel>
+                      </Section>
+                      <Section label={getSHFieldLabel('waterproof')} isRtl={isRtl}>
+                        <Sel value={sportsHobbyFilters.waterproof} onChange={(v) => setSH({ waterproof: v as SportsHobbyFilterState['waterproof'] })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          <option value="yes">{tCommon('yes')}</option>
+                          <option value="no">{tCommon('no')}</option>
+                        </Sel>
+                      </Section>
+                      <Section label={getSHFieldLabel('season')} isRtl={isRtl}>
+                        <Sel value={sportsHobbyFilters.season} onChange={(v) => setSH({ season: v })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          {['All Season', 'Summer', 'Winter', 'Spring/Fall'].map((o) => (
+                            <option key={o} value={o}>{getSHOptionLabel(o)}</option>
+                          ))}
+                        </Sel>
+                      </Section>
+                      <Section label={getSHFieldLabel('capacity')} isRtl={isRtl}>
+                        <input
+                          type="text"
+                          value={sportsHobbyFilters.capacity}
+                          onChange={(e) => setSH({ capacity: e.target.value })}
+                          placeholder="e.g., 2-person, 65L"
+                          className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                        />
+                      </Section>
+                    </>
+                  )}
+
+                  {/* Team Sports */}
+                  {sportsHobbyFilters.subcategory === 'team-sports' && (
+                    <>
+                      <Section label={getSHFieldLabel('sport')} isRtl={isRtl}>
+                        <Sel value={sportsHobbyFilters.sport} onChange={(v) => setSH({ sport: v })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          {['Soccer', 'Basketball', 'Volleyball', 'Cricket', 'Baseball', 'Hockey', 'Rugby', 'Other'].map((o) => (
+                            <option key={o} value={o}>{getSHOptionLabel(o)}</option>
+                          ))}
+                        </Sel>
+                      </Section>
+                      <Section label={getSHFieldLabel('team_size')} isRtl={isRtl}>
+                        <Sel value={sportsHobbyFilters.team_size} onChange={(v) => setSH({ team_size: v })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          {['Individual', '2-player', 'Small Team (3-5)', 'Full Team (6+)'].map((o) => (
+                            <option key={o} value={o}>{getSHOptionLabel(o)}</option>
+                          ))}
+                        </Sel>
+                      </Section>
+                      <Section label={getSHFieldLabel('league_approved')} isRtl={isRtl}>
+                        <Sel value={sportsHobbyFilters.league_approved} onChange={(v) => setSH({ league_approved: v as SportsHobbyFilterState['league_approved'] })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          <option value="yes">{tCommon('yes')}</option>
+                          <option value="no">{tCommon('no')}</option>
+                        </Sel>
+                      </Section>
+                    </>
+                  )}
+
+                  {/* Water Sports */}
+                  {sportsHobbyFilters.subcategory === 'water-sports' && (
+                    <>
+                      <Section label={getSHFieldLabel('sport_type')} isRtl={isRtl}>
+                        <Sel value={sportsHobbyFilters.sport_type} onChange={(v) => setSH({ sport_type: v })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          {['Swimming', 'Surfing', 'Diving', 'Kayaking', 'Canoeing', 'Paddleboarding', 'Waterskiing', 'Other'].map((o) => (
+                            <option key={o} value={o}>{getSHOptionLabel(o)}</option>
+                          ))}
+                        </Sel>
+                      </Section>
+                      <Section label={getSHFieldLabel('floatation')} isRtl={isRtl}>
+                        <Sel value={sportsHobbyFilters.floatation} onChange={(v) => setSH({ floatation: v as SportsHobbyFilterState['floatation'] })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          <option value="yes">{tCommon('yes')}</option>
+                          <option value="no">{tCommon('no')}</option>
+                        </Sel>
+                      </Section>
+                      <Section label={getSHFieldLabel('size')} isRtl={isRtl}>
+                        <input
+                          type="text"
+                          value={sportsHobbyFilters.size}
+                          onChange={(e) => setSH({ size: e.target.value })}
+                          placeholder="e.g., 6ft board, Medium wetsuit"
+                          className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                        />
+                      </Section>
+                    </>
+                  )}
+
+                  {/* Winter Sports */}
+                  {sportsHobbyFilters.subcategory === 'winter-sports' && (
+                    <>
+                      <Section label={getSHFieldLabel('sport_type')} isRtl={isRtl}>
+                        <Sel value={sportsHobbyFilters.sport_type} onChange={(v) => setSH({ sport_type: v })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          {['Skiing', 'Snowboarding', 'Ice Skating', 'Sledding', 'Hockey', 'Other'].map((o) => (
+                            <option key={o} value={o}>{getSHOptionLabel(o)}</option>
+                          ))}
+                        </Sel>
+                      </Section>
+                      <Section label={getSHFieldLabel('skill_level')} isRtl={isRtl}>
+                        <Sel value={sportsHobbyFilters.skill_level} onChange={(v) => setSH({ skill_level: v })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          {SKILL_LEVELS.map((sl) => (
+                            <option key={sl} value={sl}>{getSHOptionLabel(sl)}</option>
+                          ))}
+                        </Sel>
+                      </Section>
+                      <Section label={getSHFieldLabel('size')} isRtl={isRtl}>
+                        <input
+                          type="text"
+                          value={sportsHobbyFilters.size}
+                          onChange={(e) => setSH({ size: e.target.value })}
+                          placeholder="e.g., 160cm skis, Size 10 boots"
+                          className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                        />
+                      </Section>
+                      <Section label={getSHFieldLabel('bindings_included')} isRtl={isRtl}>
+                        <Sel value={sportsHobbyFilters.bindings_included} onChange={(v) => setSH({ bindings_included: v as SportsHobbyFilterState['bindings_included'] })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          <option value="yes">{tCommon('yes')}</option>
+                          <option value="no">{tCommon('no')}</option>
+                        </Sel>
+                      </Section>
+                    </>
+                  )}
+
+                  {/* Collectibles */}
+                  {sportsHobbyFilters.subcategory === 'collectibles' && (
+                    <>
+                      <Section label={getSHFieldLabel('collectible_type')} isRtl={isRtl}>
+                        <Sel value={sportsHobbyFilters.collectible_type} onChange={(v) => setSH({ collectible_type: v })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          {['Action Figures', 'Model Kits', 'Trading Cards', 'Coins/Stamps', 'Memorabilia', 'Comics', 'Other'].map((o) => (
+                            <option key={o} value={o}>{getSHOptionLabel(o)}</option>
+                          ))}
+                        </Sel>
+                      </Section>
+                      <Section label={getSHFieldLabel('year')} isRtl={isRtl}>
+                        <input
+                          type="number"
+                          value={sportsHobbyFilters.year || ''}
+                          onChange={(e) => setSH({ year: e.target.value })}
+                          min="1900"
+                          placeholder="1900"
+                          className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                        />
+                      </Section>
+                      <Section label={getSHFieldLabel('authenticity')} isRtl={isRtl}>
+                        <Sel value={sportsHobbyFilters.authenticity} onChange={(v) => setSH({ authenticity: v as SportsHobbyFilterState['authenticity'] })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          <option value="yes">{tCommon('yes')}</option>
+                          <option value="no">{tCommon('no')}</option>
+                        </Sel>
+                      </Section>
+                      <Section label={getSHFieldLabel('limited_edition')} isRtl={isRtl}>
+                        <Sel value={sportsHobbyFilters.limited_edition} onChange={(v) => setSH({ limited_edition: v as SportsHobbyFilterState['limited_edition'] })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          <option value="yes">{tCommon('yes')}</option>
+                          <option value="no">{tCommon('no')}</option>
+                        </Sel>
+                      </Section>
+                    </>
+                  )}
+
+                  {/* Hobby Tools */}
+                  {sportsHobbyFilters.subcategory === 'hobby-tools' && (
+                    <>
+                      <Section label={getSHFieldLabel('tool_type')} isRtl={isRtl}>
+                        <Sel value={sportsHobbyFilters.tool_type} onChange={(v) => setSH({ tool_type: v })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          {['Cutting Tools', 'Sanding Tools', 'Painting Tools', 'Measuring Tools', 'Power Tools', 'Hand Tools', 'Other'].map((o) => (
+                            <option key={o} value={o}>{getSHOptionLabel(o)}</option>
+                          ))}
+                        </Sel>
+                      </Section>
+                      <Section label={getSHFieldLabel('power_source')} isRtl={isRtl}>
+                        <Sel value={sportsHobbyFilters.power_source} onChange={(v) => setSH({ power_source: v })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          {['Battery', 'Electric', 'Manual', 'Gas'].map((o) => (
+                            <option key={o} value={o}>{getSHOptionLabel(o)}</option>
+                          ))}
+                        </Sel>
+                      </Section>
+                      <Section label={getSHFieldLabel('safety_features')} isRtl={isRtl}>
+                        <MultiCheck
+                          options={['Safety Guard', 'Auto-shutoff', 'Overload Protection', 'Non-slip Grip'].map((o) => ({
+                            value: o,
+                            label: getSHOptionLabel(o),
+                          }))}
+                          selected={sportsHobbyFilters.safety_features ? sportsHobbyFilters.safety_features.split(',') : []}
+                          onToggle={(v) => {
+                            const current = sportsHobbyFilters.safety_features ? sportsHobbyFilters.safety_features.split(',').filter(Boolean) : [];
+                            const next = current.includes(v)
+                              ? current.filter((item) => item !== v)
+                              : [...current, v];
+                            setSH({ safety_features: next.join(',') });
+                          }}
+                          isRtl={isRtl}
+                        />
+                      </Section>
+                    </>
+                  )}
+
+                  {/* Musical Instruments */}
+                  {sportsHobbyFilters.subcategory === 'musical-instruments' && (
+                    <>
+                      <Section label={getSHFieldLabel('instrument_type')} isRtl={isRtl}>
+                        <Sel value={sportsHobbyFilters.instrument_type} onChange={(v) => setSH({ instrument_type: v })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          {['String', 'Wind', 'Percussion', 'Keyboard', 'Electronic', 'Other'].map((o) => (
+                            <option key={o} value={o}>{getSHOptionLabel(o)}</option>
+                          ))}
+                        </Sel>
+                      </Section>
+                      <Section label={getSHFieldLabel('skill_level')} isRtl={isRtl}>
+                        <Sel value={sportsHobbyFilters.skill_level} onChange={(v) => setSH({ skill_level: v })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          {SKILL_LEVELS.map((sl) => (
+                            <option key={sl} value={sl}>{getSHOptionLabel(sl)}</option>
+                          ))}
+                        </Sel>
+                      </Section>
+                      <Section label={getSHFieldLabel('accessories_included')} isRtl={isRtl}>
+                        <MultiCheck
+                          options={['Case', 'Stand', 'Tuner', 'Metronome', 'Cleaning Kit', 'Extra Strings/Reeds'].map((o) => ({
+                            value: o,
+                            label: getSHOptionLabel(o),
+                          }))}
+                          selected={sportsHobbyFilters.accessories_included ? sportsHobbyFilters.accessories_included.split(',') : []}
+                          onToggle={(v) => {
+                            const current = sportsHobbyFilters.accessories_included ? sportsHobbyFilters.accessories_included.split(',').filter(Boolean) : [];
+                            const next = current.includes(v)
+                              ? current.filter((item) => item !== v)
+                              : [...current, v];
+                            setSH({ accessories_included: next.join(',') });
+                          }}
+                          isRtl={isRtl}
+                        />
+                      </Section>
+                    </>
+                  )}
+
+                  {/* Art Supplies */}
+                  {sportsHobbyFilters.subcategory === 'art-supplies' && (
+                    <>
+                      <Section label={getSHFieldLabel('supply_type')} isRtl={isRtl}>
+                        <Sel value={sportsHobbyFilters.supply_type} onChange={(v) => setSH({ supply_type: v })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          {['Paints', 'Brushes', 'Canvas/Paper', 'Drawing Tools', 'Sculpting Materials', 'Other'].map((o) => (
+                            <option key={o} value={o}>{getSHOptionLabel(o)}</option>
+                          ))}
+                        </Sel>
+                      </Section>
+                      <Section label={getSHFieldLabel('quantity')} isRtl={isRtl}>
+                        <input
+                          type="number"
+                          value={sportsHobbyFilters.quantity || ''}
+                          onChange={(e) => setSH({ quantity: e.target.value })}
+                          min="1"
+                          placeholder="1"
+                          className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                        />
+                      </Section>
+                      <Section label={getSHFieldLabel('non_toxic')} isRtl={isRtl}>
+                        <Sel value={sportsHobbyFilters.non_toxic} onChange={(v) => setSH({ non_toxic: v as SportsHobbyFilterState['non_toxic'] })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          <option value="yes">{tCommon('yes')}</option>
+                          <option value="no">{tCommon('no')}</option>
+                        </Sel>
+                      </Section>
+                    </>
+                  )}
+
+                  {/* Games & Puzzles */}
+                  {sportsHobbyFilters.subcategory === 'games-puzzles' && (
+                    <>
+                      <Section label={getSHFieldLabel('game_type')} isRtl={isRtl}>
+                        <Sel value={sportsHobbyFilters.game_type} onChange={(v) => setSH({ game_type: v })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          {['Board Games', 'Card Games', 'Puzzles', 'Video Games', 'Outdoor Games', 'Other'].map((o) => (
+                            <option key={o} value={o}>{getSHOptionLabel(o)}</option>
+                          ))}
+                        </Sel>
+                      </Section>
+                      <Section label={getSHFieldLabel('player_count')} isRtl={isRtl}>
+                        <input
+                          type="text"
+                          value={sportsHobbyFilters.player_count}
+                          onChange={(e) => setSH({ player_count: e.target.value })}
+                          placeholder="e.g., 2-4 players"
+                          className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                        />
+                      </Section>
+                      <Section label={getSHFieldLabel('complete_set')} isRtl={isRtl}>
+                        <Sel value={sportsHobbyFilters.complete_set} onChange={(v) => setSH({ complete_set: v as SportsHobbyFilterState['complete_set'] })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          <option value="yes">{tCommon('yes')}</option>
+                          <option value="no">{tCommon('no')}</option>
+                        </Sel>
+                      </Section>
+                      <Section label={getSHFieldLabel('age_recommendation')} isRtl={isRtl}>
+                        <Sel value={sportsHobbyFilters.age_recommendation} onChange={(v) => setSH({ age_recommendation: v })} isRtl={isRtl}>
+                          <option value="">{tCommon('all')}</option>
+                          {['3+', '6+', '12+', '18+', 'All Ages'].map((o) => (
+                            <option key={o} value={o}>{getSHOptionLabel(o)}</option>
+                          ))}
+                        </Sel>
+                      </Section>
+                    </>
+                  )}
+
+                  {/* Other Sports & Hobby */}
+                  {sportsHobbyFilters.subcategory === 'other-sports-hobby' && (
+                    <>
+                      <Section label={getSHFieldLabel('custom_type')} isRtl={isRtl}>
+                        <input
+                          type="text"
+                          value={sportsHobbyFilters.custom_type}
+                          onChange={(e) => setSH({ custom_type: e.target.value })}
+                          placeholder={getSHFieldLabel('custom_type')}
+                          className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                        />
+                      </Section>
+                      <Section label={getSHFieldLabel('description')} isRtl={isRtl}>
+                        <textarea
+                          value={sportsHobbyFilters.description}
+                          onChange={(e) => setSH({ description: e.target.value })}
+                          placeholder={getSHFieldLabel('description')}
+                          rows={3}
+                          className={`w-full px-3 py-2 border border-slate-300 rounded-md text-sm bg-white shadow-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+                        />
+                      </Section>
+                    </>
+                  )}
+
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className={`flex gap-2 ${isRtl ? 'flex-row-reverse' : ''}`}>
+            <button
+              type="button"
+              onClick={() => {
+                setSH(EMPTY_SPORTS_HOBBY_FILTERS);
+                onSportsHobbyClear?.();
+              }}
+              className="w-1/2 px-3 py-2 rounded-md border border-slate-300 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              {t('clearFilters')}
+            </button>
+            <button
+              type="button"
+              onClick={() => onSportsHobbySearch?.()}
               className="w-1/2 px-3 py-2 rounded-md border border-primary-600 bg-primary-600 text-sm font-medium text-white hover:bg-primary-700"
             >
               {t('applyFilters')}

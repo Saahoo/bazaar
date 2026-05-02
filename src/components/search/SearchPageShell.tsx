@@ -19,13 +19,13 @@ export function SearchPageShell(props: SearchPageShellProps) {
   return (
     <Suspense
       fallback={
-        <main className="flex-1 bg-slate-50">
+        <main className="flex-1 bg-gradient-to-b from-slate-50 via-white/30 to-slate-50">
           <div className="container mx-auto px-4 py-6">
             <div className="grid gap-6 lg:grid-cols-[18rem_minmax(0,1fr)]">
               <div className="hidden lg:block">
                 <PanelSkeleton />
               </div>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
                 {Array.from({ length: 6 }).map((_, index) => (
                   <ListingCardSkeleton key={index} />
                 ))}

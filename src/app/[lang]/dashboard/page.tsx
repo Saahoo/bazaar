@@ -13,7 +13,7 @@ export default async function Dashboard({ params }: PageProps) {
   return (
     <>
       <Header locale={locale as Locale} />
-      <main className="flex-1 bg-slate-50">
+      <main className="flex-1 bg-gradient-to-b from-slate-50 via-white/30 to-slate-50">
         <DashboardPage locale={locale as Locale} />
       </main>
     </>

@@ -53,13 +53,13 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ locale }) => {
 
   return (
     <div className="container mx-auto px-4 py-6 md:py-8">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-primary-100/60 to-transparent" />
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-48 bg-gradient-to-b from-primary-500/8 via-primary-500/4 to-transparent" />
 
       <StatsCards locale={locale} />
 
       <div className="mt-6 sticky top-[72px] z-20">
         <nav
-          className={`flex gap-1 sm:gap-2 overflow-x-auto rounded-2xl border border-slate-200 bg-white/90 p-1 shadow-sm backdrop-blur ${isRtl ? 'flex-row-reverse' : ''}`}
+          className={`flex gap-1 sm:gap-2 overflow-x-auto rounded-2xl border border-slate-200/60 bg-white/80 p-1.5 shadow-lg shadow-slate-900/5 backdrop-blur-xl ${isRtl ? 'flex-row-reverse' : ''}`}
           role="tablist"
         >
           {tabs.map((tab) => {
@@ -75,8 +75,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ locale }) => {
                   ${isRtl ? 'flex-row-reverse' : ''}
                   ${
                     isActive
-                      ? 'bg-primary-500 text-white shadow-sm'
-                      : 'text-slate-500 hover:bg-slate-100 hover:text-slate-700'
+                      ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-md shadow-primary-500/25'
+                      : 'text-slate-500 hover:bg-slate-100/80 hover:text-slate-700'
                   }
                 `}
               >
@@ -92,10 +92,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ locale }) => {
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.2 }}
+            initial={{ opacity: 0, y: 10, filter: 'blur(4px)' }}
+            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            exit={{ opacity: 0, y: -6, filter: 'blur(2px)' }}
+            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
           >
             {renderTabContent()}
           </motion.div>

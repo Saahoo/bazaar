@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
-import { Eye, EyeOff, Mail } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react';
 import { isRTL, Locale } from '@/lib/i18n/config';
 import { createClient } from '@/lib/supabase/client';
 
@@ -22,8 +23,6 @@ export const LoginForm: React.FC<LoginFormProps> = ({ locale }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-
-  const inputClass = `w-full px-4 py-3 border border-slate-300 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-500 ${rtl ? 'text-right' : 'text-left'}`;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,96 +49,160 @@ export const LoginForm: React.FC<LoginFormProps> = ({ locale }) => {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
+    <div className="relative overflow-hidden rounded-3xl border border-slate-200/60 bg-white/80 p-8 shadow-xl shadow-slate-900/5 backdrop-blur-xl">
+      {/* Decorative gradient blurs */}
+      <div className="absolute -top-20 -right-20 h-40 w-40 rounded-full bg-primary-500/10 blur-3xl" />
+      <div className="absolute -bottom-20 -left-20 h-40 w-40 rounded-full bg-accent-500/10 blur-3xl" />
+
       {/* Header */}
-      <div className="text-center mb-8">
-        <div className="w-14 h-14 bg-primary-600 rounded-xl flex items-center justify-center text-white font-bold text-xl mx-auto mb-4">
-          B
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        className="relative text-center mb-8"
+      >
+        <div className="relative mx-auto mb-4 h-16 w-16">
+          <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-600 via-primary-500 to-accent-500 text-xl font-bold text-white shadow-lg shadow-primary-500/30">
+            B
+          </div>
+          <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary-500 to-accent-500 opacity-30 blur-lg" />
         </div>
         <h1 className="text-2xl font-bold text-slate-900">{t('loginTitle')}</h1>
-      </div>
+        <p className="mt-1.5 text-sm text-slate-500">
+          {locale === 'en' ? 'Welcome back to Bazaar' : locale === 'ps' ? 'بازار ته بیرته ښه راغلاست' : 'به بازار خوش آمدید'}
+        </p>
+      </motion.div>
 
       {/* Error */}
-      {error && (
-        <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm text-center">
-          {error}
-        </div>
-      )}
+      <AnimatePresence>
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+            animate={{ opacity: 1, height: 'auto', marginBottom: 24 }}
+            exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+            className="overflow-hidden rounded-2xl border border-red-100 bg-gradient-to-r from-red-50 to-red-50/50 p-4 text-center text-sm text-red-700"
+          >
+            <span className="inline-flex items-center gap-2">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-100 text-[10px]">!</span>
+              {error}
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} className="relative space-y-5">
         {/* Email */}
-        <div>
-          <label className={`block text-sm font-medium text-slate-700 mb-1.5 ${rtl ? 'text-right' : 'text-left'}`}>
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <label className={`block text-sm font-semibold text-slate-700 mb-2 ${rtl ? 'text-right' : 'text-left'}`}>
             {t('email')}
           </label>
-          <div className="relative">
+          <div className="relative group">
+            <Mail className={`w-4.5 h-4.5 text-slate-400 absolute top-1/2 -translate-y-1/2 pointer-events-none transition-colors group-focus-within:text-primary-500 ${rtl ? 'left-4' : 'right-4'}`} />
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="name@example.com"
-              className={inputClass}
+              className={`w-full px-4 py-3.5 border border-slate-200/80 rounded-2xl bg-white/60 text-base transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-primary-100/50 focus:border-primary-400 focus:bg-white focus:shadow-lg focus:shadow-primary-100/20 ${rtl ? 'text-right pl-12' : 'text-left pr-12'}`}
               dir="ltr"
               required
             />
-            <Mail className={`w-4 h-4 text-slate-400 absolute top-1/2 -translate-y-1/2 pointer-events-none ${rtl ? 'left-3' : 'right-3'}`} />
           </div>
-        </div>
+        </motion.div>
 
         {/* Password */}
-        <div>
-          <div className={`flex items-center justify-between mb-1.5 ${rtl ? 'flex-row-reverse' : ''}`}>
-            <label className="text-sm font-medium text-slate-700">
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <div className={`flex items-center justify-between mb-2 ${rtl ? 'flex-row-reverse' : ''}`}>
+            <label className="text-sm font-semibold text-slate-700">
               {t('password')}
             </label>
-            <button type="button" onClick={() => window.location.href = `/${locale}/forgot-password`} className="text-xs text-primary-600 hover:text-primary-700 font-medium">
+            <button
+              type="button"
+              onClick={() => window.location.href = `/${locale}/forgot-password`}
+              className="text-xs text-primary-600 hover:text-primary-700 font-semibold transition-colors"
+            >
               {t('forgotPassword')}
             </button>
           </div>
-          <div className="relative">
+          <div className="relative group">
+            <Lock className={`w-4.5 h-4.5 text-slate-400 absolute top-1/2 -translate-y-1/2 pointer-events-none transition-colors group-focus-within:text-primary-500 ${rtl ? 'left-4' : 'right-12'}`} />
             <input
               type={showPassword ? 'text' : 'password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
-              className={inputClass}
+              className={`w-full px-4 py-3.5 border border-slate-200/80 rounded-2xl bg-white/60 text-base transition-all duration-300 focus:outline-none focus:ring-4 focus:ring-primary-100/50 focus:border-primary-400 focus:bg-white focus:shadow-lg focus:shadow-primary-100/20 ${rtl ? 'text-right pl-12' : 'text-left pr-12'}`}
               dir="ltr"
               required
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className={`absolute top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 ${rtl ? 'left-3' : 'right-3'}`}
+              className={`absolute top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-600 ${rtl ? 'right-3' : 'right-3'}`}
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
           </div>
-        </div>
+        </motion.div>
 
         {/* Submit */}
-        <button
-          type="submit"
-          disabled={loading}
-          className={`w-full py-3 rounded-lg font-semibold text-white transition ${
-            loading
-              ? 'bg-primary-400 cursor-not-allowed'
-              : 'bg-primary-600 hover:bg-primary-700'
-          }`}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
         >
-          {loading ? tCommon('loading') : t('loginButton')}
-        </button>
+          <motion.button
+            type="submit"
+            disabled={loading}
+            whileHover={{ scale: loading ? 1 : 1.01 }}
+            whileTap={{ scale: loading ? 1 : 0.98 }}
+            className={`w-full py-3.5 rounded-2xl font-semibold text-white text-base transition-all duration-300 flex items-center justify-center gap-2 ${
+              loading
+                ? 'bg-primary-400 cursor-not-allowed'
+                : 'bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 shadow-lg shadow-primary-500/30 hover:shadow-xl hover:shadow-primary-500/40'
+            }`}
+          >
+            {loading ? (
+              <span className="inline-flex items-center gap-2">
+                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                </svg>
+                {tCommon('loading')}
+              </span>
+            ) : (
+              <>
+                {t('loginButton')}
+                <ArrowRight className="h-4 w-4" />
+              </>
+            )}
+          </motion.button>
+        </motion.div>
       </form>
 
       {/* Sign Up Link */}
-      <p className="mt-6 text-center text-sm text-slate-600">
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.3 }}
+        className="relative mt-6 text-center text-sm text-slate-500"
+      >
         {t('noAccount')}{' '}
         <Link
           href={`/${locale}/signup`}
-          className="text-primary-600 hover:text-primary-700 font-semibold"
+          className="font-semibold text-primary-600 hover:text-primary-700 transition-colors"
         >
           {t('registerButton')}
         </Link>
-      </p>
+      </motion.p>
     </div>
   );
 };

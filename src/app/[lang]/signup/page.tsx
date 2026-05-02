@@ -11,7 +11,7 @@ export default async function SignUpPage({ params }: PageProps) {
   return (
     <>
       <Header locale={locale as Locale} />
-      <main className="flex-1 bg-slate-50 py-12">
+      <main className="flex-1 bg-gradient-to-b from-slate-50 via-white/30 to-slate-50 py-12">
         <div className="container mx-auto px-4 max-w-md">
           <SignUpForm locale={locale as Locale} />
         </div>

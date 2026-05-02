@@ -34,6 +34,17 @@ export const HEALTH_BEAUTY_SUBCATEGORIES: HealthBeautySubcategoryOption[] = [
   { value: 'other', label: 'Other' },
 ];
 
+export const HEALTH_BEAUTY_SUBCATEGORY_LABEL_KEYS: Record<HealthBeautySubcategory, string> = {
+  'skincare': 'subcategorySkincare',
+  'haircare': 'subcategoryHaircare',
+  'makeup': 'subcategoryMakeup',
+  'fragrances': 'subcategoryFragrances',
+  'personal-care': 'subcategoryPersonalCare',
+  'health-care-products': 'subcategoryHealthCareProducts',
+  'beauty-tools-devices': 'subcategoryBeautyToolsDevices',
+  'other': 'subcategoryOther',
+};
+
 const SKINCARE_FIELDS: HealthBeautySpecField[] = [
   { key: 'product_type', label: 'Product Type', type: 'select', required: true, options: ['Cleanser', 'Moisturizer', 'Serum', 'Sunscreen', 'Toner', 'Face Mask', 'Exfoliator', 'Other'] },
   { key: 'skin_type', label: 'Skin Type', type: 'select', required: true, options: ['Dry', 'Oily', 'Combination', 'Sensitive', 'All'] },
@@ -144,6 +155,7 @@ export const getHealthBeautyOptionTranslationKey = (option: string): string => {
     .replace(/\+/g, 'plus')
     .replace(/\//g, '_')
     .replace(/[()]/g, '')
+    .replace(/-/g, '_')
     .replace(/\s+/g, '_')
     .replace(/[^a-z0-9_]/g, '');
 

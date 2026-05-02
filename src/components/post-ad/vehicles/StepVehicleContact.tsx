@@ -12,6 +12,20 @@ export interface VehicleContactData {
   whatsappSameAsPhone: boolean;
   email: string;
   termsAccepted: boolean;
+  // Additional contact methods
+  telegram: string;
+  signal: string;
+  viber: string;
+  // Contact preferences
+  preferredContactMethod: 'phone' | 'whatsapp' | 'telegram' | 'signal' | 'viber' | 'email';
+  contactHoursStart: string;
+  contactHoursEnd: string;
+  // Scheduling for test drives
+  allowTestDriveScheduling: boolean;
+  testDriveInstructions: string;
+  // Communication preferences
+  allowCalls: boolean;
+  allowMessages: boolean;
 }
 
 interface StepVehicleContactProps {

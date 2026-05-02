@@ -32,42 +32,53 @@ export function Drawer({ open, onClose, title, side = 'right', children, classNa
     <AnimatePresence>
       {open && (
         <>
+          {/* Backdrop */}
           <motion.button
             type="button"
             aria-label="Close drawer"
-            className="fixed inset-0 z-[70] bg-slate-950/40 backdrop-blur-sm"
+            className="fixed inset-0 z-[70] bg-slate-950/50 backdrop-blur-md"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
             onClick={onClose}
           />
+          {/* Drawer Panel */}
           <motion.aside
             role="dialog"
             aria-modal="true"
             initial={{ x: side === 'right' ? '100%' : '-100%' }}
             animate={{ x: 0 }}
             exit={{ x: side === 'right' ? '100%' : '-100%' }}
-            transition={{ type: 'spring', stiffness: 260, damping: 28 }}
+            transition={{ type: 'spring', stiffness: 300, damping: 30 }}
             className={cn(
-              'fixed inset-y-0 z-[80] flex w-[min(90vw,24rem)] flex-col border-slate-200 bg-white shadow-2xl',
-              side === 'right' ? 'right-0 border-l' : 'left-0 border-r',
+              'fixed inset-y-0 z-[80] flex w-[min(88vw,26rem)] flex-col bg-white/95 shadow-2xl shadow-slate-900/20 backdrop-blur-xl',
+              side === 'right' ? 'right-0 border-l border-slate-200/50' : 'left-0 border-r border-slate-200/50',
               className,
             )}
           >
-            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
               <div>
-                {title && <h2 className="text-base font-semibold text-slate-900">{title}</h2>}
+                {title && (
+                  <h2 className="text-base font-bold text-slate-900">
+                    {title}
+                  </h2>
+                )}
               </div>
-              <button
+              <motion.button
                 type="button"
                 onClick={onClose}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
                 aria-label="Close drawer"
                 title="Close drawer"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-500 transition-all hover:bg-red-50 hover:text-red-600"
               >
                 <X className="h-4 w-4" />
-              </button>
+              </motion.button>
             </div>
+            {/* Content */}
             <div className="flex-1 overflow-y-auto p-5">{children}</div>
           </motion.aside>
         </>

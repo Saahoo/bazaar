@@ -91,7 +91,7 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ locale }) => {
     return (
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {Array.from({ length: 4 }).map((_, index) => (
-          <div key={index} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div key={index} className="rounded-2xl border border-slate-200/60 bg-white/80 p-4 shadow-sm backdrop-blur-sm">
             <div className="flex items-center gap-3">
               <Skeleton className="h-10 w-10 rounded-xl" />
               <div className="space-y-2 flex-1">
@@ -110,14 +110,15 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ locale }) => {
       {stats.map((stat, index) => (
         <motion.div
           key={index}
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.24, delay: index * 0.05 }}
-          className="glass-panel rounded-2xl border border-slate-200 p-4 shadow-sm"
+          initial={{ opacity: 0, y: 12, filter: 'blur(4px)' }}
+          animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+          transition={{ duration: 0.3, delay: index * 0.06, ease: [0.22, 1, 0.36, 1] }}
+          whileHover={{ y: -2, transition: { duration: 0.2 } }}
+          className="rounded-2xl border border-slate-200/60 bg-white/80 p-4 shadow-lg shadow-slate-900/5 backdrop-blur-xl transition-shadow hover:shadow-xl"
         >
           <div className={`flex items-center gap-3 ${isRtl ? 'flex-row-reverse' : ''}`}>
             <div
-              className={`w-10 h-10 rounded-xl ${stat.bgColor} flex items-center justify-center flex-shrink-0`}
+              className={`w-10 h-10 rounded-xl ${stat.bgColor} flex items-center justify-center flex-shrink-0 shadow-sm`}
             >
               {stat.icon}
             </div>

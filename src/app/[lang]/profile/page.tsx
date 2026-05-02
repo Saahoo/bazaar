@@ -11,7 +11,7 @@ export default async function Profile({ params }: PageProps) {
   return (
     <>
       <Header locale={locale as Locale} />
-      <main className="flex-1 bg-slate-50 py-8">
+      <main className="flex-1 bg-gradient-to-b from-slate-50 via-white/30 to-slate-50 py-8">
         <div className="container mx-auto px-4 max-w-5xl">
           <ProfilePage locale={locale as Locale} />
         </div>

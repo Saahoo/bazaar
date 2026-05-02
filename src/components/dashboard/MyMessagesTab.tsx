@@ -55,7 +55,7 @@ export const MyMessagesTab: React.FC<MyMessagesTabProps> = ({ locale }) => {
     return (
       <div className="space-y-3">
         {Array.from({ length: 4 }).map((_, index) => (
-          <div key={index} className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+          <div key={index} className="rounded-2xl border border-slate-200/60 bg-white/80 p-3 shadow-sm backdrop-blur-sm">
             <div className="flex items-center gap-3">
               <Skeleton className="h-10 w-10 rounded-xl" />
               <div className="space-y-2 flex-1">
@@ -71,7 +71,7 @@ export const MyMessagesTab: React.FC<MyMessagesTabProps> = ({ locale }) => {
 
   if (conversations.length === 0) {
     return (
-      <div className="rounded-2xl border border-slate-200 bg-white py-12 text-center text-slate-500 shadow-sm">
+      <div className="rounded-2xl border border-slate-200/60 bg-white/80 py-12 text-center text-slate-500 shadow-sm backdrop-blur-xl">
         <MessageCircle className="w-12 h-12 mx-auto mb-3 text-slate-300" />
         <p>{tCommon('noMessages')}</p>
       </div>
@@ -91,7 +91,7 @@ export const MyMessagesTab: React.FC<MyMessagesTabProps> = ({ locale }) => {
         </a>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-2xl border border-slate-200/60 bg-white/80 shadow-lg shadow-slate-900/5 backdrop-blur-xl">
         {conversations.slice(0, 5).map((conv, index) => {
           const initial = (conv.other_user_name || 'U').charAt(0).toUpperCase();
           const timeAgo = formatMessageTime(conv.last_message_at, locale);

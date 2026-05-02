@@ -1,6 +1,7 @@
 /* src/styles/rtl.css */
-/* RTL-specific styles — minimal overrides, let tailwindcss-rtl plugin handle utilities */
+/* Comprehensive RTL/LTR layout optimization for regional reading patterns */
 
+/* Base direction settings */
 html[dir='rtl'] {
   direction: rtl;
   text-align: right;
@@ -11,22 +12,270 @@ html[dir='ltr'] {
   text-align: left;
 }
 
-/* Icon mirroring for RTL */
+/* ===== TYPOGRAPHY & TEXT RENDERING ===== */
+/* Arabic/Persian/Pashto font optimization */
+html[dir='rtl'] body {
+  font-family: system-ui, -apple-system, 'Segoe UI', 'Noto Sans Arabic', 'Tahoma', sans-serif;
+  letter-spacing: 0;
+}
+
+/* Improve Arabic numeral rendering */
+html[dir='rtl'] .eastern-numerals {
+  font-family: 'Noto Sans Arabic', 'Tahoma', sans-serif;
+}
+
+/* ===== LAYOUT & GRID SYSTEMS ===== */
+/* Flexbox direction reversal */
+html[dir='rtl'] .flex-row-reverse-rtl {
+  flex-direction: row-reverse;
+}
+
+html[dir='rtl'] .flex-row-rtl {
+  flex-direction: row;
+}
+
+/* Grid column order reversal */
+html[dir='rtl'] .grid-cols-reverse-rtl {
+  grid-auto-flow: column;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+}
+
+/* Margin and padding utilities */
+html[dir='rtl'] .ms-auto {
+  margin-inline-start: auto;
+}
+
+html[dir='rtl'] .me-auto {
+  margin-inline-end: auto;
+}
+
+/* ===== ICONOGRAPHY & VISUAL ELEMENTS ===== */
+/* Directional icon mirroring */
 html[dir='rtl'] .icon-mirror {
   transform: scaleX(-1);
 }
 
-/* Ensure proper alignment for RTL text inputs */
+/* Specific icon adjustments */
+html[dir='rtl'] .icon-chevron-left {
+  transform: rotate(180deg);
+}
+
+html[dir='rtl'] .icon-chevron-right {
+  transform: rotate(180deg);
+}
+
+html[dir='rtl'] .icon-arrow-left {
+  transform: rotate(180deg);
+}
+
+html[dir='rtl'] .icon-arrow-right {
+  transform: rotate(180deg);
+}
+
+/* Breadcrumb separator adjustment */
+html[dir='rtl'] .breadcrumb-separator {
+  transform: rotate(180deg);
+  display: inline-block;
+}
+
+/* ===== FORM CONTROLS & INPUTS ===== */
+/* Text input alignment */
 html[dir='rtl'] input[type='text'],
 html[dir='rtl'] input[type='email'],
 html[dir='rtl'] input[type='password'],
-html[dir='rtl'] textarea {
+html[dir='rtl'] input[type='tel'],
+html[dir='rtl'] input[type='number'],
+html[dir='rtl'] input[type='search'],
+html[dir='rtl'] textarea,
+html[dir='rtl'] select {
   text-align: right;
+  direction: rtl;
 }
 
 html[dir='ltr'] input[type='text'],
 html[dir='ltr'] input[type='email'],
 html[dir='ltr'] input[type='password'],
-html[dir='ltr'] textarea {
+html[dir='ltr'] input[type='tel'],
+html[dir='ltr'] input[type='number'],
+html[dir='ltr'] input[type='search'],
+html[dir='ltr'] textarea,
+html[dir='ltr'] select {
   text-align: left;
+  direction: ltr;
+}
+
+/* Placeholder text alignment */
+html[dir='rtl'] ::placeholder {
+  text-align: right;
+}
+
+html[dir='ltr'] ::placeholder {
+  text-align: left;
+}
+
+/* Form label positioning */
+html[dir='rtl'] .form-label {
+  text-align: right;
+  margin-left: 0.5rem;
+  margin-right: 0;
+}
+
+html[dir='ltr'] .form-label {
+  text-align: left;
+  margin-right: 0.5rem;
+  margin-left: 0;
+}
+
+/* ===== NAVIGATION & BREADCRUMBS ===== */
+/* Breadcrumb item order */
+html[dir='rtl'] .breadcrumb-item:not(:last-child)::after {
+  content: '‹';
+  margin: 0 0.5rem;
+}
+
+html[dir='ltr'] .breadcrumb-item:not(:last-child)::after {
+  content: '›';
+  margin: 0 0.5rem;
+}
+
+/* Pagination controls */
+html[dir='rtl'] .pagination-next {
+  order: -1;
+}
+
+html[dir='rtl'] .pagination-prev {
+  order: 1;
+}
+
+/* ===== DATA TABLES & LISTS ===== */
+/* Table cell alignment */
+html[dir='rtl'] table th,
+html[dir='rtl'] table td {
+  text-align: right;
+}
+
+html[dir='ltr'] table th,
+html[dir='ltr'] table td {
+  text-align: left;
+}
+
+/* List markers positioning */
+html[dir='rtl'] ul,
+html[dir='rtl'] ol {
+  padding-right: 1.5rem;
+  padding-left: 0;
+}
+
+html[dir='ltr'] ul,
+html[dir='ltr'] ol {
+  padding-left: 1.5rem;
+  padding-right: 0;
+}
+
+/* ===== COMPONENT-SPECIFIC ADJUSTMENTS ===== */
+/* Vehicle listing details specific */
+html[dir='rtl'] .vehicle-specs-table td:first-child {
+  border-right: 2px solid #e5e7eb;
+  border-left: none;
+}
+
+html[dir='ltr'] .vehicle-specs-table td:first-child {
+  border-left: 2px solid #e5e7eb;
+  border-right: none;
+}
+
+/* Image gallery navigation */
+html[dir='rtl'] .gallery-nav-prev {
+  right: 1rem;
+  left: auto;
+}
+
+html[dir='rtl'] .gallery-nav-next {
+  left: 1rem;
+  right: auto;
+}
+
+/* Seller card layout */
+html[dir='rtl'] .seller-info {
+  padding-right: 1rem;
+  padding-left: 0;
+}
+
+/* ===== UTILITY CLASSES FOR COMPONENTS ===== */
+/* Text alignment utilities */
+.text-start-rtl {
+  text-align: start;
+}
+
+.text-end-rtl {
+  text-align: end;
+}
+
+/* Float utilities */
+.float-start-rtl {
+  float: inline-start;
+}
+
+.float-end-rtl {
+  float: inline-end;
+}
+
+/* Margin utilities */
+.margin-inline-start-rtl {
+  margin-inline-start: 1rem;
+}
+
+.margin-inline-end-rtl {
+  margin-inline-end: 1rem;
+}
+
+/* ===== ANIMATIONS & TRANSITIONS ===== */
+/* RTL-aware slide animations */
+@keyframes slideInRtl {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOutRtl {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+html[dir='rtl'] .slide-in {
+  animation: slideInRtl 0.3s ease-out;
+}
+
+html[dir='rtl'] .slide-out {
+  animation: slideOutRtl 0.3s ease-in;
+}
+
+/* ===== PRINT STYLES ===== */
+@media print {
+  html[dir='rtl'] {
+    /* Ensure proper text flow in printed RTL documents */
+    text-align: right;
+  }
+  
+  html[dir='rtl'] table {
+    direction: rtl;
+  }
+}
+
+/* ===== ACCESSIBILITY ENHANCEMENTS ===== */
+/* Screen reader announcements for RTL */
+.sr-rtl-hint::after {
+  content: ' (Right-to-left layout)';
+}
+
+/* Focus ring positioning */
+html[dir='rtl'] :focus-visible {
+  outline-offset: -2px;
 }

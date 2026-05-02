@@ -72,6 +72,54 @@ import { StepJobDescription } from './jobs/StepJobDescription';
 import { StepJobCompensation } from './jobs/StepJobCompensation';
 import { StepJobContact } from './jobs/StepJobContact';
 import { StepJobReview } from './jobs/StepJobReview';
+// Sports & Hobby steps
+import { StepSportsBasicInfo } from './sports-hobby/StepSportsBasicInfo';
+import { StepSportsSpecs } from './sports-hobby/StepSportsSpecs';
+import { StepSportsMedia, SportsMediaData } from './sports-hobby/StepSportsMedia';
+import { StepSportsContact } from './sports-hobby/StepSportsContact';
+import { StepSportsReview } from './sports-hobby/StepSportsReview';
+// Animals & Livestock steps
+import { StepAnimalsBasicInfo } from './animals-livestock/StepAnimalsBasicInfo';
+import { StepAnimalsSpecs } from './animals-livestock/StepAnimalsSpecs';
+import { StepAnimalsLocationContact } from './animals-livestock/StepAnimalsLocationContact';
+import { StepAnimalsMedia, AnimalsMediaData } from './animals-livestock/StepAnimalsMedia';
+import { StepAnimalsReview } from './animals-livestock/StepAnimalsReview';
+import { AnimalsLivestockSubcategory, getAnimalsSpecsConfig } from '@/lib/constants/animals-livestock-wizard';
+// Food & Agriculture steps
+import { StepFoodAgricultureBasicInfo } from './food-agriculture/StepFoodAgricultureBasicInfo';
+import { StepFoodAgricultureSpecs } from './food-agriculture/StepFoodAgricultureSpecs';
+import { StepFoodAgricultureLocationContact } from './food-agriculture/StepFoodAgricultureLocationContact';
+import { StepFoodAgricultureMedia, FoodAgricultureMediaData } from './food-agriculture/StepFoodAgricultureMedia';
+import { StepFoodAgricultureReview } from './food-agriculture/StepFoodAgricultureReview';
+import { FoodAgricultureSubcategory, getFoodAgricultureSpecsConfig } from '@/lib/constants/food-agriculture-wizard';
+// Books & Education steps
+import { StepBooksEducationBasicInfo } from './books-education/StepBooksEducationBasicInfo';
+import { StepBooksEducationSpecs } from './books-education/StepBooksEducationSpecs';
+import { StepBooksEducationLocationContact } from './books-education/StepBooksEducationLocationContact';
+import { StepBooksEducationMedia, BooksEducationMediaData } from './books-education/StepBooksEducationMedia';
+import { StepBooksEducationReview } from './books-education/StepBooksEducationReview';
+import { BooksEducationSubcategory, getBooksEducationSpecsConfig } from '@/lib/constants/books-education-wizard';
+// Baby & Kids steps
+import { StepBabyKidsBasicInfo } from './baby-kids/StepBabyKidsBasicInfo';
+import { StepBabyKidsSpecs } from './baby-kids/StepBabyKidsSpecs';
+import { StepBabyKidsLocationContact } from './baby-kids/StepBabyKidsLocationContact';
+import { StepBabyKidsMedia, BabyKidsMediaData } from './baby-kids/StepBabyKidsMedia';
+import { StepBabyKidsReview } from './baby-kids/StepBabyKidsReview';
+import { BabyKidsSubcategory, getBabyKidsSpecsConfig } from '@/lib/constants/baby-kids-wizard';
+// Business & Industry steps
+import { StepBusinessIndustryBasicInfo } from './business-industry/StepBusinessIndustryBasicInfo';
+import { StepBusinessIndustrySpecs } from './business-industry/StepBusinessIndustrySpecs';
+import { StepBusinessIndustryLocationContact } from './business-industry/StepBusinessIndustryLocationContact';
+import { StepBusinessIndustryMedia, BusinessIndustryMediaData } from './business-industry/StepBusinessIndustryMedia';
+import { StepBusinessIndustryReview } from './business-industry/StepBusinessIndustryReview';
+import { BusinessIndustrySubcategory, getBusinessIndustrySpecsConfig } from '@/lib/constants/business-industry-wizard';
+// Shopping & Groceries steps
+import { StepShoppingGroceriesBasicInfo } from './shopping-groceries/StepShoppingGroceriesBasicInfo';
+import { StepShoppingGroceriesSpecs } from './shopping-groceries/StepShoppingGroceriesSpecs';
+import { StepShoppingGroceriesLocationContact } from './shopping-groceries/StepShoppingGroceriesLocationContact';
+import { StepShoppingGroceriesMedia, ShoppingGroceriesMediaData } from './shopping-groceries/StepShoppingGroceriesMedia';
+import { StepShoppingGroceriesReview } from './shopping-groceries/StepShoppingGroceriesReview';
+import { ShoppingGroceriesSubcategory, getShoppingGroceriesSpecsConfig } from '@/lib/constants/shopping-groceries-wizard';
 import { DynamicWizardFields, WizardFormConfig, isWizardRequiredFieldsValid } from './DynamicWizardFields';
 import { ElectronicsSubcategory, getElectronicsSpecsConfig, hasConditionInSpecs } from '@/lib/constants/electronics-wizard';
 import { FashionSubcategory, FASHION_BRANDS_BY_SUBCATEGORY, FASHION_SUBCATEGORY_LABEL_KEYS, getFashionSpecsConfig } from '@/lib/constants/fashion-wizard';
@@ -80,6 +128,7 @@ import { HomeFurnitureSubcategory, getHomeFurnitureSpecsConfig } from '@/lib/con
 import { SparePartsSubcategory, VEHICLE_SPARE_SUBCATEGORIES, ELECTRONICS_OR_MACHINERY_SUBCATEGORIES } from '@/lib/constants/spare-parts-wizard';
 import { ServicesSubcategory, getServicesSpecsConfig, ServiceType, PricingType } from '@/lib/constants/services-wizard';
 import { EmploymentType, ExperienceLevel, Currency, ApplicationMethod } from '@/lib/constants/jobs-wizard';
+import { SportsHobbySubcategory, getSportsHobbySpecsConfig } from '@/lib/constants/sports-hobby-wizard';
 import type { VehicleType as VehicleTypeEnum } from '@/lib/constants/vehicles';
 import { cn } from '@/lib/utils/cn';
 
@@ -94,6 +143,13 @@ const HEALTH_BEAUTY_CATEGORY_ID = 13;
 const HOME_FURNITURE_SLUGS = ['home-furniture', 'home-and-furniture', 'furniture'];
 const SERVICES_SLUGS = ['services'];
 const JOBS_SLUGS = ['jobs', 'job'];
+const SPORTS_HOBBY_SLUGS = ['sports-hobbies', 'sports-hobby', 'sports-and-hobby', 'sports-hobby-products'];
+const ANIMALS_SLUG = 'animals-livestock';
+const FOOD_AGRICULTURE_SLUG = 'food-agriculture';
+const BOOKS_EDUCATION_SLUG = 'books-education';
+const BABY_KIDS_SLUG = 'kids-baby';
+const BUSINESS_INDUSTRY_SLUG = 'business-industry';
+const SHOPPING_GROCERIES_SLUG = 'shopping-groceries';
 
 export interface PostAdFormData {
   categoryId: number | null;
@@ -218,11 +274,16 @@ export interface HealthBeautyFormData {
   brand: string;
   seller_type: 'Individual' | 'Dealer' | '';
   city: string;
+  street: string;
+  postalCode: string;
   lat: number | null;
   lng: number | null;
+  sellerName: string;
   phone: string;
   whatsapp: string;
   email: string;
+  preferredContact: 'phone' | 'email' | 'both' | '';
+  hidePhone: boolean;
   termsAccepted: boolean;
   specs: Record<string, unknown>;
   media: HealthMediaData;
@@ -317,6 +378,179 @@ export interface JobsFormData {
   photos: { photos: string[] };
 }
 
+export interface SportsHobbyFormData {
+  subcategory: SportsHobbySubcategory | '';
+  title: string;
+  details: string;
+  price: number | '';
+  currency: 'AFN' | 'USD' | 'PKR' | '';
+  condition: 'New' | 'Used' | 'Refurbished' | '';
+  brand: string;
+  brandOther: string;
+  sellerType: 'Individual' | 'Dealer' | '';
+  city: string;
+  lat: number | null;
+  lng: number | null;
+  phone: string;
+  whatsapp: string;
+  email: string;
+  termsAccepted: boolean;
+  specs: Record<string, unknown>;
+  media: SportsMediaData;
+}
+
+export interface AnimalsFormData {
+  subcategory: AnimalsLivestockSubcategory | '';
+  title: string;
+  description: string;
+  breed: string;
+  quantity: number | '';
+  age: number | '';
+  ageUnit: string;
+  healthStatus: string;
+  price: number | '';
+  priceType: string;
+  street: string;
+  city: string;
+  postalCode: string;
+  lat: number | null;
+  lng: number | null;
+  sellerName: string;
+  phone: string;
+  email: string;
+  preferredContact: 'phone' | 'email' | 'both';
+  hidePhone: boolean;
+  specs: Record<string, unknown>;
+  media: AnimalsMediaData;
+}
+
+export interface FoodAgricultureFormData {
+  subcategory: FoodAgricultureSubcategory | '';
+  title: string;
+  description: string;
+  quantity: number | '';
+  unit: string;
+  grade: string;
+  freshness: string;
+  origin: string;
+  certification: string;
+  price: number | '';
+  priceType: string;
+  deliveryAvailable: string;
+  minOrder: number | '';
+  street: string;
+  city: string;
+  postalCode: string;
+  lat: number | null;
+  lng: number | null;
+  sellerName: string;
+  phone: string;
+  email: string;
+  preferredContact: 'phone' | 'email' | 'both';
+  hidePhone: boolean;
+  specs: Record<string, unknown>;
+  media: FoodAgricultureMediaData;
+}
+
+export interface BooksEducationFormData {
+  subcategory: BooksEducationSubcategory | '';
+  title: string;
+  description: string;
+  subjectMatter: string;
+  educationLevel: string;
+  language: string;
+  price: number | '';
+  priceType: string;
+  deliveryAvailable: string;
+  street: string;
+  city: string;
+  postalCode: string;
+  lat: number | null;
+  lng: number | null;
+  sellerName: string;
+  phone: string;
+  email: string;
+  preferredContact: 'phone' | 'email' | 'both';
+  hidePhone: boolean;
+  specs: Record<string, unknown>;
+  media: BooksEducationMediaData;
+}
+
+export interface BabyKidsFormData {
+  subcategory: BabyKidsSubcategory | '';
+  title: string;
+  description: string;
+  condition: string;
+  ageRange: string;
+  gender: string;
+  price: number | '';
+  priceType: string;
+  deliveryAvailable: string;
+  street: string;
+  city: string;
+  postalCode: string;
+  lat: number | null;
+  lng: number | null;
+  sellerName: string;
+  phone: string;
+  email: string;
+  preferredContact: 'phone' | 'email' | 'both';
+  hidePhone: boolean;
+  specs: Record<string, unknown>;
+  media: BabyKidsMediaData;
+}
+
+export interface BusinessIndustryFormData {
+  subcategory: BusinessIndustrySubcategory | '';
+  title: string;
+  description: string;
+  condition: string;
+  businessType: string;
+  industrySector: string;
+  price: number | '';
+  priceType: string;
+  deliveryAvailable: string;
+  warranty: string;
+  street: string;
+  city: string;
+  postalCode: string;
+  lat: number | null;
+  lng: number | null;
+  sellerName: string;
+  phone: string;
+  email: string;
+  preferredContact: 'phone' | 'email' | 'both';
+  hidePhone: boolean;
+  specs: Record<string, unknown>;
+  media: BusinessIndustryMediaData;
+}
+
+export interface ShoppingGroceriesFormData {
+  subcategory: ShoppingGroceriesSubcategory | '';
+  title: string;
+  description: string;
+  quantity: number | '';
+  unit: string;
+  condition: string;
+  brand: string;
+  price: number | '';
+  priceType: string;
+  deliveryAvailable: string;
+  minOrder: string;
+  street: string;
+  city: string;
+  postalCode: string;
+  lat: number | null;
+  lng: number | null;
+  sellerName: string;
+  phone: string;
+  email: string;
+  preferredContact: 'phone' | 'email' | 'both';
+  hidePhone: boolean;
+  specs: Record<string, unknown>;
+  media: ShoppingGroceriesMediaData;
+}
+
 const INITIAL_FORM_DATA: PostAdFormData = {
   categoryId: null,
   title: '',
@@ -404,18 +638,59 @@ const INITIAL_VH_DATA: VehiclesFormData = {
   description: '',
   vehicleType: '',
   specs: {
-    year: '', make: '', customMake: '', model: '', customModel: '',
+    year: '', make: '', customMake: '', model: '', customModel: '', vin: '',
     engineType: '', wheelDriveType: '', trimLevel: '', customTrim: '',
     bodyType: '', customBodyType: '', gearType: '', engineSize: '', enginePower: '',
+    bikeType: '', displacementCC: '', numberOfCylinders: '',
   },
   condition: {
     price: '', currency: 'AFN', mileage: '', color: '', customColor: '', sellerSource: '',
     hasDamage: null, exchange: null, hasNumberPlate: null,
     numberPlateCity: '', handDrive: '', damageDetails: '', otherOptions: [],
   },
-  address: { city: '', street: '', area: '', lat: null, lng: null },
-  media: { photos: [], videoUrl: '' },
-  contact: { phone: '', whatsapp: '', whatsappSameAsPhone: false, email: '', termsAccepted: false },
+  address: {
+    city: '',
+    street: '',
+    area: '',
+    lat: null,
+    lng: null,
+    showExactAddress: true,
+    showOnMap: true,
+    postalCode: '',
+    landmark: '',
+    isDealerListing: false,
+    dealerName: '',
+    dealerLicense: ''
+  },
+  media: {
+    photos: [],
+    videoUrl: '',
+    // Enhanced media features
+    has360Spin: false,
+    vinPhotoIndex: null,
+    photoTags: {},
+    // Quality settings
+    requireHighResolution: false,
+    // Best practice flags
+    bestPracticesAccepted: false
+  },
+  contact: {
+    phone: '',
+    whatsapp: '',
+    whatsappSameAsPhone: false,
+    email: '',
+    termsAccepted: false,
+    telegram: '',
+    signal: '',
+    viber: '',
+    preferredContactMethod: 'phone',
+    contactHoursStart: '09:00',
+    contactHoursEnd: '18:00',
+    allowTestDriveScheduling: false,
+    testDriveInstructions: '',
+    allowCalls: true,
+    allowMessages: true
+  },
 };
 
 const INITIAL_EL_DATA: ElectronicsFormData = {
@@ -507,11 +782,16 @@ const INITIAL_HB_DATA: HealthBeautyFormData = {
   brand: '',
   seller_type: '',
   city: '',
+  street: '',
+  postalCode: '',
   lat: null,
   lng: null,
+  sellerName: '',
   phone: '',
   whatsapp: '',
   email: '',
+  preferredContact: '',
+  hidePhone: false,
   termsAccepted: false,
   specs: {},
   media: {
@@ -540,6 +820,176 @@ const INITIAL_HF_DATA: HomeFurnitureFormData = {
   media: {
     images: [],
     video: '',
+  },
+};
+
+const INITIAL_ANIMALS_DATA: AnimalsFormData = {
+  subcategory: '',
+  title: '',
+  description: '',
+  breed: '',
+  quantity: '',
+  age: '',
+  ageUnit: 'months',
+  healthStatus: '',
+  price: '',
+  priceType: 'Fixed',
+  street: '',
+  city: '',
+  postalCode: '',
+  lat: null,
+  lng: null,
+  sellerName: '',
+  phone: '',
+  email: '',
+  preferredContact: 'both',
+  hidePhone: false,
+  specs: {},
+  media: {
+    photos: [],
+    videos: [],
+  },
+};
+
+const INITIAL_FAG_DATA: FoodAgricultureFormData = {
+  subcategory: '',
+  title: '',
+  description: '',
+  quantity: '',
+  unit: 'kg',
+  grade: '',
+  freshness: '',
+  origin: '',
+  certification: '',
+  price: '',
+  priceType: 'Fixed',
+  deliveryAvailable: '',
+  minOrder: '',
+  street: '',
+  city: '',
+  postalCode: '',
+  lat: null,
+  lng: null,
+  sellerName: '',
+  phone: '',
+  email: '',
+  preferredContact: 'both',
+  hidePhone: false,
+  specs: {},
+  media: {
+    photos: [],
+    videos: [],
+  },
+};
+
+const INITIAL_BE_DATA: BooksEducationFormData = {
+  subcategory: '',
+  title: '',
+  description: '',
+  subjectMatter: '',
+  educationLevel: '',
+  language: '',
+  price: '',
+  priceType: 'Fixed',
+  deliveryAvailable: '',
+  street: '',
+  city: '',
+  postalCode: '',
+  lat: null,
+  lng: null,
+  sellerName: '',
+  phone: '',
+  email: '',
+  preferredContact: 'both',
+  hidePhone: false,
+  specs: {},
+  media: {
+    photos: [],
+    videos: [],
+  },
+};
+
+const INITIAL_BK_DATA: BabyKidsFormData = {
+  subcategory: '',
+  title: '',
+  description: '',
+  condition: '',
+  ageRange: '',
+  gender: '',
+  price: '',
+  priceType: 'Fixed',
+  deliveryAvailable: '',
+  street: '',
+  city: '',
+  postalCode: '',
+  lat: null,
+  lng: null,
+  sellerName: '',
+  phone: '',
+  email: '',
+  preferredContact: 'both',
+  hidePhone: false,
+  specs: {},
+  media: {
+    photos: [],
+    videos: [],
+  },
+};
+
+const INITIAL_BI_DATA: BusinessIndustryFormData = {
+  subcategory: '',
+  title: '',
+  description: '',
+  condition: '',
+  businessType: '',
+  industrySector: '',
+  price: '',
+  priceType: 'Fixed',
+  deliveryAvailable: '',
+  warranty: '',
+  street: '',
+  city: '',
+  postalCode: '',
+  lat: null,
+  lng: null,
+  sellerName: '',
+  phone: '',
+  email: '',
+  preferredContact: 'both',
+  hidePhone: false,
+  specs: {},
+  media: {
+    photos: [],
+    videos: [],
+  },
+};
+
+const INITIAL_SG_DATA: ShoppingGroceriesFormData = {
+  subcategory: '',
+  title: '',
+  description: '',
+  quantity: '',
+  unit: '',
+  condition: '',
+  brand: '',
+  price: '',
+  priceType: 'Fixed',
+  deliveryAvailable: '',
+  minOrder: '',
+  street: '',
+  city: '',
+  postalCode: '',
+  lat: null,
+  lng: null,
+  sellerName: '',
+  phone: '',
+  email: '',
+  preferredContact: 'both',
+  hidePhone: false,
+  specs: {},
+  media: {
+    photos: [],
+    videos: [],
   },
 };
 
@@ -619,6 +1069,30 @@ const INITIAL_JOBS_DATA: JobsFormData = {
   photos: { photos: [] },
 };
 
+const INITIAL_SH_DATA: SportsHobbyFormData = {
+  subcategory: '',
+  title: '',
+  details: '',
+  price: '',
+  currency: 'AFN',
+  condition: '',
+  brand: '',
+  brandOther: '',
+  sellerType: '',
+  city: '',
+  lat: null,
+  lng: null,
+  phone: '',
+  whatsapp: '',
+  email: '',
+  termsAccepted: false,
+  specs: {},
+  media: {
+    photos: [],
+    videoUrl: '',
+  },
+};
+
 // Default steps for non-specialized categories
 const DEFAULT_STEPS = ['stepCategory', 'stepDetails', 'stepPhotos', 'stepContact'] as const;
 // Real estate steps
@@ -648,6 +1122,20 @@ const HF_STEPS = ['stepCategory', 'hfStepBasic', 'hfStepGeneral', 'hfStepSpecs',
 const SERVICES_STEPS = ['stepCategory', 'srvStepBasic', 'srvStepLocation', 'srvStepPricing', 'srvStepDetails', 'srvStepMedia', 'srvStepContact', 'srvStepReview'] as const;
 // Jobs steps
 const JOBS_STEPS = ['stepCategory', 'jobStepBasic', 'jobStepDescription', 'jobStepCompensation', 'jobStepContact', 'jobStepReview'] as const;
+// Sports & Hobby steps
+const SPORTS_HOBBY_STEPS = ['stepCategory', 'shStepBasic', 'shStepSpecs', 'shStepMedia', 'shStepContact', 'shStepReview'] as const;
+// Animals & Livestock steps
+const ANIMALS_STEPS = ['stepCategory', 'anStepBasic', 'anStepSpecs', 'anStepLocationContact', 'anStepMedia', 'anStepReview'] as const;
+// Food & Agriculture steps
+const FAG_STEPS = ['stepCategory', 'fagStepBasic', 'fagStepSpecs', 'fagStepLocationContact', 'fagStepMedia', 'fagStepReview'] as const;
+// Books & Education steps
+const BE_STEPS = ['stepCategory', 'beStepBasic', 'beStepSpecs', 'beStepLocationContact', 'beStepMedia', 'beStepReview'] as const;
+// Baby & Kids steps
+const BK_STEPS = ['stepCategory', 'bkStepBasic', 'bkStepSpecs', 'bkStepLocationContact', 'bkStepMedia', 'bkStepReview'] as const;
+// Business & Industry steps
+const BI_STEPS = ['stepCategory', 'biStepBasic', 'biStepSpecs', 'biStepLocationContact', 'biStepMedia', 'biStepReview'] as const;
+// Shopping & Groceries steps
+const SG_STEPS = ['stepCategory', 'sgStepBasic', 'sgStepSpecs', 'sgStepLocationContact', 'sgStepMedia', 'sgStepReview'] as const;
 
 const isFashionSlug = (categorySlug: string | null): boolean => {
   if (!categorySlug) return false;
@@ -664,6 +1152,13 @@ const getStepsForCategorySlug = (categorySlug: string | null): readonly string[]
   if (categorySlug && HOME_FURNITURE_SLUGS.includes(categorySlug)) return HF_STEPS;
   if (categorySlug && SERVICES_SLUGS.includes(categorySlug)) return SERVICES_STEPS;
   if (categorySlug && JOBS_SLUGS.includes(categorySlug)) return JOBS_STEPS;
+  if (categorySlug && SPORTS_HOBBY_SLUGS.includes(categorySlug)) return SPORTS_HOBBY_STEPS;
+  if (categorySlug === ANIMALS_SLUG) return ANIMALS_STEPS;
+  if (categorySlug === FOOD_AGRICULTURE_SLUG) return FAG_STEPS;
+  if (categorySlug === BOOKS_EDUCATION_SLUG) return BE_STEPS;
+  if (categorySlug === BABY_KIDS_SLUG) return BK_STEPS;
+  if (categorySlug === BUSINESS_INDUSTRY_SLUG) return BI_STEPS;
+  if (categorySlug === SHOPPING_GROCERIES_SLUG) return SG_STEPS;
   return DEFAULT_STEPS;
 };
 
@@ -809,7 +1304,14 @@ type StepKey =
   | typeof HB_STEPS[number]
   | typeof HF_STEPS[number]
   | typeof SERVICES_STEPS[number]
-  | typeof JOBS_STEPS[number];
+  | typeof JOBS_STEPS[number]
+  | typeof SPORTS_HOBBY_STEPS[number]
+  | typeof ANIMALS_STEPS[number]
+  | typeof FAG_STEPS[number]
+  | typeof BE_STEPS[number]
+  | typeof BK_STEPS[number]
+  | typeof BI_STEPS[number]
+  | typeof SG_STEPS[number];
 
 interface PostAdWizardProps {
   locale: Locale;
@@ -825,6 +1327,13 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
   const tHB = useTranslations('postAd.healthBeauty');
   const tHF = useTranslations('postAd.homeFurniture');
   const tSRV = useTranslations('postAd.services');
+  const tSH = useTranslations('postAd.sportsHobby');
+  const tAN = useTranslations('postAd.animals');
+  const tFAG = useTranslations('postAd.foodAgriculture');
+  const tBE = useTranslations('postAd.booksEducation');
+  const tBK = useTranslations('postAd.babyKids');
+  const tBI = useTranslations('postAd.businessIndustry');
+  const tSG = useTranslations('postAd.shoppingGroceries');
   const tCommon = useTranslations('common');
   const tAuth = useTranslations('auth');
   const rtl = isRTL(locale);
@@ -842,6 +1351,13 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
   const [hfData, setHfData] = useState<HomeFurnitureFormData>(INITIAL_HF_DATA);
   const [srvData, setSrvData] = useState<ServicesFormData>(INITIAL_SERVICES_DATA);
   const [jobsData, setJobsData] = useState<JobsFormData>(INITIAL_JOBS_DATA);
+  const [shData, setShData] = useState<SportsHobbyFormData>(INITIAL_SH_DATA);
+  const [anData, setAnData] = useState<AnimalsFormData>(INITIAL_ANIMALS_DATA);
+  const [fagData, setFagData] = useState<FoodAgricultureFormData>(INITIAL_FAG_DATA);
+  const [beData, setBeData] = useState<BooksEducationFormData>(INITIAL_BE_DATA);
+  const [bkData, setBkData] = useState<BabyKidsFormData>(INITIAL_BK_DATA);
+  const [biData, setBiData] = useState<BusinessIndustryFormData>(INITIAL_BI_DATA);
+  const [sgData, setSgData] = useState<ShoppingGroceriesFormData>(INITIAL_SG_DATA);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -897,6 +1413,139 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
     setSrvData((prev) => ({ ...prev, ...updates }));
   }, []);
 
+  const updateSHData = useCallback((updates: Partial<SportsHobbyFormData>) => {
+    setShData((prev) => ({ ...prev, ...updates }));
+  }, []);
+
+  const updateANData = useCallback((updates: Partial<AnimalsFormData>) => {
+    // Convert string numbers to numbers for quantity, age, and price fields
+    const processedUpdates: Partial<AnimalsFormData> = { ...updates };
+    
+    if ('quantity' in processedUpdates) {
+      const q = processedUpdates.quantity;
+      if (typeof q === 'string' && q.trim() !== '') {
+        processedUpdates.quantity = Number(q);
+      } else if (q === '') {
+        processedUpdates.quantity = '';
+      }
+      // If q is already a number or undefined, leave as is
+    }
+    
+    if ('age' in processedUpdates) {
+      const a = processedUpdates.age;
+      if (typeof a === 'string' && a.trim() !== '') {
+        processedUpdates.age = Number(a);
+      } else if (a === '') {
+        processedUpdates.age = '';
+      }
+    }
+    
+    if ('price' in processedUpdates) {
+      const p = processedUpdates.price;
+      if (typeof p === 'string' && p.trim() !== '') {
+        processedUpdates.price = Number(p);
+      } else if (p === '') {
+        processedUpdates.price = '';
+      }
+    }
+    
+    setAnData((prev) => ({ ...prev, ...processedUpdates }));
+  }, []);
+
+  const updateFAGData = useCallback((updates: Partial<FoodAgricultureFormData>) => {
+    // Convert string numbers to numbers for quantity, price, and minOrder fields
+    const processedUpdates: Partial<FoodAgricultureFormData> = { ...updates };
+    
+    if ('quantity' in processedUpdates) {
+      const q = processedUpdates.quantity;
+      if (typeof q === 'string' && q.trim() !== '') {
+        processedUpdates.quantity = Number(q);
+      } else if (q === '') {
+        processedUpdates.quantity = '';
+      }
+    }
+    
+    if ('price' in processedUpdates) {
+      const p = processedUpdates.price;
+      if (typeof p === 'string' && p.trim() !== '') {
+        processedUpdates.price = Number(p);
+      } else if (p === '') {
+        processedUpdates.price = '';
+      }
+    }
+    
+    if ('minOrder' in processedUpdates) {
+      const m = processedUpdates.minOrder;
+      if (typeof m === 'string' && m.trim() !== '') {
+        processedUpdates.minOrder = Number(m);
+      } else if (m === '') {
+        processedUpdates.minOrder = '';
+      }
+    }
+    
+    setFagData((prev) => ({ ...prev, ...processedUpdates }));
+  }, []);
+
+  const updateBEData = useCallback((updates: Partial<BooksEducationFormData>) => {
+    const processedUpdates: Partial<BooksEducationFormData> = { ...updates };
+    
+    if ('price' in processedUpdates) {
+      const p = processedUpdates.price;
+      if (typeof p === 'string' && p.trim() !== '') {
+        processedUpdates.price = Number(p);
+      } else if (p === '') {
+        processedUpdates.price = '';
+      }
+    }
+    
+    setBeData((prev) => ({ ...prev, ...processedUpdates }));
+  }, []);
+
+  const updateBKData = useCallback((updates: Partial<BabyKidsFormData>) => {
+    const processedUpdates: Partial<BabyKidsFormData> = { ...updates };
+    
+    if ('price' in processedUpdates) {
+      const p = processedUpdates.price;
+      if (typeof p === 'string' && p.trim() !== '') {
+        processedUpdates.price = Number(p);
+      } else if (p === '') {
+        processedUpdates.price = '';
+      }
+    }
+    
+    setBkData((prev) => ({ ...prev, ...processedUpdates }));
+  }, []);
+
+  const updateBIData = useCallback((updates: Partial<BusinessIndustryFormData>) => {
+    const processedUpdates: Partial<BusinessIndustryFormData> = { ...updates };
+    
+    if ('price' in processedUpdates) {
+      const p = processedUpdates.price;
+      if (typeof p === 'string' && p.trim() !== '') {
+        processedUpdates.price = Number(p);
+      } else if (p === '') {
+        processedUpdates.price = '';
+      }
+    }
+    
+    setBiData((prev) => ({ ...prev, ...processedUpdates }));
+  }, []);
+
+  const updateSGData = useCallback((updates: Partial<ShoppingGroceriesFormData>) => {
+    const processedUpdates: Partial<ShoppingGroceriesFormData> = { ...updates };
+    
+    if ('price' in processedUpdates) {
+      const p = processedUpdates.price;
+      if (typeof p === 'string' && p.trim() !== '') {
+        processedUpdates.price = Number(p);
+      } else if (p === '') {
+        processedUpdates.price = '';
+      }
+    }
+    
+    setSgData((prev) => ({ ...prev, ...processedUpdates }));
+  }, []);
+
   const handleCategorySelect = useCallback(
     (categoryId: number, categorySlug?: string, categoryName?: string) => {
       const changingCategory = formData.categoryId !== categoryId;
@@ -912,6 +1561,12 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         setSpData(INITIAL_SP_DATA);
         setHbData(INITIAL_HB_DATA);
         setHfData(INITIAL_HF_DATA);
+        setShData(INITIAL_SH_DATA);
+        setFagData(INITIAL_FAG_DATA);
+        setBeData(INITIAL_BE_DATA);
+        setBkData(INITIAL_BK_DATA);
+        setBiData(INITIAL_BI_DATA);
+        setSgData(INITIAL_SG_DATA);
         setWizardValues({});
       }
     },
@@ -1167,6 +1822,71 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         ...INITIAL_JOBS_DATA,
         ...draftJobsData,
       });
+      setFagData({
+        ...INITIAL_FAG_DATA,
+        ...(draftData.fagData as Partial<FoodAgricultureFormData> | undefined) || {},
+        subcategory: ((draftData.fagData as Partial<FoodAgricultureFormData> | undefined)?.subcategory) ?? INITIAL_FAG_DATA.subcategory,
+        specs: {
+          ...INITIAL_FAG_DATA.specs,
+          ...(((draftData.fagData as Partial<FoodAgricultureFormData> | undefined) || {}).specs as Record<string, unknown> || {}),
+        },
+        media: {
+          ...INITIAL_FAG_DATA.media,
+          ...(((draftData.fagData as Partial<FoodAgricultureFormData> | undefined) || {}).media as Partial<FoodAgricultureMediaData> || {}),
+        },
+      });
+      setBeData({
+        ...INITIAL_BE_DATA,
+        ...(draftData.beData as Partial<BooksEducationFormData> | undefined) || {},
+        subcategory: ((draftData.beData as Partial<BooksEducationFormData> | undefined)?.subcategory) ?? INITIAL_BE_DATA.subcategory,
+        specs: {
+          ...INITIAL_BE_DATA.specs,
+          ...(((draftData.beData as Partial<BooksEducationFormData> | undefined) || {}).specs as Record<string, unknown> || {}),
+        },
+        media: {
+          ...INITIAL_BE_DATA.media,
+          ...(((draftData.beData as Partial<BooksEducationFormData> | undefined) || {}).media as Partial<BooksEducationMediaData> || {}),
+        },
+      });
+      setBkData({
+        ...INITIAL_BK_DATA,
+        ...(draftData.bkData as Partial<BabyKidsFormData> | undefined) || {},
+        subcategory: ((draftData.bkData as Partial<BabyKidsFormData> | undefined)?.subcategory) ?? INITIAL_BK_DATA.subcategory,
+        specs: {
+          ...INITIAL_BK_DATA.specs,
+          ...(((draftData.bkData as Partial<BabyKidsFormData> | undefined) || {}).specs as Record<string, unknown> || {}),
+        },
+        media: {
+          ...INITIAL_BK_DATA.media,
+          ...(((draftData.bkData as Partial<BabyKidsFormData> | undefined) || {}).media as Partial<BabyKidsMediaData> || {}),
+        },
+      });
+      setBiData({
+        ...INITIAL_BI_DATA,
+        ...(draftData.biData as Partial<BusinessIndustryFormData> | undefined) || {},
+        subcategory: ((draftData.biData as Partial<BusinessIndustryFormData> | undefined)?.subcategory) ?? INITIAL_BI_DATA.subcategory,
+        specs: {
+          ...INITIAL_BI_DATA.specs,
+          ...(((draftData.biData as Partial<BusinessIndustryFormData> | undefined) || {}).specs as Record<string, unknown> || {}),
+        },
+        media: {
+          ...INITIAL_BI_DATA.media,
+          ...(((draftData.biData as Partial<BusinessIndustryFormData> | undefined) || {}).media as Partial<BusinessIndustryMediaData> || {}),
+        },
+      });
+      setSgData({
+        ...INITIAL_SG_DATA,
+        ...(draftData.sgData as Partial<ShoppingGroceriesFormData> | undefined) || {},
+        subcategory: ((draftData.sgData as Partial<ShoppingGroceriesFormData> | undefined)?.subcategory) ?? INITIAL_SG_DATA.subcategory,
+        specs: {
+          ...INITIAL_SG_DATA.specs,
+          ...(((draftData.sgData as Partial<ShoppingGroceriesFormData> | undefined) || {}).specs as Record<string, unknown> || {}),
+        },
+        media: {
+          ...INITIAL_SG_DATA.media,
+          ...(((draftData.sgData as Partial<ShoppingGroceriesFormData> | undefined) || {}).media as Partial<ShoppingGroceriesMediaData> || {}),
+        },
+      });
       setWizardValues(((draftData.wizardValues as Record<string, unknown> | undefined) || {}));
 
       const savedStep = typeof draftData.currentStep === 'number' ? draftData.currentStep : (categoryId ? 1 : 0);
@@ -1185,7 +1905,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
   // Auth gate — require login to post an ad
   if (authLoading) {
     return (
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-12 text-center">
+      <div className="rounded-2xl border border-slate-200/60 bg-white/80 shadow-lg shadow-slate-900/5 backdrop-blur-xl p-12 text-center">
         <p className="text-slate-500">{tCommon('loading')}</p>
       </div>
     );
@@ -1193,7 +1913,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
 
   if (!user) {
     return (
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-12 text-center">
+      <div className="rounded-2xl border border-slate-200/60 bg-white/80 shadow-lg shadow-slate-900/5 backdrop-blur-xl p-12 text-center">
         <LogIn className="w-12 h-12 text-slate-300 mx-auto mb-4" />
         <h2 className="text-xl font-bold text-slate-900 mb-2">{tAuth('loginTitle')}</h2>
         <p className="text-slate-500 mb-6 text-sm">
@@ -1205,7 +1925,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         </p>
         <Link
           href={`/${locale}/login`}
-          className="inline-block px-6 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition font-medium"
+          className="inline-block px-6 py-2.5 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl hover:shadow-lg hover:shadow-primary-500/25 transition font-medium"
         >
           {tAuth('loginButton')}
         </Link>
@@ -1215,7 +1935,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
 
   if (loadingDraft) {
     return (
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-12 text-center">
+      <div className="rounded-2xl border border-slate-200/60 bg-white/80 shadow-lg shadow-slate-900/5 backdrop-blur-xl p-12 text-center">
         <p className="text-slate-500">{tCommon('loading')}</p>
       </div>
     );
@@ -1230,7 +1950,14 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
   const isHomeFurniture = selectedCategorySlug ? HOME_FURNITURE_SLUGS.includes(selectedCategorySlug) : false;
   const isServices = selectedCategorySlug ? SERVICES_SLUGS.includes(selectedCategorySlug) : false;
   const isJobs = selectedCategorySlug ? JOBS_SLUGS.includes(selectedCategorySlug) : false;
-  const steps: readonly string[] = isJobs ? JOBS_STEPS : isServices ? SERVICES_STEPS : isHomeFurniture ? HF_STEPS : isHealthBeauty ? HB_STEPS : getStepsForCategorySlug(selectedCategorySlug);
+  const isSportsHobby = selectedCategorySlug ? SPORTS_HOBBY_SLUGS.includes(selectedCategorySlug) : false;
+  const isAnimals = selectedCategorySlug === ANIMALS_SLUG;
+  const isFoodAgriculture = selectedCategorySlug === FOOD_AGRICULTURE_SLUG;
+  const isBooksEducation = selectedCategorySlug === BOOKS_EDUCATION_SLUG;
+  const isBabyKids = selectedCategorySlug === BABY_KIDS_SLUG;
+  const isBusinessIndustry = selectedCategorySlug === BUSINESS_INDUSTRY_SLUG;
+  const isShoppingGroceries = selectedCategorySlug === SHOPPING_GROCERIES_SLUG;
+  const steps: readonly string[] = isJobs ? JOBS_STEPS : isServices ? SERVICES_STEPS : isHomeFurniture ? HF_STEPS : isHealthBeauty ? HB_STEPS : isSportsHobby ? SPORTS_HOBBY_STEPS : isAnimals ? ANIMALS_STEPS : isFoodAgriculture ? FAG_STEPS : isBooksEducation ? BE_STEPS : isBabyKids ? BK_STEPS : isBusinessIndustry ? BI_STEPS : isShoppingGroceries ? SG_STEPS : getStepsForCategorySlug(selectedCategorySlug);
 
   const getStepLabel = (step: string): string => {
     switch (step) {
@@ -1289,6 +2016,46 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       case 'srvStepMedia': return tSRV('stepMedia');
       case 'srvStepContact': return tSRV('stepContact');
       case 'srvStepReview': return tSRV('stepReview');
+      case 'shStepBasic': return tSH('stepBasic');
+      case 'shStepSpecs': return tSH('stepSpecs');
+      case 'shStepMedia': return tSH('stepMedia');
+      case 'shStepContact': return tSH('stepContact');
+      case 'shStepReview': return tSH('stepReview');
+      case 'anStepBasic': return tAN('stepBasic');
+      case 'anStepSpecs': return tAN('stepSpecs');
+      case 'anStepLocationContact': return tAN('stepLocationContact');
+      case 'anStepMedia': return tAN('stepMedia');
+      case 'anStepReview': return tAN('stepReview');
+      // Food & Agriculture steps
+      case 'fagStepBasic': return tFAG('stepBasic');
+      case 'fagStepSpecs': return tFAG('stepSpecs');
+      case 'fagStepLocationContact': return tFAG('stepLocationContact');
+      case 'fagStepMedia': return tFAG('stepMedia');
+      case 'fagStepReview': return tFAG('stepReview');
+      // Books & Education steps
+      case 'beStepBasic': return tBE('stepBasic');
+      case 'beStepSpecs': return tBE('stepSpecs');
+      case 'beStepLocationContact': return tBE('stepLocationContact');
+      case 'beStepMedia': return tBE('stepMedia');
+      case 'beStepReview': return tBE('stepReview');
+      // Baby & Kids steps
+      case 'bkStepBasic': return tBK('stepBasic');
+      case 'bkStepSpecs': return tBK('stepSpecs');
+      case 'bkStepLocationContact': return tBK('stepLocationContact');
+      case 'bkStepMedia': return tBK('stepMedia');
+      case 'bkStepReview': return tBK('stepReview');
+      // Business & Industry steps
+      case 'biStepBasic': return tBI('stepBasic');
+      case 'biStepSpecs': return tBI('stepSpecs');
+      case 'biStepLocationContact': return tBI('stepLocationContact');
+      case 'biStepMedia': return tBI('stepMedia');
+      case 'biStepReview': return tBI('stepReview');
+      // Shopping & Groceries steps
+      case 'sgStepBasic': return tSG('stepBasic');
+      case 'sgStepSpecs': return tSG('stepSpecs');
+      case 'sgStepLocationContact': return tSG('stepLocationContact');
+      case 'sgStepMedia': return tSG('stepMedia');
+      case 'sgStepReview': return tSG('stepReview');
       default: return '';
     }
   };
@@ -1541,6 +2308,358 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       case 'jobStepContact':
         return jobsData.contactPhone.trim() !== '' && jobsData.contactEmail.trim() !== '' && jobsData.termsAccepted;
       case 'jobStepReview':
+        return true;
+      // Sports & Hobby steps
+      case 'shStepBasic':
+        return shData.title.trim().length >= 3 && shData.details.trim().length >= 10 && shData.subcategory !== '';
+      case 'shStepSpecs': {
+        const fields = getSportsHobbySpecsConfig(shData.subcategory);
+        return fields.every((field) => {
+          if (!field.required) return true;
+          const value = shData.specs[field.key];
+          if (field.type === 'multiselect') {
+            return Array.isArray(value) && value.length > 0;
+          }
+          if (field.type === 'checkbox' || field.type === 'toggle') {
+            return typeof value === 'boolean';
+          }
+          if (field.type === 'number') {
+            return typeof value === 'number' || (typeof value === 'string' && value.trim() !== '');
+          }
+          if (typeof value === 'string' && value === 'Other') {
+            const custom = shData.specs[`${field.key}Other`];
+            return typeof custom === 'string' && custom.trim().length > 0;
+          }
+          if (Array.isArray(value) && value.includes('Other')) {
+            const custom = shData.specs[`${field.key}Other`];
+            return typeof custom === 'string' && custom.trim().length > 0;
+          }
+          return typeof value === 'string' && value.trim().length > 0;
+        });
+      }
+      case 'shStepMedia':
+        return shData.media.photos.length >= 1 && shData.city.trim() !== '';
+      case 'shStepContact':
+        return shData.phone.trim() !== '' && shData.termsAccepted;
+      case 'shStepReview':
+        return true;
+      // Animals & Livestock steps
+      case 'anStepBasic':
+        return (
+          anData.subcategory !== '' &&
+          anData.title.trim().length >= 3 &&
+          anData.description.trim().length >= 10
+        );
+      case 'anStepSpecs': {
+        const fields = getAnimalsSpecsConfig(anData.subcategory as AnimalsLivestockSubcategory);
+        
+        // Check all required fields
+        const allValid = fields.every((field) => {
+          if (!field.required) return true;
+          
+          // Common fields are stored at root level, not in specs
+          let value: unknown;
+          if (field.key === 'breed') {
+            value = anData.breed;
+          } else if (field.key === 'quantity') {
+            value = anData.quantity;
+          } else if (field.key === 'age') {
+            value = anData.age;
+          } else if (field.key === 'healthStatus') {
+            value = anData.healthStatus;
+          } else if (field.key === 'price') {
+            value = anData.price;
+          } else if (field.key === 'priceType') {
+            value = anData.priceType;
+          } else {
+            value = anData.specs[field.key];
+          }
+          
+          if (field.type === 'multiselect') {
+            return Array.isArray(value) && value.length > 0;
+          }
+          if (field.type === 'checkbox' || field.type === 'toggle') {
+            return typeof value === 'boolean';
+          }
+          if (field.type === 'number') {
+            return typeof value === 'number' || (typeof value === 'string' && value.trim() !== '');
+          }
+          if (field.type === 'unit') {
+            // For unit fields, we need to check both value and unit
+            const unitValue = field.key === 'age' ? anData.age : anData.specs[field.key];
+            const unit = field.key === 'age' ? anData.ageUnit : anData.specs[`${field.key}Unit`];
+            return (typeof unitValue === 'number' || (typeof unitValue === 'string' && unitValue.trim() !== '')) &&
+                   (typeof unit === 'string' && unit.trim() !== '');
+          }
+          return typeof value === 'string' && value.trim().length > 0;
+        });
+        
+        return allValid;
+      }
+      case 'anStepLocationContact':
+        return (
+          anData.city.trim() !== '' &&
+          anData.phone.trim() !== ''
+        );
+      case 'anStepMedia':
+        return anData.media.photos.length >= 1;
+      case 'anStepReview':
+        return true;
+      // Food & Agriculture steps
+      case 'fagStepBasic':
+        return (
+          fagData.subcategory !== '' &&
+          fagData.title.trim().length >= 3 &&
+          fagData.description.trim().length >= 10
+        );
+      case 'fagStepSpecs': {
+        const fields = getFoodAgricultureSpecsConfig(fagData.subcategory as FoodAgricultureSubcategory);
+        
+        // Check all required fields
+        const allValid = fields.every((field) => {
+          if (!field.required) return true;
+          
+          // Common fields are stored at root level, not in specs
+          let value: unknown;
+          if (field.key === 'quantity') {
+            value = fagData.quantity;
+          } else if (field.key === 'unit') {
+            value = fagData.unit;
+          } else if (field.key === 'grade') {
+            value = fagData.grade;
+          } else if (field.key === 'freshness') {
+            value = fagData.freshness;
+          } else if (field.key === 'origin') {
+            value = fagData.origin;
+          } else if (field.key === 'certification') {
+            value = fagData.certification;
+          } else if (field.key === 'price') {
+            value = fagData.price;
+          } else if (field.key === 'priceType') {
+            value = fagData.priceType;
+          } else if (field.key === 'deliveryAvailable') {
+            value = fagData.deliveryAvailable;
+          } else if (field.key === 'minOrder') {
+            value = fagData.minOrder;
+          } else {
+            value = fagData.specs[field.key];
+          }
+          
+          if (field.type === 'multiselect') {
+            return Array.isArray(value) && value.length > 0;
+          }
+          if (field.type === 'checkbox' || field.type === 'toggle') {
+            return typeof value === 'boolean';
+          }
+          if (field.type === 'number') {
+            return typeof value === 'number' || (typeof value === 'string' && value.trim() !== '');
+          }
+          if (field.type === 'unit') {
+            // For unit fields, check both value and unit
+            const unitValue = field.key === 'quantity' ? fagData.quantity : fagData.specs[field.key];
+            const unit = field.key === 'quantity' ? fagData.unit : fagData.specs[`${field.key}Unit`];
+            return (typeof unitValue === 'number' || (typeof unitValue === 'string' && unitValue.trim() !== '')) &&
+                   (typeof unit === 'string' && unit.trim() !== '');
+          }
+          return typeof value === 'string' && value.trim().length > 0;
+        });
+        
+        return allValid;
+      }
+      case 'fagStepLocationContact':
+        return (
+          fagData.city.trim() !== '' &&
+          fagData.phone.trim() !== ''
+        );
+      case 'fagStepMedia':
+        return fagData.media.photos.length >= 1;
+      case 'fagStepReview':
+        return true;
+      // Books & Education steps
+      case 'beStepBasic':
+        return (
+          beData.subcategory !== '' &&
+          beData.title.trim().length >= 3 &&
+          beData.description.trim().length >= 10
+        );
+      case 'beStepSpecs': {
+        const fields = getBooksEducationSpecsConfig(beData.subcategory as BooksEducationSubcategory);
+        const allValid = fields.every((field) => {
+          if (!field.required) return true;
+          let value: unknown;
+          if (field.key === 'subjectMatter') {
+            value = beData.subjectMatter;
+          } else if (field.key === 'educationLevel') {
+            value = beData.educationLevel;
+          } else if (field.key === 'language') {
+            value = beData.language;
+          } else if (field.key === 'price') {
+            value = beData.price;
+          } else if (field.key === 'priceType') {
+            value = beData.priceType;
+          } else if (field.key === 'deliveryAvailable') {
+            value = beData.deliveryAvailable;
+          } else {
+            value = beData.specs[field.key];
+          }
+          if (field.type === 'toggle') {
+            return typeof value === 'boolean';
+          }
+          if (field.type === 'number') {
+            return typeof value === 'number' || (typeof value === 'string' && value.trim() !== '');
+          }
+          return typeof value === 'string' && value.trim().length > 0;
+        });
+        return allValid;
+      }
+      case 'beStepLocationContact':
+        return (
+          beData.city.trim() !== '' &&
+          beData.phone.trim() !== ''
+        );
+      case 'beStepMedia':
+        return beData.media.photos.length >= 1;
+      case 'beStepReview':
+        return true;
+      // Baby & Kids validation
+      case 'bkStepBasic':
+        return (
+          bkData.subcategory !== '' &&
+          bkData.title.trim().length >= 3 &&
+          bkData.description.trim().length >= 10
+        );
+      case 'bkStepSpecs': {
+        const bkFields = getBabyKidsSpecsConfig(bkData.subcategory as BabyKidsSubcategory);
+        const bkAllValid = bkFields.every((field) => {
+          if (!field.required) return true;
+          let value: unknown;
+          if (field.key === 'condition') {
+            value = bkData.condition;
+          } else if (field.key === 'ageRange') {
+            value = bkData.ageRange;
+          } else if (field.key === 'gender') {
+            value = bkData.gender;
+          } else if (field.key === 'price') {
+            value = bkData.price;
+          } else if (field.key === 'priceType') {
+            value = bkData.priceType;
+          } else if (field.key === 'deliveryAvailable') {
+            value = bkData.deliveryAvailable;
+          } else {
+            value = bkData.specs[field.key];
+          }
+          if (field.type === 'toggle') {
+            return typeof value === 'boolean';
+          }
+          if (field.type === 'number') {
+            return typeof value === 'number' || (typeof value === 'string' && value.trim() !== '');
+          }
+          return typeof value === 'string' && value.trim().length > 0;
+        });
+        return bkAllValid;
+      }
+      case 'bkStepLocationContact':
+        return (
+          bkData.city.trim() !== '' &&
+          bkData.phone.trim() !== ''
+        );
+      case 'bkStepMedia':
+        return bkData.media.photos.length >= 1;
+      case 'bkStepReview':
+        return true;
+      // Business & Industry validation
+      case 'biStepBasic':
+        return (
+          biData.subcategory !== '' &&
+          biData.title.trim().length >= 3 &&
+          biData.description.trim().length >= 10
+        );
+      case 'biStepSpecs': {
+        const biFields = getBusinessIndustrySpecsConfig(biData.subcategory as BusinessIndustrySubcategory);
+        const biAllValid = biFields.every((field) => {
+          if (!field.required) return true;
+          let value: unknown;
+          if (field.key === 'condition') {
+            value = biData.condition;
+          } else if (field.key === 'businessType') {
+            value = biData.businessType;
+          } else if (field.key === 'industrySector') {
+            value = biData.industrySector;
+          } else if (field.key === 'price') {
+            value = biData.price;
+          } else if (field.key === 'priceType') {
+            value = biData.priceType;
+          } else if (field.key === 'deliveryAvailable') {
+            value = biData.deliveryAvailable;
+          } else if (field.key === 'warranty') {
+            value = biData.warranty;
+          } else {
+            value = biData.specs[field.key];
+          }
+          if (field.type === 'toggle') {
+            return typeof value === 'boolean';
+          }
+          if (field.type === 'number') {
+            return typeof value === 'number' || (typeof value === 'string' && value.trim() !== '');
+          }
+          return typeof value === 'string' && value.trim().length > 0;
+        });
+        return biAllValid;
+      }
+      case 'biStepLocationContact':
+        return (
+          biData.city.trim() !== '' &&
+          biData.phone.trim() !== ''
+        );
+      case 'biStepMedia':
+        return biData.media.photos.length >= 1;
+      case 'biStepReview':
+        return true;
+      // Shopping & Groceries validation
+      case 'sgStepBasic':
+        return (
+          sgData.subcategory !== '' &&
+          sgData.title.trim().length >= 3 &&
+          sgData.description.trim().length >= 10
+        );
+      case 'sgStepSpecs': {
+        const sgFields = getShoppingGroceriesSpecsConfig(sgData.subcategory as ShoppingGroceriesSubcategory);
+        const sgAllValid = sgFields.every((field) => {
+          if (!field.required) return true;
+          let value: unknown;
+          if (field.key === 'condition') {
+            value = sgData.condition;
+          } else if (field.key === 'brand') {
+            value = sgData.brand;
+          } else if (field.key === 'price') {
+            value = sgData.price;
+          } else if (field.key === 'priceType') {
+            value = sgData.priceType;
+          } else if (field.key === 'deliveryAvailable') {
+            value = sgData.deliveryAvailable;
+          } else if (field.key === 'minOrder') {
+            value = sgData.minOrder;
+          } else {
+            value = sgData.specs[field.key];
+          }
+          if (field.type === 'toggle') {
+            return typeof value === 'boolean';
+          }
+          if (field.type === 'number') {
+            return typeof value === 'number' || (typeof value === 'string' && value.trim() !== '');
+          }
+          return typeof value === 'string' && value.trim().length > 0;
+        });
+        return sgAllValid;
+      }
+      case 'sgStepLocationContact':
+        return (
+          sgData.city.trim() !== '' &&
+          sgData.phone.trim() !== ''
+        );
+      case 'sgStepMedia':
+        return sgData.media.photos.length >= 1;
+      case 'sgStepReview':
         return true;
       default:
         return false;
@@ -1845,6 +2964,211 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         city = srvData.city || city;
         _phone = srvData.phone || _phone;
         photosList = srvData.media.images;
+      } else if (isSportsHobby) {
+        const normalizedBrand = shData.brand === 'Other' ? shData.brandOther.trim() : shData.brand;
+        metadata = {
+          subcategory: shData.subcategory,
+          condition: shData.condition,
+          brand: normalizedBrand,
+          sellerType: shData.sellerType,
+          ...shData.specs,
+          location: {
+            city: shData.city,
+            lat: shData.lat,
+            lng: shData.lng,
+          },
+          contact: {
+            phone: shData.phone,
+            whatsapp: shData.whatsapp,
+            email: shData.email,
+          },
+          media: {
+            video: shData.media.videoUrl,
+          },
+          wizard_forms: wizardValues,
+        };
+        title = shData.title || title;
+        description = shData.details || description;
+        price = Number(shData.price) || price;
+        currency = shData.currency || currency;
+        city = shData.city || city;
+        _phone = shData.phone || _phone;
+        condition = (shData.condition || condition || 'good') as string;
+        photosList = shData.media.photos;
+      } else if (isFoodAgriculture) {
+        metadata = {
+          subcategory: fagData.subcategory,
+          quantity: fagData.quantity,
+          unit: fagData.unit,
+          grade: fagData.grade,
+          freshness: fagData.freshness,
+          origin: fagData.origin,
+          certification: fagData.certification,
+          deliveryAvailable: fagData.deliveryAvailable,
+          minOrder: fagData.minOrder,
+          ...fagData.specs,
+          location: {
+            street: fagData.street,
+            city: fagData.city,
+            postalCode: fagData.postalCode,
+            lat: fagData.lat,
+            lng: fagData.lng,
+          },
+          contact: {
+            sellerName: fagData.sellerName,
+            phone: fagData.phone,
+            email: fagData.email,
+            preferredContact: fagData.preferredContact,
+            hidePhone: fagData.hidePhone,
+          },
+          media: {
+            videos: fagData.media.videos,
+          },
+          wizard_forms: wizardValues,
+        };
+        title = fagData.title || title;
+        description = fagData.description || description;
+        price = Number(fagData.price) || price;
+        city = fagData.city || city;
+        _phone = fagData.phone || _phone;
+        photosList = fagData.media.photos;
+      } else if (isBooksEducation) {
+        metadata = {
+          subcategory: beData.subcategory,
+          subjectMatter: beData.subjectMatter,
+          educationLevel: beData.educationLevel,
+          language: beData.language,
+          deliveryAvailable: beData.deliveryAvailable,
+          ...beData.specs,
+          location: {
+            street: beData.street,
+            city: beData.city,
+            postalCode: beData.postalCode,
+            lat: beData.lat,
+            lng: beData.lng,
+          },
+          contact: {
+            sellerName: beData.sellerName,
+            phone: beData.phone,
+            email: beData.email,
+            preferredContact: beData.preferredContact,
+            hidePhone: beData.hidePhone,
+          },
+          media: {
+            videos: beData.media.videos,
+          },
+          wizard_forms: wizardValues,
+        };
+        title = beData.title || title;
+        description = beData.description || description;
+        price = Number(beData.price) || price;
+        city = beData.city || city;
+        _phone = beData.phone || _phone;
+        photosList = beData.media.photos;
+      } else if (isBabyKids) {
+        metadata = {
+          subcategory: bkData.subcategory,
+          condition: bkData.condition,
+          ageRange: bkData.ageRange,
+          gender: bkData.gender,
+          deliveryAvailable: bkData.deliveryAvailable,
+          ...bkData.specs,
+          location: {
+            street: bkData.street,
+            city: bkData.city,
+            postalCode: bkData.postalCode,
+            lat: bkData.lat,
+            lng: bkData.lng,
+          },
+          contact: {
+            sellerName: bkData.sellerName,
+            phone: bkData.phone,
+            email: bkData.email,
+            preferredContact: bkData.preferredContact,
+            hidePhone: bkData.hidePhone,
+          },
+          media: {
+            videos: bkData.media.videos,
+          },
+          wizard_forms: wizardValues,
+        };
+        title = bkData.title || title;
+        description = bkData.description || description;
+        price = Number(bkData.price) || price;
+        city = bkData.city || city;
+        _phone = bkData.phone || _phone;
+        photosList = bkData.media.photos;
+      } else if (isBusinessIndustry) {
+        metadata = {
+          subcategory: biData.subcategory,
+          condition: biData.condition,
+          businessType: biData.businessType,
+          industrySector: biData.industrySector,
+          priceType: biData.priceType,
+          deliveryAvailable: biData.deliveryAvailable,
+          warranty: biData.warranty,
+          ...biData.specs,
+          location: {
+            street: biData.street,
+            city: biData.city,
+            postalCode: biData.postalCode,
+            lat: biData.lat,
+            lng: biData.lng,
+          },
+          contact: {
+            sellerName: biData.sellerName,
+            phone: biData.phone,
+            email: biData.email,
+            preferredContact: biData.preferredContact,
+            hidePhone: biData.hidePhone,
+          },
+          media: {
+            videos: biData.media.videos,
+          },
+          wizard_forms: wizardValues,
+        };
+        title = biData.title || title;
+        description = biData.description || description;
+        price = Number(biData.price) || price;
+        city = biData.city || city;
+        _phone = biData.phone || _phone;
+        photosList = biData.media.photos;
+      } else if (isShoppingGroceries) {
+        metadata = {
+          subcategory: sgData.subcategory,
+          condition: sgData.condition,
+          brand: sgData.brand,
+          priceType: sgData.priceType,
+          deliveryAvailable: sgData.deliveryAvailable,
+          minOrder: sgData.minOrder,
+          quantity: sgData.quantity,
+          unit: sgData.unit,
+          ...sgData.specs,
+          location: {
+            street: sgData.street,
+            city: sgData.city,
+            postalCode: sgData.postalCode,
+            lat: sgData.lat,
+            lng: sgData.lng,
+          },
+          contact: {
+            sellerName: sgData.sellerName,
+            phone: sgData.phone,
+            email: sgData.email,
+            preferredContact: sgData.preferredContact,
+            hidePhone: sgData.hidePhone,
+          },
+          media: {
+            videos: sgData.media.videos,
+          },
+          wizard_forms: wizardValues,
+        };
+        title = sgData.title || title;
+        description = sgData.description || description;
+        price = Number(sgData.price) || price;
+        city = sgData.city || city;
+        _phone = sgData.phone || _phone;
+        photosList = sgData.media.photos;
       } else {
         metadata = {
           ...metadata,
@@ -1951,6 +3275,12 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
     setHbData(INITIAL_HB_DATA);
     setHfData(INITIAL_HF_DATA);
     setSrvData(INITIAL_SERVICES_DATA);
+    setShData(INITIAL_SH_DATA);
+    setFagData(INITIAL_FAG_DATA);
+    setBeData(INITIAL_BE_DATA);
+    setBkData(INITIAL_BK_DATA);
+    setBiData(INITIAL_BI_DATA);
+    setSgData(INITIAL_SG_DATA);
     setCurrentStep(0);
     setSubmitted(false);
     setSubmittedListingId(null);
@@ -1982,6 +3312,42 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
     setSubmitError(null);
   };
 
+  const handleClearSportsHobbyForm = () => {
+    setShData(INITIAL_SH_DATA);
+    setCurrentStep(1);
+    setSubmitError(null);
+  };
+
+  const handleClearFoodAgricultureForm = () => {
+    setFagData(INITIAL_FAG_DATA);
+    setCurrentStep(1);
+    setSubmitError(null);
+  };
+
+  const handleClearBooksEducationForm = () => {
+    setBeData(INITIAL_BE_DATA);
+    setCurrentStep(1);
+    setSubmitError(null);
+  };
+
+  const handleClearBabyKidsForm = () => {
+    setBkData(INITIAL_BK_DATA);
+    setCurrentStep(1);
+    setSubmitError(null);
+  };
+
+  const handleClearBusinessIndustryForm = () => {
+    setBiData(INITIAL_BI_DATA);
+    setCurrentStep(1);
+    setSubmitError(null);
+  };
+
+  const handleClearShoppingGroceriesForm = () => {
+    setSgData(INITIAL_SG_DATA);
+    setCurrentStep(1);
+    setSubmitError(null);
+  };
+
   const handleSaveDraft = async () => {
     if (!user) return;
     setSavingDraft(true);
@@ -2006,6 +3372,13 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       else if (isHomeFurniture) draftData = { ...draftData, hfData };
       else if (isServices) draftData = { ...draftData, srvData };
       else if (isJobs) draftData = { ...draftData, jobsData };
+      else if (isSportsHobby) draftData = { ...draftData, shData };
+      else if (isAnimals) draftData = { ...draftData, anData };
+      else if (isFoodAgriculture) draftData = { ...draftData, fagData };
+      else if (isBooksEducation) draftData = { ...draftData, beData };
+      else if (isBabyKids) draftData = { ...draftData, bkData };
+      else if (isBusinessIndustry) draftData = { ...draftData, biData };
+      else if (isShoppingGroceries) draftData = { ...draftData, sgData };
 
       const { data: savedDraft, error: draftError } = await supabase.from('listing_drafts').upsert({
         user_id: user.id,
@@ -2037,8 +3410,8 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
 
   if (submitted) {
     return (
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8 text-center">
-        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <div className="rounded-2xl border border-slate-200/60 bg-white/80 shadow-lg shadow-slate-900/5 backdrop-blur-xl p-8 text-center">
+        <div className="w-16 h-16 bg-green-100/80 rounded-full flex items-center justify-center mx-auto mb-4 backdrop-blur-sm">
           <Check className="w-8 h-8 text-green-600" />
         </div>
         <h2 className="text-2xl font-bold text-slate-900 mb-2">{tCommon('success')}</h2>
@@ -2046,13 +3419,13 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         <div className={`flex items-center justify-center gap-4 ${rtl ? 'flex-row-reverse' : ''}`}>
           <Link
             href={submittedListingId ? `/${locale}/listing/${submittedListingId}` : `/${locale}`}
-            className="px-6 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition font-medium"
+            className="px-6 py-2.5 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl hover:shadow-lg hover:shadow-primary-500/25 transition font-medium"
           >
             {t('viewListing')}
           </Link>
           <button
             onClick={handlePostAnother}
-            className="px-6 py-2.5 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition font-medium"
+            className="px-6 py-2.5 bg-slate-100/80 text-slate-700 rounded-xl hover:bg-slate-200/80 backdrop-blur-sm transition font-medium"
           >
             {t('postAnother')}
           </button>
@@ -2716,11 +4089,16 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
             locale={locale}
             data={{
               city: hbData.city,
+              street: hbData.street,
+              postalCode: hbData.postalCode,
               lat: hbData.lat,
               lng: hbData.lng,
+              sellerName: hbData.sellerName,
               phone: hbData.phone,
               whatsapp: hbData.whatsapp,
               email: hbData.email,
+              preferredContact: hbData.preferredContact,
+              hidePhone: hbData.hidePhone,
               termsAccepted: hbData.termsAccepted,
             }}
             onChange={(updates) => updateHBData(updates)}
@@ -2746,11 +4124,16 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
             media={hbData.media}
             contact={{
               city: hbData.city,
+              street: hbData.street,
+              postalCode: hbData.postalCode,
               lat: hbData.lat,
               lng: hbData.lng,
+              sellerName: hbData.sellerName,
               phone: hbData.phone,
               whatsapp: hbData.whatsapp,
               email: hbData.email,
+              preferredContact: hbData.preferredContact,
+              hidePhone: hbData.hidePhone,
             }}
             onEdit={(stepIndex) => setCurrentStep(stepIndex)}
           />
@@ -3084,6 +4467,689 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
             }}
           />
         );
+      // Sports & Hobby steps
+      case 'shStepBasic':
+        return (
+          <StepSportsBasicInfo
+            locale={locale}
+            data={{
+              subcategory: shData.subcategory,
+              title: shData.title,
+              details: shData.details,
+            }}
+            onChange={(updates) => updateSHData(updates)}
+          />
+        );
+      case 'shStepSpecs':
+        return (
+          <StepSportsSpecs
+            locale={locale}
+            subcategory={shData.subcategory}
+            specs={shData.specs}
+            onChange={(specs) => updateSHData({ specs })}
+          />
+        );
+      case 'shStepMedia':
+        return (
+          <StepSportsMedia
+            locale={locale}
+            data={shData.media}
+            city={shData.city}
+            lat={shData.lat}
+            lng={shData.lng}
+            onChange={(updates) => {
+              // Determine if updates are media fields or location fields
+              const mediaKeys = ['photos', 'videoUrl'];
+              const locationKeys = ['city', 'lat', 'lng'];
+              
+              const mediaUpdates: Partial<SportsMediaData> = {};
+              const locationUpdates: Partial<SportsHobbyFormData> = {};
+              
+              Object.entries(updates as Record<string, unknown>).forEach(([key, value]) => {
+                if (mediaKeys.includes(key)) {
+                  (mediaUpdates as Record<string, unknown>)[key] = value;
+                } else if (locationKeys.includes(key)) {
+                  (locationUpdates as Record<string, unknown>)[key] = value;
+                }
+              });
+              
+              // Apply updates
+              if (Object.keys(mediaUpdates).length > 0) {
+                updateSHData({
+                  media: { ...shData.media, ...mediaUpdates }
+                });
+              }
+              if (Object.keys(locationUpdates).length > 0) {
+                updateSHData(locationUpdates);
+              }
+            }}
+          />
+        );
+      case 'shStepContact':
+        return (
+          <StepSportsContact
+            locale={locale}
+            data={{
+              phone: shData.phone,
+              whatsapp: shData.whatsapp,
+              email: shData.email,
+              termsAccepted: shData.termsAccepted,
+            }}
+            onChange={(updates) => updateSHData(updates)}
+          />
+        );
+      case 'shStepReview':
+        return (
+          <StepSportsReview
+            locale={locale}
+            title={shData.title}
+            description={shData.details}
+            subcategory={shData.subcategory}
+            city={shData.city}
+            lat={shData.lat}
+            lng={shData.lng}
+            phone={shData.phone}
+            whatsapp={shData.whatsapp}
+            email={shData.email}
+            specs={shData.specs}
+            media={shData.media}
+            onEdit={(stepIndex) => setCurrentStep(stepIndex)}
+          />
+        );
+      // Animals & Livestock steps
+      case 'anStepBasic':
+        return (
+          <StepAnimalsBasicInfo
+            locale={locale}
+            data={{
+              title: anData.title,
+              description: anData.description,
+              subcategory: anData.subcategory,
+            }}
+            onChange={(updates) => {
+              if (updates.subcategory !== undefined && updates.subcategory !== anData.subcategory) {
+                updateANData({ ...updates, specs: {}, breed: '' });
+                return;
+              }
+              updateANData(updates);
+            }}
+          />
+        );
+      case 'anStepSpecs':
+        return (
+          <StepAnimalsSpecs
+            locale={locale}
+            data={{
+              subcategory: anData.subcategory,
+              breed: anData.breed,
+              quantity: anData.quantity === '' ? '' : String(anData.quantity),
+              age: anData.age === '' ? '' : String(anData.age),
+              ageUnit: anData.ageUnit,
+              healthStatus: anData.healthStatus,
+              price: anData.price === '' ? '' : String(anData.price),
+              priceType: anData.priceType,
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              specs: anData.specs as any,
+            }}
+            onChange={(updates) => updateANData(updates as Partial<AnimalsFormData>)}
+          />
+        );
+      case 'anStepLocationContact':
+        return (
+          <StepAnimalsLocationContact
+            locale={locale}
+            data={{
+              street: anData.street,
+              city: anData.city,
+              postalCode: anData.postalCode,
+              lat: anData.lat,
+              lng: anData.lng,
+              sellerName: anData.sellerName,
+              phone: anData.phone,
+              email: anData.email,
+              preferredContact: anData.preferredContact,
+              hidePhone: anData.hidePhone,
+            }}
+            onChange={(updates) => updateANData(updates)}
+          />
+        );
+      case 'anStepMedia':
+        return (
+          <StepAnimalsMedia
+            locale={locale}
+            data={anData.media}
+            onChange={(updates) => updateANData({ media: { ...anData.media, ...updates } })}
+          />
+        );
+      case 'anStepReview':
+        return (
+          <StepAnimalsReview
+            locale={locale}
+            title={anData.title}
+            description={anData.description}
+            subcategory={anData.subcategory}
+            breed={anData.breed}
+            quantity={anData.quantity}
+            age={anData.age}
+            ageUnit={anData.ageUnit}
+            healthStatus={anData.healthStatus}
+            price={anData.price}
+            priceType={anData.priceType}
+            street={anData.street}
+            city={anData.city}
+            postalCode={anData.postalCode}
+            lat={anData.lat}
+            lng={anData.lng}
+            sellerName={anData.sellerName}
+            phone={anData.phone}
+            email={anData.email}
+            preferredContact={anData.preferredContact}
+            hidePhone={anData.hidePhone}
+            specs={anData.specs}
+            media={anData.media}
+            onEdit={(stepIndex) => setCurrentStep(stepIndex)}
+          />
+        );
+      case 'fagStepBasic':
+        return (
+          <StepFoodAgricultureBasicInfo
+            locale={locale}
+            data={{
+              title: fagData.title,
+              description: fagData.description,
+              subcategory: fagData.subcategory,
+            }}
+            onChange={(updates) => {
+              updateFAGData(updates);
+            }}
+          />
+        );
+      case 'fagStepSpecs':
+        return (
+          <StepFoodAgricultureSpecs
+            locale={locale}
+            data={{
+              subcategory: fagData.subcategory,
+              quantity: fagData.quantity === '' ? '' : String(fagData.quantity),
+              unit: fagData.unit,
+              grade: fagData.grade,
+              freshness: fagData.freshness,
+              origin: fagData.origin,
+              certification: fagData.certification,
+              price: fagData.price === '' ? '' : String(fagData.price),
+              priceType: fagData.priceType,
+              deliveryAvailable: fagData.deliveryAvailable,
+              minOrder: fagData.minOrder === '' ? '' : String(fagData.minOrder),
+              ...fagData.specs,
+            }}
+            onChange={(updates) => {
+              const commonKeys = new Set(['subcategory', 'quantity', 'unit', 'grade', 'freshness', 'origin', 'certification', 'price', 'priceType', 'deliveryAvailable', 'minOrder']);
+              const commonUpdates: Partial<FoodAgricultureFormData> = {};
+              const specUpdates: Record<string, unknown> = {};
+              Object.entries(updates as Record<string, unknown>).forEach(([key, value]) => {
+                if (commonKeys.has(key)) {
+                  (commonUpdates as Record<string, unknown>)[key] = value;
+                } else {
+                  specUpdates[key] = value;
+                }
+              });
+              if (Object.keys(specUpdates).length > 0) {
+                commonUpdates.specs = { ...fagData.specs, ...specUpdates };
+              }
+              updateFAGData(commonUpdates);
+            }}
+          />
+        );
+      case 'fagStepLocationContact':
+        return (
+          <StepFoodAgricultureLocationContact
+            locale={locale}
+            data={{
+              street: fagData.street,
+              city: fagData.city,
+              postalCode: fagData.postalCode,
+              lat: fagData.lat,
+              lng: fagData.lng,
+              sellerName: fagData.sellerName,
+              phone: fagData.phone,
+              email: fagData.email,
+              preferredContact: fagData.preferredContact,
+              hidePhone: fagData.hidePhone,
+            }}
+            onChange={(data) => updateFAGData(data)}
+          />
+        );
+      case 'fagStepMedia':
+        return (
+          <StepFoodAgricultureMedia
+            locale={locale}
+            data={fagData.media}
+            onChange={(updates) => updateFAGData({ media: { ...fagData.media, ...updates } })}
+          />
+        );
+      case 'fagStepReview':
+        return (
+          <StepFoodAgricultureReview
+            locale={locale}
+            title={fagData.title}
+            description={fagData.description}
+            subcategory={fagData.subcategory}
+            quantity={fagData.quantity}
+            unit={fagData.unit}
+            grade={fagData.grade}
+            freshness={fagData.freshness}
+            origin={fagData.origin}
+            certification={fagData.certification}
+            price={fagData.price}
+            priceType={fagData.priceType}
+            deliveryAvailable={fagData.deliveryAvailable}
+            minOrder={fagData.minOrder === '' ? '' : String(fagData.minOrder)}
+            street={fagData.street}
+            city={fagData.city}
+            postalCode={fagData.postalCode}
+            lat={fagData.lat}
+            lng={fagData.lng}
+            sellerName={fagData.sellerName}
+            phone={fagData.phone}
+            email={fagData.email}
+            preferredContact={fagData.preferredContact}
+            hidePhone={fagData.hidePhone}
+            specs={fagData.specs}
+            media={fagData.media}
+            onEdit={(stepIndex) => setCurrentStep(stepIndex)}
+          />
+        );
+      case 'beStepBasic':
+        return (
+          <StepBooksEducationBasicInfo
+            locale={locale}
+            data={{
+              title: beData.title,
+              description: beData.description,
+              subcategory: beData.subcategory,
+            }}
+            onChange={(updates) => {
+              updateBEData(updates);
+            }}
+          />
+        );
+      case 'beStepSpecs':
+        return (
+          <StepBooksEducationSpecs
+            locale={locale}
+            data={{
+              subcategory: beData.subcategory,
+              subjectMatter: beData.subjectMatter,
+              educationLevel: beData.educationLevel,
+              language: beData.language,
+              price: beData.price === '' ? '' : String(beData.price),
+              priceType: beData.priceType,
+              deliveryAvailable: beData.deliveryAvailable,
+              ...beData.specs,
+            }}
+            onChange={(updates) => {
+              const commonKeys = new Set(['subcategory', 'subjectMatter', 'educationLevel', 'language', 'price', 'priceType', 'deliveryAvailable']);
+              const commonUpdates: Partial<BooksEducationFormData> = {};
+              const specUpdates: Record<string, unknown> = {};
+              Object.entries(updates as Record<string, unknown>).forEach(([key, value]) => {
+                if (commonKeys.has(key)) {
+                  (commonUpdates as Record<string, unknown>)[key] = value;
+                } else {
+                  specUpdates[key] = value;
+                }
+              });
+              if (Object.keys(specUpdates).length > 0) {
+                commonUpdates.specs = { ...beData.specs, ...specUpdates };
+              }
+              updateBEData(commonUpdates);
+            }}
+          />
+        );
+      case 'beStepLocationContact':
+        return (
+          <StepBooksEducationLocationContact
+            locale={locale}
+            data={{
+              street: beData.street,
+              city: beData.city,
+              postalCode: beData.postalCode,
+              lat: beData.lat,
+              lng: beData.lng,
+              sellerName: beData.sellerName,
+              phone: beData.phone,
+              email: beData.email,
+              preferredContact: beData.preferredContact,
+              hidePhone: beData.hidePhone,
+            }}
+            onChange={(data) => updateBEData(data)}
+          />
+        );
+      case 'beStepMedia':
+        return (
+          <StepBooksEducationMedia
+            locale={locale}
+            data={beData.media}
+            onChange={(updates) => updateBEData({ media: { ...beData.media, ...updates } })}
+          />
+        );
+      case 'beStepReview':
+        return (
+          <StepBooksEducationReview
+            locale={locale}
+            title={beData.title}
+            description={beData.description}
+            subcategory={beData.subcategory}
+            specs={beData.specs}
+            street={beData.street}
+            city={beData.city}
+            postalCode={beData.postalCode}
+            lat={beData.lat}
+            lng={beData.lng}
+            sellerName={beData.sellerName}
+            phone={beData.phone}
+            email={beData.email}
+            preferredContact={beData.preferredContact}
+            hidePhone={beData.hidePhone}
+            media={beData.media}
+            onEdit={(stepIndex) => setCurrentStep(stepIndex)}
+          />
+        );
+      case 'bkStepBasic':
+        return (
+          <StepBabyKidsBasicInfo
+            locale={locale}
+            data={{ subcategory: bkData.subcategory, title: bkData.title, description: bkData.description }}
+            onChange={(updates) => {
+              updateBKData(updates);
+            }}
+          />
+        );
+      case 'bkStepSpecs':
+        return (
+          <StepBabyKidsSpecs
+            locale={locale}
+            data={{
+              subcategory: bkData.subcategory,
+              condition: bkData.condition,
+              ageRange: bkData.ageRange,
+              gender: bkData.gender,
+              price: bkData.price,
+              priceType: bkData.priceType,
+              deliveryAvailable: bkData.deliveryAvailable,
+              ...bkData.specs,
+            }}
+            onChange={(updates) => {
+              const { subcategory: _sub, condition: _cond, ageRange: _age, gender: _gen, price: _price, priceType: _pt, deliveryAvailable: _del, ...specUpdates } = updates as Record<string, unknown>;
+              const coreUpdates: Partial<BabyKidsFormData> = {};
+              if (_sub !== undefined) coreUpdates.subcategory = _sub as BabyKidsSubcategory;
+              if (_cond !== undefined) coreUpdates.condition = _cond as string;
+              if (_age !== undefined) coreUpdates.ageRange = _age as string;
+              if (_gen !== undefined) coreUpdates.gender = _gen as string;
+              if (_price !== undefined) coreUpdates.price = _price === '' ? '' : Number(_price) || '';
+              if (_pt !== undefined) coreUpdates.priceType = _pt as string;
+              if (_del !== undefined) coreUpdates.deliveryAvailable = typeof _del === 'boolean' ? (_del ? 'yes' : 'no') : String(_del);
+              if (Object.keys(specUpdates).length > 0) {
+                coreUpdates.specs = { ...bkData.specs, ...specUpdates };
+              }
+              updateBKData(coreUpdates);
+            }}
+          />
+        );
+      case 'bkStepLocationContact':
+        return (
+          <StepBabyKidsLocationContact
+            locale={locale}
+            data={{
+              street: bkData.street,
+              city: bkData.city,
+              postalCode: bkData.postalCode,
+              lat: bkData.lat,
+              lng: bkData.lng,
+              sellerName: bkData.sellerName,
+              phone: bkData.phone,
+              email: bkData.email,
+              preferredContact: bkData.preferredContact,
+              hidePhone: bkData.hidePhone,
+            }}
+            onChange={(updates) => {
+              updateBKData(updates);
+            }}
+          />
+        );
+      case 'bkStepMedia':
+        return (
+          <StepBabyKidsMedia
+            locale={locale}
+            data={bkData.media}
+            onChange={(mediaUpdate) => {
+              updateBKData({ media: mediaUpdate });
+            }}
+          />
+        );
+      case 'bkStepReview':
+        return (
+          <StepBabyKidsReview
+            locale={locale}
+            title={bkData.title}
+            description={bkData.description}
+            subcategory={bkData.subcategory}
+            specs={bkData.specs}
+            street={bkData.street}
+            city={bkData.city}
+            postalCode={bkData.postalCode}
+            lat={bkData.lat}
+            lng={bkData.lng}
+            sellerName={bkData.sellerName}
+            phone={bkData.phone}
+            email={bkData.email}
+            preferredContact={bkData.preferredContact}
+            hidePhone={bkData.hidePhone}
+            media={bkData.media}
+            onEdit={(stepIndex) => setCurrentStep(stepIndex)}
+          />
+        );
+      // Business & Industry steps
+      case 'biStepBasic':
+        return (
+          <StepBusinessIndustryBasicInfo
+            locale={locale}
+            data={{ title: biData.title, description: biData.description, subcategory: biData.subcategory }}
+            onChange={(updates) => {
+              updateBIData(updates);
+            }}
+          />
+        );
+      case 'biStepSpecs':
+        return (
+          <StepBusinessIndustrySpecs
+            locale={locale}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            data={{ subcategory: biData.subcategory, specs: biData.specs as any } as any}
+            onChange={(updates) => {
+              Object.entries(updates as Record<string, unknown>).forEach(([key, value]) => {
+                if (key === 'subcategory') {
+                  updateBIData({ subcategory: value as BusinessIndustrySubcategory });
+                } else {
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  updateBIData({ specs: { ...biData.specs, [key]: value } as any });
+                }
+              });
+            }}
+          />
+        );
+      case 'biStepLocationContact':
+        return (
+          <StepBusinessIndustryLocationContact
+            locale={locale}
+            data={{
+              street: biData.street,
+              city: biData.city,
+              postalCode: biData.postalCode,
+              lat: biData.lat,
+              lng: biData.lng,
+              sellerName: biData.sellerName,
+              phone: biData.phone,
+              email: biData.email,
+              preferredContact: biData.preferredContact,
+              hidePhone: biData.hidePhone,
+            }}
+            onChange={(data) =>
+              setBiData((prev) => ({
+                ...prev,
+                ...data,
+              }))
+            }
+          />
+        );
+      case 'biStepMedia':
+        return (
+          <StepBusinessIndustryMedia
+            locale={locale}
+            data={biData.media}
+            onChange={(mediaUpdate) =>
+              setBiData((prev) => ({
+                ...prev,
+                media: { ...prev.media, ...mediaUpdate },
+              }))
+            }
+          />
+        );
+      case 'biStepReview':
+        return (
+          <StepBusinessIndustryReview
+            locale={locale}
+            title={biData.title}
+            description={biData.description}
+            subcategory={biData.subcategory}
+            condition={biData.condition}
+            businessType={biData.businessType}
+            industrySector={biData.industrySector}
+            price={biData.price}
+            priceType={biData.priceType}
+            deliveryAvailable={biData.deliveryAvailable}
+            warranty={biData.warranty}
+            specs={biData.specs}
+            street={biData.street}
+            city={biData.city}
+            postalCode={biData.postalCode}
+            lat={biData.lat}
+            lng={biData.lng}
+            sellerName={biData.sellerName}
+            phone={biData.phone}
+            email={biData.email}
+            preferredContact={biData.preferredContact}
+            hidePhone={biData.hidePhone}
+            media={biData.media}
+            onEdit={(stepIndex) => setCurrentStep(stepIndex)}
+          />
+        );
+      // Shopping & Groceries steps
+      case 'sgStepBasic':
+        return (
+          <StepShoppingGroceriesBasicInfo
+            locale={locale}
+            data={{ title: sgData.title, description: sgData.description, subcategory: sgData.subcategory }}
+            onChange={(updates) => {
+              updateSGData(updates);
+            }}
+          />
+        );
+      case 'sgStepSpecs':
+        return (
+          <StepShoppingGroceriesSpecs
+            locale={locale}
+            data={{
+              subcategory: sgData.subcategory,
+              quantity: String(sgData.quantity),
+              unit: sgData.unit,
+              condition: sgData.condition,
+              brand: sgData.brand,
+              price: String(sgData.price),
+              priceType: sgData.priceType,
+              deliveryAvailable: sgData.deliveryAvailable,
+              minOrder: sgData.minOrder,
+              ...sgData.specs,
+            }}
+            onChange={(updates) => {
+              Object.entries(updates as Record<string, unknown>).forEach(([key, value]) => {
+                if (key === 'subcategory') {
+                  updateSGData({ subcategory: value as ShoppingGroceriesSubcategory });
+                } else if (['quantity', 'unit', 'condition', 'brand', 'price', 'priceType', 'deliveryAvailable', 'minOrder'].includes(key)) {
+                  updateSGData({ [key]: value as string | number | '' });
+                } else {
+                  updateSGData({ specs: { ...sgData.specs, [key]: value } });
+                }
+              });
+            }}
+          />
+        );
+      case 'sgStepLocationContact':
+        return (
+          <StepShoppingGroceriesLocationContact
+            locale={locale}
+            data={{
+              street: sgData.street,
+              city: sgData.city,
+              postalCode: sgData.postalCode,
+              lat: sgData.lat,
+              lng: sgData.lng,
+              sellerName: sgData.sellerName,
+              phone: sgData.phone,
+              email: sgData.email,
+              preferredContact: sgData.preferredContact,
+              hidePhone: sgData.hidePhone,
+            }}
+            onChange={(data) =>
+              setSgData((prev) => ({
+                ...prev,
+                ...data,
+              }))
+            }
+          />
+        );
+      case 'sgStepMedia':
+        return (
+          <StepShoppingGroceriesMedia
+            locale={locale}
+            data={sgData.media}
+            onChange={(mediaUpdate) =>
+              setSgData((prev) => ({
+                ...prev,
+                media: { ...prev.media, ...mediaUpdate },
+              }))
+            }
+          />
+        );
+      case 'sgStepReview':
+        return (
+          <StepShoppingGroceriesReview
+            locale={locale}
+            title={sgData.title}
+            description={sgData.description}
+            subcategory={sgData.subcategory}
+            quantity={sgData.quantity}
+            unit={sgData.unit}
+            condition={sgData.condition}
+            brand={sgData.brand}
+            price={sgData.price}
+            priceType={sgData.priceType}
+            deliveryAvailable={sgData.deliveryAvailable}
+            minOrder={sgData.minOrder}
+            street={sgData.street}
+            city={sgData.city}
+            postalCode={sgData.postalCode}
+            lat={sgData.lat}
+            lng={sgData.lng}
+            sellerName={sgData.sellerName}
+            phone={sgData.phone}
+            email={sgData.email}
+            preferredContact={sgData.preferredContact}
+            hidePhone={sgData.hidePhone}
+            specs={sgData.specs}
+            media={sgData.media}
+            onEdit={(stepIndex) => setCurrentStep(stepIndex)}
+          />
+        );
       default:
         return null;
     }
@@ -3230,6 +5296,60 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
             </button>
           )}
 
+          {isSportsHobby && (
+            <button
+              onClick={handleClearSportsHobbyForm}
+              className={`px-4 py-2.5 rounded-lg font-medium transition border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 ${rtl ? 'text-right' : 'text-left'}`}
+            >
+              Clear form
+            </button>
+          )}
+
+          {isFoodAgriculture && (
+            <button
+              onClick={handleClearFoodAgricultureForm}
+              className={`px-4 py-2.5 rounded-lg font-medium transition border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 ${rtl ? 'text-right' : 'text-left'}`}
+            >
+              Clear form
+            </button>
+          )}
+
+          {isBooksEducation && (
+            <button
+              onClick={handleClearBooksEducationForm}
+              className={`px-4 py-2.5 rounded-lg font-medium transition border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 ${rtl ? 'text-right' : 'text-left'}`}
+            >
+              Clear form
+            </button>
+          )}
+
+          {isBabyKids && (
+            <button
+              onClick={handleClearBabyKidsForm}
+              className={`px-4 py-2.5 rounded-lg font-medium transition border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 ${rtl ? 'text-right' : 'text-left'}`}
+            >
+              Clear form
+            </button>
+          )}
+
+          {isBusinessIndustry && (
+            <button
+              onClick={handleClearBusinessIndustryForm}
+              className={`px-4 py-2.5 rounded-lg font-medium transition border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 ${rtl ? 'text-right' : 'text-left'}`}
+            >
+              Clear form
+            </button>
+          )}
+
+          {isShoppingGroceries && (
+            <button
+              onClick={handleClearShoppingGroceriesForm}
+              className={`px-4 py-2.5 rounded-lg font-medium transition border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 ${rtl ? 'text-right' : 'text-left'}`}
+            >
+              Clear form
+            </button>
+          )}
+
           {currentStep < steps.length - 1 ? (
             <button
               onClick={handleNext}
@@ -3298,6 +5418,9 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
                   <div><span className="font-semibold text-slate-700">{tVH('year')}:</span> {vhData.specs.year}</div>
                   <div><span className="font-semibold text-slate-700">{tVH('make')}:</span> {vhData.specs.make === '__other__' ? vhData.specs.customMake : vhData.specs.make}</div>
                   <div><span className="font-semibold text-slate-700">{tVH('model')}:</span> {vhData.specs.model === '__other__' ? vhData.specs.customModel : vhData.specs.model}</div>
+                  {vhData.specs.vin && (
+                    <div><span className="font-semibold text-slate-700">{tVH('vin')}:</span> {vhData.specs.vin}</div>
+                  )}
                   <div><span className="font-semibold text-slate-700">{tCommon('price')}:</span> {vhData.condition.price} {vhData.condition.currency}</div>
                   <div><span className="font-semibold text-slate-700">{tVH('mileage')}:</span> {vhData.condition.mileage} km</div>
                   <div><span className="font-semibold text-slate-700">{tVH('city')}:</span> {vhData.address.city}</div>
@@ -3345,7 +5468,70 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
                   <div><span className="font-semibold text-slate-700">{tHB('images')}:</span> {hbData.media.images.length}</div>
                 </>
               )}
-              {!isVehicles && !isRealEstate && !isElectronics && !isFashion && !isSpareParts && !isHealthBeauty && (
+              {isAnimals && (
+                <>
+                  <div><span className="font-semibold text-slate-700">{tAN('subcategory')}:</span> {anData.subcategory || '-'}</div>
+                  <div><span className="font-semibold text-slate-700">{tAN('title')}:</span> {anData.title || '-'}</div>
+                  <div><span className="font-semibold text-slate-700">{tAN('breed')}:</span> {anData.breed || '-'}</div>
+                  <div><span className="font-semibold text-slate-700">{tAN('quantity')}:</span> {anData.quantity === '' ? '-' : anData.quantity}</div>
+                  <div><span className="font-semibold text-slate-700">{tAN('price')}:</span> {anData.price === '' ? '-' : `${anData.price} ${anData.priceType === 'negotiable' ? tAN('priceNegotiable') : tAN('priceFixed')}`}</div>
+                  <div><span className="font-semibold text-slate-700">{tAN('city')}:</span> {anData.city || '-'}</div>
+                  <div><span className="font-semibold text-slate-700">{tAN('phone')}:</span> {anData.phone || '-'}</div>
+                  <div><span className="font-semibold text-slate-700">{tAN('photos')}:</span> {anData.media.photos.length}</div>
+                </>
+              )}
+              {isFoodAgriculture && (
+                <>
+                  <div><span className="font-semibold text-slate-700">{tFAG('subcategory')}:</span> {fagData.subcategory || '-'}</div>
+                  <div><span className="font-semibold text-slate-700">{tFAG('title')}:</span> {fagData.title || '-'}</div>
+                  <div><span className="font-semibold text-slate-700">{tFAG('quantity')}:</span> {fagData.quantity === '' ? '-' : fagData.quantity}</div>
+                  <div><span className="font-semibold text-slate-700">{tFAG('price')}:</span> {fagData.price === '' ? '-' : `${fagData.price} ${fagData.priceType === 'negotiable' ? tFAG('priceNegotiable') : tFAG('priceFixed')}`}</div>
+                  <div><span className="font-semibold text-slate-700">{tFAG('city')}:</span> {fagData.city || '-'}</div>
+                  <div><span className="font-semibold text-slate-700">{tFAG('phone')}:</span> {fagData.phone || '-'}</div>
+                  <div><span className="font-semibold text-slate-700">{tFAG('photos')}:</span> {fagData.media.photos.length}</div>
+                </>
+              )}
+              {isBooksEducation && (
+                <>
+                  <div><span className="font-semibold text-slate-700">{tBE('subcategory')}:</span> {beData.subcategory || '-'}</div>
+                  <div><span className="font-semibold text-slate-700">{tBE('title')}:</span> {beData.title || '-'}</div>
+                  <div><span className="font-semibold text-slate-700">{tBE('price')}:</span> {beData.price === '' ? '-' : `${beData.price} ${beData.priceType === 'negotiable' ? tBE('priceNegotiable') : tBE('priceFixed')}`}</div>
+                  <div><span className="font-semibold text-slate-700">{tBE('city')}:</span> {beData.city || '-'}</div>
+                  <div><span className="font-semibold text-slate-700">{tBE('phone')}:</span> {beData.phone || '-'}</div>
+                  <div><span className="font-semibold text-slate-700">{tBE('photos')}:</span> {beData.media.photos.length}</div>
+                </>
+              )}
+              {isBabyKids && (
+                <>
+                  <div><span className="font-semibold text-slate-700">{tBK('subcategory')}:</span> {bkData.subcategory || '-'}</div>
+                  <div><span className="font-semibold text-slate-700">{tBK('title')}:</span> {bkData.title || '-'}</div>
+                  <div><span className="font-semibold text-slate-700">{tBK('price')}:</span> {bkData.price === '' ? '-' : `${bkData.price} ${bkData.priceType === 'negotiable' ? tBK('priceNegotiable') : tBK('priceFixed')}`}</div>
+                  <div><span className="font-semibold text-slate-700">{tBK('city')}:</span> {bkData.city || '-'}</div>
+                  <div><span className="font-semibold text-slate-700">{tBK('phone')}:</span> {bkData.phone || '-'}</div>
+                  <div><span className="font-semibold text-slate-700">{tBK('photos')}:</span> {bkData.media.photos.length}</div>
+                </>
+              )}
+              {isBusinessIndustry && (
+                <>
+                  <div><span className="font-semibold text-slate-700">{tBI('subcategory')}:</span> {biData.subcategory || '-'}</div>
+                  <div><span className="font-semibold text-slate-700">{tBI('title')}:</span> {biData.title || '-'}</div>
+                  <div><span className="font-semibold text-slate-700">{tBI('price')}:</span> {biData.price === '' ? '-' : `${biData.price} ${biData.priceType === 'negotiable' ? tBI('priceNegotiable') : tBI('priceFixed')}`}</div>
+                  <div><span className="font-semibold text-slate-700">{tBI('city')}:</span> {biData.city || '-'}</div>
+                  <div><span className="font-semibold text-slate-700">{tBI('phone')}:</span> {biData.phone || '-'}</div>
+                  <div><span className="font-semibold text-slate-700">{tBI('photos')}:</span> {biData.media.photos.length}</div>
+                </>
+              )}
+              {isShoppingGroceries && (
+                <>
+                  <div><span className="font-semibold text-slate-700">{tSG('subcategory')}:</span> {sgData.subcategory || '-'}</div>
+                  <div><span className="font-semibold text-slate-700">{tSG('title')}:</span> {sgData.title || '-'}</div>
+                  <div><span className="font-semibold text-slate-700">{tSG('price')}:</span> {sgData.price === '' ? '-' : `${sgData.price} ${sgData.priceType === 'negotiable' ? tSG('priceNegotiable') : tSG('priceFixed')}`}</div>
+                  <div><span className="font-semibold text-slate-700">{tSG('city')}:</span> {sgData.city || '-'}</div>
+                  <div><span className="font-semibold text-slate-700">{tSG('phone')}:</span> {sgData.phone || '-'}</div>
+                  <div><span className="font-semibold text-slate-700">{tSG('photos')}:</span> {sgData.media.photos.length}</div>
+                </>
+              )}
+              {!isVehicles && !isRealEstate && !isElectronics && !isFashion && !isSpareParts && !isHealthBeauty && !isAnimals && !isFoodAgriculture && !isBooksEducation && !isBabyKids && !isBusinessIndustry && !isShoppingGroceries && (
                 <>
                   <div><span className="font-semibold text-slate-700">{t('stepDetails')}:</span> {formData.title}</div>
                   <div><span className="font-semibold text-slate-700">{tCommon('price')}:</span> {formData.price} {formData.currency}</div>

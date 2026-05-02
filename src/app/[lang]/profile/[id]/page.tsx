@@ -48,7 +48,7 @@ export default async function PublicProfile({ params }: PageProps) {
     return (
       <>
         <Header locale={locale} />
-        <main className="flex-1 bg-slate-50 py-8">
+        <main className="flex-1 bg-gradient-to-b from-slate-50 via-white/30 to-slate-50 py-8">
           <div className="container mx-auto px-4 max-w-5xl">
             <PublicProfilePage
               locale={locale}
@@ -126,7 +126,7 @@ export default async function PublicProfile({ params }: PageProps) {
   return (
     <>
       <Header locale={locale} />
-      <main className="flex-1 bg-slate-50 py-8">
+      <main className="flex-1 bg-gradient-to-b from-slate-50 via-white/30 to-slate-50 py-8">
         <div className="container mx-auto px-4 max-w-5xl">
           <PublicProfilePage
             locale={locale}

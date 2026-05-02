@@ -91,12 +91,14 @@ export const MessagesPage: React.FC<MessagesPageProps> = ({ locale, conversation
   if (!authLoading && !user) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-          <MessageCircle className="w-12 h-12 mx-auto mb-3 text-slate-300" />
-          <p className="text-slate-500 mb-4">{t('loginRequired')}</p>
+        <div className="w-full max-w-md rounded-3xl border border-slate-200/60 bg-white/80 p-8 text-center shadow-xl shadow-slate-900/5 backdrop-blur-xl">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-100 to-slate-50">
+            <MessageCircle className="w-8 h-8 text-slate-400" />
+          </div>
+          <p className="text-slate-500 mb-5">{t('loginRequired')}</p>
           <a
             href={`/${locale}/login`}
-            className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition text-sm font-medium"
+            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary-500/25 transition-all hover:shadow-xl hover:shadow-primary-500/30 hover:brightness-110"
           >
             {t('login')}
           </a>
@@ -120,7 +122,7 @@ export const MessagesPage: React.FC<MessagesPageProps> = ({ locale, conversation
         </p>
       </motion.div>
 
-      <div className="glass-panel mt-4 h-[calc(100vh-220px)] min-h-[560px] overflow-hidden rounded-3xl border border-slate-200 shadow-sm">
+      <div className="mt-4 h-[calc(100vh-220px)] min-h-[560px] overflow-hidden rounded-3xl border border-slate-200/60 bg-white/80 shadow-xl shadow-slate-900/5 backdrop-blur-xl">
         <div className={`flex h-full ${isRtl ? 'flex-row-reverse' : ''}`}>
           <div className={`
             w-full md:w-80 lg:w-96 border-slate-200 overflow-y-auto flex-shrink-0

@@ -6,7 +6,8 @@ import { BaseListingDetails } from './BaseListingDetails';
 
 /**
  * ListingDetails component - Wrapper around BaseListingDetails for the listing details page
- * This component transforms the data from the page and passes it to the base component
+ * This component transforms the data from the page and passes it to BaseListingDetails
+ * BaseListingDetails includes comprehensive localization support for all categories including vehicles
  */
 export const ListingDetails: React.FC<ListingDetailsProps> = ({ listing, seller, locale }) => {
   // Transform the data to match ListingData interface
@@ -47,8 +48,9 @@ export const ListingDetails: React.FC<ListingDetailsProps> = ({ listing, seller,
     member_since: seller.member_since,
   };
 
-  // Type assertion: ListingData can be treated as ListingCategory for the generic component
-  // This works because ListingData has all the base properties needed
+  // Use BaseListingDetails for all categories (including vehicles)
+  // VehicleLocalizedDetails has TypeScript/runtime issues, but BaseListingDetails
+  // already includes all the localization enhancements needed
   return (
     <BaseListingDetails<ListingCategory>
       listingData={listingData as ListingCategory}

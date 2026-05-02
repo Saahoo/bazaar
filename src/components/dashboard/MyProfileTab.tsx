@@ -78,7 +78,7 @@ export const MyProfileTab: React.FC<MyProfileTabProps> = ({ locale }) => {
 
   return (
     <div className="flex justify-center">
-      <div className="bg-white rounded-lg border border-slate-200 p-6 sm:p-8 w-full max-w-lg">
+      <div className="rounded-2xl border border-slate-200/60 bg-white/80 shadow-lg shadow-slate-900/5 backdrop-blur-xl p-6 sm:p-8 w-full max-w-lg">
         {/* Avatar & Name */}
         <div className="flex flex-col items-center text-center">
           <div className="relative w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center mb-4 overflow-hidden">

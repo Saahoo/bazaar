@@ -12,6 +12,16 @@ export interface VehicleAddressData {
   area: string;
   lat: number | null;
   lng: number | null;
+  // Privacy and visibility settings
+  showExactAddress: boolean;
+  showOnMap: boolean;
+  // Region-specific address fields
+  postalCode: string;
+  landmark: string;
+  // Dealer information (if applicable)
+  isDealerListing: boolean;
+  dealerName: string;
+  dealerLicense: string;
 }
 
 interface StepVehicleAddressProps {
@@ -190,6 +200,144 @@ export const StepVehicleAddress: React.FC<StepVehicleAddressProps> = ({
           className={inputClass}
           dir={rtl ? 'rtl' : 'ltr'}
         />
+      </div>
+
+      {/* Postal Code */}
+      <div>
+        <label className={labelClass}>{t('postalCode')}</label>
+        <input
+          type="text"
+          value={data.postalCode}
+          onChange={(e) => onChange({ postalCode: e.target.value })}
+          placeholder={t('enterPostalCode')}
+          className={inputClass}
+          dir={rtl ? 'rtl' : 'ltr'}
+        />
+      </div>
+
+      {/* Landmark */}
+      <div>
+        <label className={labelClass}>{t('landmark')}</label>
+        <input
+          type="text"
+          value={data.landmark}
+          onChange={(e) => onChange({ landmark: e.target.value })}
+          placeholder={t('enterLandmark')}
+          className={inputClass}
+          dir={rtl ? 'rtl' : 'ltr'}
+        />
+      </div>
+
+      {/* Privacy Toggles */}
+      <div className="space-y-4 p-4 border border-slate-200 rounded-lg bg-slate-50">
+        <h4 className={`text-md font-medium text-slate-800 ${rtl ? 'text-right' : 'text-left'}`}>
+          {t('privacySettings')}
+        </h4>
+        
+        <div className={`flex items-center justify-between ${rtl ? 'flex-row-reverse' : ''}`}>
+          <div>
+            <label className={`block text-sm font-medium text-slate-700 ${rtl ? 'text-right' : 'text-left'}`}>
+              {t('showExactAddress')}
+            </label>
+            <p className={`text-xs text-slate-500 ${rtl ? 'text-right' : 'text-left'}`}>
+              {t('showExactAddressHint')}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => onChange({ showExactAddress: !data.showExactAddress })}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              data.showExactAddress ? 'bg-primary-600' : 'bg-slate-300'
+            }`}
+            aria-label={data.showExactAddress ? t('exactAddressShown') : t('exactAddressHidden')}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                data.showExactAddress ? (rtl ? 'translate-x-[-1.25rem]' : 'translate-x-6') : 'translate-x-1'
+              }`}
+            />
+          </button>
+        </div>
+
+        <div className={`flex items-center justify-between ${rtl ? 'flex-row-reverse' : ''}`}>
+          <div>
+            <label className={`block text-sm font-medium text-slate-700 ${rtl ? 'text-right' : 'text-left'}`}>
+              {t('showOnMap')}
+            </label>
+            <p className={`text-xs text-slate-500 ${rtl ? 'text-right' : 'text-left'}`}>
+              {t('showOnMapHint')}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => onChange({ showOnMap: !data.showOnMap })}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              data.showOnMap ? 'bg-primary-600' : 'bg-slate-300'
+            }`}
+            aria-label={data.showOnMap ? t('mapShown') : t('mapHidden')}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                data.showOnMap ? (rtl ? 'translate-x-[-1.25rem]' : 'translate-x-6') : 'translate-x-1'
+              }`}
+            />
+          </button>
+        </div>
+      </div>
+
+      {/* Dealer Information */}
+      <div className="space-y-4 p-4 border border-slate-200 rounded-lg bg-blue-50">
+        <div className={`flex items-center justify-between ${rtl ? 'flex-row-reverse' : ''}`}>
+          <h4 className={`text-md font-medium text-blue-800 ${rtl ? 'text-right' : 'text-left'}`}>
+            {t('dealerInformation')}
+          </h4>
+          <button
+            type="button"
+            onClick={() => onChange({ isDealerListing: !data.isDealerListing })}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              data.isDealerListing ? 'bg-blue-600' : 'bg-slate-300'
+            }`}
+            aria-label={data.isDealerListing ? t('dealerModeOn') : t('dealerModeOff')}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                data.isDealerListing ? (rtl ? 'translate-x-[-1.25rem]' : 'translate-x-6') : 'translate-x-1'
+              }`}
+            />
+          </button>
+        </div>
+
+        {data.isDealerListing && (
+          <div className="space-y-4">
+            <div>
+              <label className={labelClass}>{t('dealerName')}</label>
+              <input
+                type="text"
+                value={data.dealerName}
+                onChange={(e) => onChange({ dealerName: e.target.value })}
+                placeholder={t('enterDealerName')}
+                className={inputClass}
+                dir={rtl ? 'rtl' : 'ltr'}
+              />
+            </div>
+
+            <div>
+              <label className={labelClass}>{t('dealerLicense')}</label>
+              <input
+                type="text"
+                value={data.dealerLicense}
+                onChange={(e) => onChange({ dealerLicense: e.target.value })}
+                placeholder={t('enterDealerLicense')}
+                className={inputClass}
+                dir={rtl ? 'rtl' : 'ltr'}
+              />
+            </div>
+
+            <p className={`text-xs text-blue-600 ${rtl ? 'text-right' : 'text-left'}`}>
+              {t('dealerInfoHint')}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Map Location */}

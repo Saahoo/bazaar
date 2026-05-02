@@ -16,6 +16,7 @@ export interface VehicleSpecsData {
   customMake: string;
   model: string;
   customModel: string;
+  vin: string;
   engineType: EngineType | '';
   wheelDriveType: WheelDriveType | '';
   trimLevel: string;
@@ -25,6 +26,10 @@ export interface VehicleSpecsData {
   gearType: GearType | '';
   engineSize: string;
   enginePower: string;
+  // Motorcycle-specific fields
+  bikeType?: string;
+  displacementCC?: string;
+  numberOfCylinders?: string;
 }
 
 interface StepVehicleSpecsProps {
@@ -36,7 +41,7 @@ interface StepVehicleSpecsProps {
 
 export const StepVehicleSpecs: React.FC<StepVehicleSpecsProps> = ({
   locale,
-  vehicleType: _vehicleType,
+  vehicleType,
   data,
   onChange,
 }) => {
@@ -46,6 +51,9 @@ export const StepVehicleSpecs: React.FC<StepVehicleSpecsProps> = ({
   const inputClass =
     `w-full px-4 py-2.5 border border-slate-300 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-500 ${rtl ? 'text-right' : 'text-left'}`;
   const labelClass = `block text-sm font-medium text-slate-700 mb-1.5 ${rtl ? 'text-right' : 'text-left'}`;
+
+  // Conditional logic helpers
+  const isMotorcycle = vehicleType === 'motorcycle';
 
   const makeOptions = Object.entries(VEHICLE_DATA)
     .map(([makeName, entry]) => ({ makeName, makeKey: entry.makeKey }))
@@ -226,6 +234,23 @@ export const StepVehicleSpecs: React.FC<StepVehicleSpecsProps> = ({
         )}
       </div>
 
+      {/* VIN */}
+      <div>
+        <label className={labelClass}>{t('vin')}</label>
+        <input
+          type="text"
+          value={data.vin}
+          onChange={(e) => onChange({ vin: e.target.value })}
+          placeholder={t('enterVIN')}
+          className={inputClass}
+          dir="ltr"
+          maxLength={17}
+        />
+        <p className={`mt-1 text-xs text-slate-400 ${rtl ? 'text-right' : 'text-left'}`}>
+          {t('vinHint')}
+        </p>
+      </div>
+
       {/* Body Type */}
       <div>
         <label className={labelClass}>{t('bodyType')}</label>
@@ -340,12 +365,12 @@ export const StepVehicleSpecs: React.FC<StepVehicleSpecsProps> = ({
             type="text"
             value={data.engineSize}
             onChange={(e) => onChange({ engineSize: e.target.value })}
-            placeholder={t('enterEngineSize')}
+            placeholder={isMotorcycle ? t('enterEngineSizeCC') : t('enterEngineSize')}
             className={inputClass}
             dir="ltr"
           />
           <p className={`mt-1 text-xs text-slate-400 ${rtl ? 'text-right' : 'text-left'}`}>
-            {t('engineSizeHint')}
+            {isMotorcycle ? t('engineSizeHintCC') : t('engineSizeHint')}
           </p>
         </div>
         <div>
@@ -363,6 +388,62 @@ export const StepVehicleSpecs: React.FC<StepVehicleSpecsProps> = ({
           </p>
         </div>
       </div>
+
+      {/* Motorcycle-specific fields */}
+      {isMotorcycle && (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className={labelClass}>{t('bikeType')}</label>
+              <select
+                aria-label={t('bikeType')}
+                title={t('bikeType')}
+                value={data.bikeType || ''}
+                onChange={(e) => onChange({ bikeType: e.target.value })}
+                className={`${inputClass} bg-white`}
+                dir={rtl ? 'rtl' : 'ltr'}
+              >
+                <option value="">{t('selectBikeType')}</option>
+                <option value="sport">{t('bikeType_sport')}</option>
+                <option value="cruiser">{t('bikeType_cruiser')}</option>
+                <option value="touring">{t('bikeType_touring')}</option>
+                <option value="offRoad">{t('bikeType_offRoad')}</option>
+                <option value="scooter">{t('bikeType_scooter')}</option>
+                <option value="standard">{t('bikeType_standard')}</option>
+              </select>
+            </div>
+            <div>
+              <label className={labelClass}>{t('numberOfCylinders')}</label>
+              <select
+                aria-label={t('numberOfCylinders')}
+                title={t('numberOfCylinders')}
+                value={data.numberOfCylinders || ''}
+                onChange={(e) => onChange({ numberOfCylinders: e.target.value })}
+                className={`${inputClass} bg-white`}
+                dir={rtl ? 'rtl' : 'ltr'}
+              >
+                <option value="">{t('selectCylinders')}</option>
+                <option value="1">{t('cylinders_1')}</option>
+                <option value="2">{t('cylinders_2')}</option>
+                <option value="3">{t('cylinders_3')}</option>
+                <option value="4">{t('cylinders_4')}</option>
+                <option value="6">{t('cylinders_6')}</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className={labelClass}>{t('displacementCC')}</label>
+            <input
+              type="text"
+              value={data.displacementCC || ''}
+              onChange={(e) => onChange({ displacementCC: e.target.value })}
+              placeholder={t('enterDisplacementCC')}
+              className={inputClass}
+              dir="ltr"
+            />
+          </div>
+        </>
+      )}
     </div>
   );
 };

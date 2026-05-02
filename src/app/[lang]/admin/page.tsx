@@ -39,7 +39,7 @@ export default async function AdminPage({ params }: PageProps) {
   return (
     <>
       <Header locale={locale} />
-      <main className="flex-1 bg-slate-50 py-6">
+      <main className="flex-1 bg-gradient-to-b from-slate-50 via-white/30 to-slate-50 py-6">
         <AdminPanel locale={locale} />
       </main>
     </>

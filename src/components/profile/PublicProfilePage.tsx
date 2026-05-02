@@ -51,8 +51,8 @@ export const PublicProfilePage: React.FC<PublicProfilePageProps> = ({ locale, pr
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        <div className="h-32 bg-gradient-to-r from-primary-500 to-primary-700" />
+      <div className="rounded-2xl border border-slate-200/60 bg-white/80 shadow-lg shadow-slate-900/5 backdrop-blur-xl overflow-hidden">
+        <div className="h-32 bg-gradient-to-r from-primary-500 to-primary-600" />
         <div className="px-6 pb-6">
           <div className={`flex items-end gap-4 -mt-12 mb-6 ${rtl ? 'flex-row-reverse' : ''}`}>
             <div className="relative w-24 h-24 rounded-2xl bg-white border-4 border-white shadow-md overflow-hidden flex items-center justify-center bg-slate-100">
@@ -72,15 +72,15 @@ export const PublicProfilePage: React.FC<PublicProfilePageProps> = ({ locale, pr
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-slate-50 rounded-xl p-4 text-center">
+            <div className="bg-slate-50/60 rounded-xl p-4 text-center backdrop-blur-sm border border-slate-100/60">
               <div className="text-xl font-bold text-slate-900">{stats.activeListings}</div>
               <div className="text-sm text-slate-500">Active Listings</div>
             </div>
-            <div className="bg-slate-50 rounded-xl p-4 text-center">
+            <div className="bg-slate-50/60 rounded-xl p-4 text-center backdrop-blur-sm border border-slate-100/60">
               <div className="text-xl font-bold text-slate-900">{stats.friends}</div>
               <div className="text-sm text-slate-500">Friends</div>
             </div>
-            <div className="bg-slate-50 rounded-xl p-4 text-center">
+            <div className="bg-slate-50/60 rounded-xl p-4 text-center backdrop-blur-sm border border-slate-100/60">
               <div className="text-xl font-bold text-slate-900">{stats.favoriteUsers}</div>
               <div className="text-sm text-slate-500">Favorite Users</div>
             </div>
@@ -88,7 +88,7 @@ export const PublicProfilePage: React.FC<PublicProfilePageProps> = ({ locale, pr
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+      <div className="rounded-2xl border border-slate-200/60 bg-white/80 shadow-lg shadow-slate-900/5 backdrop-blur-xl p-6">
         <h2 className={`text-lg font-semibold text-slate-900 mb-5 ${rtl ? 'text-right' : ''}`}>Profile Details</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <DetailRow icon={BadgeInfo} label="Profile Type" value={profileTypeLabel} rtl={rtl} />
@@ -111,7 +111,7 @@ export const PublicProfilePage: React.FC<PublicProfilePageProps> = ({ locale, pr
         )}
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+      <div className="rounded-2xl border border-slate-200/60 bg-white/80 shadow-lg shadow-slate-900/5 backdrop-blur-xl p-6">
         <h2 className={`text-lg font-semibold text-slate-900 mb-4 ${rtl ? 'text-right' : ''}`}>Connect</h2>
         <ProfileRelationButtons
           locale={locale}

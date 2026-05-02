@@ -24,7 +24,7 @@ export const SortDropdown: React.FC<SortDropdownProps> = ({ locale, value, onCha
         id="sort-select"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className={`px-3 py-2 border border-slate-300 rounded-md text-sm bg-white focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 ${isRtl ? 'text-right' : 'text-left'}`}
+        className={`rounded-xl border border-slate-200/80 bg-white/60 px-3 py-2 text-sm backdrop-blur-sm transition-all duration-200 focus:border-primary-400 focus:bg-white/80 focus:shadow-lg focus:ring-4 focus:ring-primary-100/50 focus:outline-none ${isRtl ? 'text-right' : 'text-left'}`}
       >
         <option value="newest">{t('sortNewest')}</option>
         <option value="oldest">{t('sortOldest')}</option>

@@ -395,7 +395,7 @@ export const MyAdsTab: React.FC<MyAdsTabProps> = ({ locale }) => {
             return (
               <div
                 key={draft.id}
-                className="bg-white rounded-lg border border-slate-200 p-4 hover:shadow-sm transition-shadow"
+                className="rounded-xl border border-slate-200/60 bg-white/80 p-4 hover:shadow-md backdrop-blur-sm transition-shadow"
               >
                 <div className={`flex flex-col sm:flex-row sm:items-center gap-4 ${isRtl ? 'sm:flex-row-reverse' : ''}`}>
                   <div className="w-16 h-16 sm:w-20 sm:h-20 bg-primary-50 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
@@ -453,7 +453,7 @@ export const MyAdsTab: React.FC<MyAdsTabProps> = ({ locale }) => {
         return (
           <div
             key={listing.id}
-            className="bg-white rounded-lg border border-slate-200 p-4 hover:shadow-sm transition-shadow"
+            className="rounded-xl border border-slate-200/60 bg-white/80 p-4 hover:shadow-md backdrop-blur-sm transition-shadow"
           >
             <div
               className={`flex flex-col sm:flex-row sm:items-center gap-4 ${isRtl ? 'sm:flex-row-reverse' : ''}`}
@@ -528,7 +528,7 @@ export const MyAdsTab: React.FC<MyAdsTabProps> = ({ locale }) => {
 
       {deleteTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50">
-          <div className={`w-full max-w-md bg-white rounded-xl shadow-xl border border-slate-200 p-5 ${isRtl ? 'text-right' : 'text-left'}`}>
+          <div className={`w-full max-w-md bg-white/90 rounded-2xl shadow-xl border border-slate-200/60 p-5 backdrop-blur-xl ${isRtl ? 'text-right' : 'text-left'}`}>
             <h3 className="text-base font-semibold text-slate-900 mb-2">
               {locale === 'en'
                 ? 'Why are you deleting this listing?'
@@ -600,7 +600,7 @@ export const MyAdsTab: React.FC<MyAdsTabProps> = ({ locale }) => {
 
       {editTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50">
-          <div className={`w-full max-w-lg bg-white rounded-xl shadow-xl border border-slate-200 p-5 max-h-[90vh] overflow-y-auto ${isRtl ? 'text-right' : 'text-left'}`}>
+          <div className={`w-full max-w-lg bg-white/90 rounded-2xl shadow-xl border border-slate-200/60 p-5 max-h-[90vh] overflow-y-auto backdrop-blur-xl ${isRtl ? 'text-right' : 'text-left'}`}>
             <h3 className="text-base font-semibold text-slate-900 mb-4">
               {locale === 'en' ? 'Edit listing' : locale === 'ps' ? 'اعلان سمول' : 'ویرایش آگهی'}
             </h3>

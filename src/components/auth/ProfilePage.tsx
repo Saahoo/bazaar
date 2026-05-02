@@ -49,7 +49,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ locale }) => {
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const inputClass = `w-full px-4 py-2.5 border border-slate-300 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-500 ${rtl ? 'text-right' : 'text-left'}`;
+  const inputClass = `w-full px-4 py-2.5 border border-slate-200/80 rounded-xl bg-white/60 text-sm backdrop-blur-sm transition-all duration-200 focus:border-primary-400 focus:bg-white/80 focus:shadow-lg focus:ring-4 focus:ring-primary-100/50 focus:outline-none ${rtl ? 'text-right' : 'text-left'}`;
   const labelClass = `block text-sm font-medium text-slate-700 mb-1.5 ${rtl ? 'text-right' : 'text-left'}`;
 
   useEffect(() => {
@@ -213,7 +213,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ locale }) => {
 
   if (authLoading) {
     return (
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-12 text-center">
+      <div className="rounded-2xl border border-slate-200/60 bg-white/80 shadow-lg shadow-slate-900/5 backdrop-blur-xl p-12 text-center">
         <p className="text-slate-500">{tCommon('loading')}</p>
       </div>
     );
@@ -221,13 +221,13 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ locale }) => {
 
   if (!user) {
     return (
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-12 text-center">
+      <div className="rounded-2xl border border-slate-200/60 bg-white/80 shadow-lg shadow-slate-900/5 backdrop-blur-xl p-12 text-center">
         <User className="w-12 h-12 text-slate-300 mx-auto mb-4" />
         <h2 className="text-xl font-bold text-slate-900 mb-2">{tAuth('loginTitle')}</h2>
         <p className="text-slate-500 mb-6 text-sm">You need to be logged in to view your profile.</p>
         <Link
           href={`/${locale}/login`}
-          className="inline-block px-6 py-2.5 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition font-medium"
+          className="inline-block px-6 py-2.5 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl hover:shadow-lg hover:shadow-primary-500/25 transition font-medium"
         >
           {tAuth('loginButton')}
         </Link>
@@ -239,16 +239,16 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ locale }) => {
     <div className="space-y-6">
       {/* Error Banner */}
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-center justify-between">
+        <div className="bg-red-50/80 border border-red-200/60 text-red-700 px-4 py-3 rounded-xl text-sm flex items-center justify-between backdrop-blur-sm">
           <span>{error}</span>
           <button onClick={() => setError(null)} className="text-red-500 hover:text-red-700 font-bold ml-2">&times;</button>
         </div>
       )}
 
       {/* Profile Card */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="rounded-2xl border border-slate-200/60 bg-white/80 shadow-lg shadow-slate-900/5 backdrop-blur-xl overflow-hidden">
         {/* Cover */}
-        <div className="h-32 bg-gradient-to-r from-primary-500 to-primary-700" />
+        <div className="h-32 bg-gradient-to-r from-primary-500 to-primary-600" />
 
         {/* Avatar + Info */}
         <div className="px-6 pb-6">
@@ -292,10 +292,10 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ locale }) => {
             <button
               onClick={() => isEditing ? handleSave() : setIsEditing(true)}
               disabled={saving}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition ${
                 isEditing
-                  ? 'bg-green-600 text-white hover:bg-green-700'
-                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-md shadow-green-500/25 hover:shadow-lg'
+                  : 'bg-slate-100/80 text-slate-700 hover:bg-slate-200/80 backdrop-blur-sm'
               } ${rtl ? 'flex-row-reverse' : ''}`}
             >
               <Edit3 className="w-4 h-4" />
@@ -312,7 +312,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ locale }) => {
               { icon: User, label: 'Friends', value: stats.friends, color: 'text-indigo-600 bg-indigo-50' },
               { icon: BadgeInfo, label: 'Favorite Users', value: stats.favoriteUsers, color: 'text-amber-600 bg-amber-50' },
             ].map((stat) => (
-              <div key={stat.label} className="flex flex-col items-center p-4 bg-slate-50 rounded-xl">
+              <div key={stat.label} className="flex flex-col items-center p-4 bg-slate-50/60 rounded-xl backdrop-blur-sm border border-slate-100/60">
                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center mb-2 ${stat.color}`}>
                   <stat.icon className="w-5 h-5" />
                 </div>
@@ -325,7 +325,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ locale }) => {
       </div>
 
       {/* Profile Details */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+      <div className="rounded-2xl border border-slate-200/60 bg-white/80 shadow-lg shadow-slate-900/5 backdrop-blur-xl p-6">
         <h2 className={`text-lg font-semibold text-slate-900 mb-6 ${rtl ? 'text-right' : ''}`}>
           {t('accountSettings')}
         </h2>
@@ -339,7 +339,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ locale }) => {
                 <option value="vendor">Vendor</option>
               </select>
             ) : (
-              <div className={`flex items-center gap-3 px-4 py-2.5 bg-slate-50 rounded-lg ${rtl ? 'flex-row-reverse' : ''}`}>
+              <div className={`flex items-center gap-3 px-4 py-2.5 bg-slate-50/60 rounded-xl backdrop-blur-sm border border-slate-100/60 ${rtl ? 'flex-row-reverse' : ''}`}>
                 <Building2 className="w-4 h-4 text-slate-400" />
                 <span className="text-slate-700">{profileType === 'vendor' ? 'Vendor Profile' : 'Personal Profile'}</span>
               </div>
@@ -352,7 +352,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ locale }) => {
             {isEditing ? (
               <input type="text" value={name} onChange={(e) => setName(e.target.value)} className={inputClass} dir={rtl ? 'rtl' : 'ltr'} />
             ) : (
-              <div className={`flex items-center gap-3 px-4 py-2.5 bg-slate-50 rounded-lg ${rtl ? 'flex-row-reverse' : ''}`}>
+              <div className={`flex items-center gap-3 px-4 py-2.5 bg-slate-50/60 rounded-xl backdrop-blur-sm border border-slate-100/60 ${rtl ? 'flex-row-reverse' : ''}`}>
                 <User className="w-4 h-4 text-slate-400" />
                 <span className="text-slate-700">{name || '—'}</span>
               </div>
@@ -362,7 +362,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ locale }) => {
           {/* Email (read-only) */}
           <div>
             <label className={labelClass}>{tAuth('email')}</label>
-            <div className={`flex items-center gap-3 px-4 py-2.5 bg-slate-50 rounded-lg ${rtl ? 'flex-row-reverse' : ''}`}>
+            <div className={`flex items-center gap-3 px-4 py-2.5 bg-slate-50/60 rounded-xl backdrop-blur-sm border border-slate-100/60 ${rtl ? 'flex-row-reverse' : ''}`}>
               <Mail className="w-4 h-4 text-slate-400" />
               <span className="text-slate-700" dir="ltr">{email}</span>
             </div>
@@ -374,7 +374,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ locale }) => {
             {isEditing ? (
               <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClass} dir="ltr" />
             ) : (
-              <div className={`flex items-center gap-3 px-4 py-2.5 bg-slate-50 rounded-lg ${rtl ? 'flex-row-reverse' : ''}`}>
+              <div className={`flex items-center gap-3 px-4 py-2.5 bg-slate-50/60 rounded-xl backdrop-blur-sm border border-slate-100/60 ${rtl ? 'flex-row-reverse' : ''}`}>
                 <Phone className="w-4 h-4 text-slate-400" />
                 <span className="text-slate-700" dir="ltr">{phone || '—'}</span>
               </div>
@@ -387,7 +387,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ locale }) => {
             {isEditing ? (
               <input type="text" value={city} onChange={(e) => setCity(e.target.value)} className={inputClass} dir={rtl ? 'rtl' : 'ltr'} />
             ) : (
-              <div className={`flex items-center gap-3 px-4 py-2.5 bg-slate-50 rounded-lg ${rtl ? 'flex-row-reverse' : ''}`}>
+              <div className={`flex items-center gap-3 px-4 py-2.5 bg-slate-50/60 rounded-xl backdrop-blur-sm border border-slate-100/60 ${rtl ? 'flex-row-reverse' : ''}`}>
                 <MapPin className="w-4 h-4 text-slate-400" />
                 <span className="text-slate-700">{city || '—'}</span>
               </div>
@@ -399,7 +399,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ locale }) => {
             {isEditing ? (
               <input type="text" value={district} onChange={(e) => setDistrict(e.target.value)} className={inputClass} dir={rtl ? 'rtl' : 'ltr'} />
             ) : (
-              <div className={`flex items-center gap-3 px-4 py-2.5 bg-slate-50 rounded-lg ${rtl ? 'flex-row-reverse' : ''}`}>
+              <div className={`flex items-center gap-3 px-4 py-2.5 bg-slate-50/60 rounded-xl backdrop-blur-sm border border-slate-100/60 ${rtl ? 'flex-row-reverse' : ''}`}>
                 <MapPin className="w-4 h-4 text-slate-400" />
                 <span className="text-slate-700">{district || '—'}</span>
               </div>
@@ -411,7 +411,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ locale }) => {
             {isEditing ? (
               <input type="text" value={addressLine} onChange={(e) => setAddressLine(e.target.value)} className={inputClass} dir={rtl ? 'rtl' : 'ltr'} />
             ) : (
-              <div className={`flex items-center gap-3 px-4 py-2.5 bg-slate-50 rounded-lg ${rtl ? 'flex-row-reverse' : ''}`}>
+              <div className={`flex items-center gap-3 px-4 py-2.5 bg-slate-50/60 rounded-xl backdrop-blur-sm border border-slate-100/60 ${rtl ? 'flex-row-reverse' : ''}`}>
                 <MapPin className="w-4 h-4 text-slate-400" />
                 <span className="text-slate-700">{addressLine || '—'}</span>
               </div>
@@ -424,7 +424,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ locale }) => {
               {isEditing ? (
                 <input type="number" min="0" value={age} onChange={(e) => setAge(e.target.value)} className={inputClass} dir="ltr" />
               ) : (
-                <div className={`flex items-center gap-3 px-4 py-2.5 bg-slate-50 rounded-lg ${rtl ? 'flex-row-reverse' : ''}`}>
+                <div className={`flex items-center gap-3 px-4 py-2.5 bg-slate-50/60 rounded-xl backdrop-blur-sm border border-slate-100/60 ${rtl ? 'flex-row-reverse' : ''}`}>
                   <User className="w-4 h-4 text-slate-400" />
                   <span className="text-slate-700">{age || '—'}</span>
                 </div>
@@ -440,7 +440,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ locale }) => {
                   <option value="other">Other</option>
                 </select>
               ) : (
-                <div className={`flex items-center gap-3 px-4 py-2.5 bg-slate-50 rounded-lg ${rtl ? 'flex-row-reverse' : ''}`}>
+                <div className={`flex items-center gap-3 px-4 py-2.5 bg-slate-50/60 rounded-xl backdrop-blur-sm border border-slate-100/60 ${rtl ? 'flex-row-reverse' : ''}`}>
                   <User className="w-4 h-4 text-slate-400" />
                   <span className="text-slate-700">{sex || '—'}</span>
                 </div>
@@ -454,7 +454,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ locale }) => {
               {isEditing ? (
                 <input type="text" value={companyName} onChange={(e) => setCompanyName(e.target.value)} className={inputClass} dir={rtl ? 'rtl' : 'ltr'} />
               ) : (
-                <div className={`flex items-center gap-3 px-4 py-2.5 bg-slate-50 rounded-lg ${rtl ? 'flex-row-reverse' : ''}`}>
+                <div className={`flex items-center gap-3 px-4 py-2.5 bg-slate-50/60 rounded-xl backdrop-blur-sm border border-slate-100/60 ${rtl ? 'flex-row-reverse' : ''}`}>
                   <Building2 className="w-4 h-4 text-slate-400" />
                   <span className="text-slate-700">{companyName || '—'}</span>
                 </div>
@@ -467,7 +467,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ locale }) => {
             {isEditing ? (
               <input type="text" value={occupation} onChange={(e) => setOccupation(e.target.value)} className={inputClass} dir={rtl ? 'rtl' : 'ltr'} />
             ) : (
-              <div className={`flex items-center gap-3 px-4 py-2.5 bg-slate-50 rounded-lg ${rtl ? 'flex-row-reverse' : ''}`}>
+              <div className={`flex items-center gap-3 px-4 py-2.5 bg-slate-50/60 rounded-xl backdrop-blur-sm border border-slate-100/60 ${rtl ? 'flex-row-reverse' : ''}`}>
                 <Briefcase className="w-4 h-4 text-slate-400" />
                 <span className="text-slate-700">{occupation || '—'}</span>
               </div>
@@ -479,7 +479,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ locale }) => {
             {isEditing ? (
               <input type="url" value={website} onChange={(e) => setWebsite(e.target.value)} className={inputClass} dir="ltr" />
             ) : (
-              <div className={`flex items-center gap-3 px-4 py-2.5 bg-slate-50 rounded-lg ${rtl ? 'flex-row-reverse' : ''}`}>
+              <div className={`flex items-center gap-3 px-4 py-2.5 bg-slate-50/60 rounded-xl backdrop-blur-sm border border-slate-100/60 ${rtl ? 'flex-row-reverse' : ''}`}>
                 <Globe className="w-4 h-4 text-slate-400" />
                 <span className="text-slate-700 break-all">{website || '—'}</span>
               </div>
@@ -491,7 +491,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ locale }) => {
             {isEditing ? (
               <textarea value={bio} onChange={(e) => setBio(e.target.value)} className={`${inputClass} min-h-28 resize-y`} dir={rtl ? 'rtl' : 'ltr'} />
             ) : (
-              <div className={`flex items-start gap-3 px-4 py-2.5 bg-slate-50 rounded-lg ${rtl ? 'flex-row-reverse' : ''}`}>
+              <div className={`flex items-start gap-3 px-4 py-2.5 bg-slate-50/60 rounded-xl backdrop-blur-sm border border-slate-100/60 ${rtl ? 'flex-row-reverse' : ''}`}>
                 <BadgeInfo className="w-4 h-4 text-slate-400 mt-0.5" />
                 <span className="text-slate-700 whitespace-pre-line">{bio || '—'}</span>
               </div>
@@ -501,7 +501,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ locale }) => {
       </div>
 
       {/* Quick Links */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+      <div className="rounded-2xl border border-slate-200/60 bg-white/80 shadow-lg shadow-slate-900/5 backdrop-blur-xl p-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {[
             { href: `/${locale}/dashboard`, label: t('myAds'), icon: Package },
@@ -512,7 +512,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ locale }) => {
             <Link
               key={link.label}
               href={link.href}
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-50 hover:bg-primary-50 hover:text-primary-600 transition group ${rtl ? 'flex-row-reverse' : ''}`}
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-50/60 backdrop-blur-sm border border-slate-100/60 hover:bg-primary-50/80 hover:border-primary-200/60 hover:text-primary-600 hover:shadow-md hover:shadow-primary-500/5 transition group ${rtl ? 'flex-row-reverse' : ''}`}
             >
               <link.icon className="w-5 h-5 text-slate-400 group-hover:text-primary-500 transition" />
               <span className="font-medium text-slate-700 group-hover:text-primary-600 transition">{link.label}</span>
