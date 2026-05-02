@@ -6,6 +6,7 @@ import { FeaturedListings } from '@/components/homepage/FeaturedListings';
 import { TrendingItems } from '@/components/homepage/TrendingItems';
 import { MostWatched } from '@/components/homepage/MostWatched';
 import { PopularInYourArea } from '@/components/homepage/PopularInYourArea';
+import { MobileCategoryStrip } from '@/components/homepage/MobileCategoryStrip';
 import { Header } from '@/components/layout/Header';
 import { Locale } from '@/lib/i18n/config';
 import { getMessages } from '@/lib/i18n/request';
@@ -44,15 +45,19 @@ export default async function HomePage({ params }: PageProps) {
   return (
     <>
       <Header locale={locale as Locale} />
+
+      {/* Mobile: horizontally scrollable categories strip at the very top */}
+      <MobileCategoryStrip locale={locale as Locale} />
+
       <main className="marketplace-shell flex-1">
-        <div className="container mx-auto px-4 py-6 md:py-10">
-          {/* Hero banner */}
-          <div className="mb-8">
+        <div className="container mx-auto px-4 py-4 md:py-10">
+          {/* Hero banner - compact on mobile, full on desktop */}
+          <div className="mb-4 md:mb-8">
             <HeroSection locale={locale as Locale} config={homepageConfig.header} />
           </div>
 
-          {/* Mobile category grid */}
-          <div className="mb-8 lg:hidden">
+          {/* Desktop category grid (hidden on mobile, shown on lg+) */}
+          <div className="mb-8 hidden lg:block">
             <CategoryGrid locale={locale as Locale} />
           </div>
 

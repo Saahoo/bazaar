@@ -121,8 +121,8 @@ export const Header: React.FC<HeaderProps> = ({ locale }) => {
         <div className="h-[2px] w-full bg-gradient-to-r from-primary-500 via-accent-500 to-primary-600 opacity-80" />
 
         <div className="container mx-auto">
-          {/* Top Navigation Row */}
-          <div className={cn('flex items-center justify-between px-4 py-3', isRtl && 'flex-row-reverse')}>
+          {/* Top Navigation Row - compact on mobile */}
+          <div className={cn('flex items-center justify-between px-3 py-2 md:px-4 md:py-3', isRtl && 'flex-row-reverse')}>
             {/* Logo Section */}
             <motion.div
               whileHover={{ scale: 1.02 }}
@@ -302,29 +302,29 @@ export const Header: React.FC<HeaderProps> = ({ locale }) => {
             </div>
           </div>
 
-          {/* Search Bar Section */}
+          {/* Search Bar Section - compact on mobile */}
           <motion.form
             onSubmit={handleSearchSubmit}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className="px-4 pb-3"
+            className="px-3 pb-2 md:px-4 md:pb-3"
           >
             <div className={cn(
-              'relative overflow-hidden rounded-2xl border transition-all duration-500 ease-smooth',
+              'relative overflow-hidden rounded-xl md:rounded-2xl border transition-all duration-500 ease-smooth',
               searchFocused
-                ? 'border-primary-300/80 bg-white shadow-lg shadow-primary-100/40 ring-4 ring-primary-100/30'
-                : 'border-slate-200/60 bg-gradient-to-r from-white/95 to-slate-50/95 shadow-md hover:shadow-lg'
+                ? 'border-primary-300/80 bg-white shadow-lg shadow-primary-100/40 ring-2 md:ring-4 ring-primary-100/30'
+                : 'border-slate-200/60 bg-gradient-to-r from-white/95 to-slate-50/95 shadow-sm md:shadow-md hover:shadow-lg'
             )}>
               {/* Animated gradient border glow on focus */}
               <div className={cn(
-                'absolute inset-0 rounded-2xl bg-gradient-to-r from-primary-500/20 via-accent-500/20 to-primary-500/20 opacity-0 transition-opacity duration-500 -z-10 blur-xl',
+                'absolute inset-0 rounded-xl md:rounded-2xl bg-gradient-to-r from-primary-500/20 via-accent-500/20 to-primary-500/20 opacity-0 transition-opacity duration-500 -z-10 blur-xl',
                 searchFocused && 'opacity-100'
               )} />
 
               <Search className={cn(
-                'pointer-events-none absolute top-1/2 h-4.5 w-4.5 -translate-y-1/2 transition-colors duration-300',
-                isRtl ? 'right-4' : 'left-4',
+                'pointer-events-none absolute top-1/2 h-4 w-4 md:h-4.5 md:w-4.5 -translate-y-1/2 transition-colors duration-300',
+                isRtl ? 'right-3 md:right-4' : 'left-3 md:left-4',
                 searchFocused ? 'text-primary-500' : 'text-slate-400'
               )} />
               <motion.input
@@ -335,8 +335,8 @@ export const Header: React.FC<HeaderProps> = ({ locale }) => {
                 onBlur={() => setSearchFocused(false)}
                 placeholder={tHeader('searchPlaceholder')}
                 className={cn(
-                  'w-full bg-transparent py-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 sm:text-base',
-                  isRtl ? 'pl-32 pr-4 text-right' : 'pl-11 pr-32',
+                  'w-full bg-transparent py-2.5 md:py-3.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400',
+                  isRtl ? 'pl-24 pr-3 text-right md:pl-32 md:pr-4' : 'pr-24 pl-9 md:pr-32 md:pl-11',
                 )}
                 whileFocus={{ scale: 1.005 }}
               />
@@ -345,8 +345,8 @@ export const Header: React.FC<HeaderProps> = ({ locale }) => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className={cn(
-                  'absolute top-1/2 inline-flex -translate-y-1/2 items-center justify-center rounded-xl bg-gradient-to-r from-primary-600 to-primary-500 px-5 py-2 text-xs font-semibold text-white shadow-md shadow-primary-500/25 transition-all hover:from-primary-700 hover:to-primary-600 hover:shadow-lg hover:shadow-primary-500/35 sm:text-sm',
-                  isRtl ? 'left-2' : 'right-2',
+                  'absolute top-1/2 inline-flex -translate-y-1/2 items-center justify-center rounded-lg md:rounded-xl bg-gradient-to-r from-primary-600 to-primary-500 px-3 py-1.5 md:px-5 md:py-2 text-xs font-semibold text-white shadow-md shadow-primary-500/25 transition-all hover:from-primary-700 hover:to-primary-600 hover:shadow-lg hover:shadow-primary-500/35',
+                  isRtl ? 'left-1.5 md:left-2' : 'right-1.5 md:right-2',
                 )}
               >
                 {tCommon('search')}

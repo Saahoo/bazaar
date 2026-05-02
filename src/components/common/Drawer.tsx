@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
@@ -15,33 +16,55 @@ interface DrawerProps {
 }
 
 export function Drawer({ open, onClose, title, side = 'right', children, className }: DrawerProps) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     if (!open) {
       return;
     }
 
     const previousOverflow = document.body.style.overflow;
+    const previousTouchAction = document.body.style.touchAction;
     document.body.style.overflow = 'hidden';
+    document.body.style.touchAction = 'none';
 
     return () => {
       document.body.style.overflow = previousOverflow;
+      document.body.style.touchAction = previousTouchAction;
     };
   }, [open]);
 
-  return (
+  // Close on Escape key
+  useEffect(() => {
+    if (!open) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [open, onClose]);
+
+  const drawerContent = (
     <AnimatePresence>
       {open && (
         <>
           {/* Backdrop */}
-          <motion.button
-            type="button"
-            aria-label="Close drawer"
+          <motion.div
+            aria-hidden="true"
             className="fixed inset-0 z-[70] bg-slate-950/50 backdrop-blur-md"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3 }}
             onClick={onClose}
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              onClose();
+            }}
           />
           {/* Drawer Panel */}
           <motion.aside
@@ -66,23 +89,31 @@ export function Drawer({ open, onClose, title, side = 'right', children, classNa
                   </h2>
                 )}
               </div>
-              <motion.button
+              <button
                 type="button"
                 onClick={onClose}
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
                 aria-label="Close drawer"
                 title="Close drawer"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-500 transition-all hover:bg-red-50 hover:text-red-600"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-500 transition-all hover:bg-red-50 hover:text-red-600 active:scale-90"
               >
                 <X className="h-4 w-4" />
-              </motion.button>
+              </button>
             </div>
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-5">{children}</div>
+            <div
+              className="flex-1 overflow-y-auto overscroll-contain p-5"
+              style={{ WebkitOverflowScrolling: 'touch' }}
+            >
+              {children}
+            </div>
           </motion.aside>
         </>
       )}
     </AnimatePresence>
   );
+
+  // Render via portal into <body> so that position:fixed works correctly
+  // even when parent elements have CSS transforms (e.g. PageTransition's motion.div)
+  if (!mounted) return null;
+  return createPortal(drawerContent, document.body);
 }

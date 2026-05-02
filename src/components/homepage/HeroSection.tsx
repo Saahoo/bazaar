@@ -36,7 +36,48 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ locale, config }) => {
       <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.55),transparent_50%)]" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_0%,rgba(192,0,0,0.06),transparent_60%)]" />
 
-      <div className={cn('relative z-10 grid gap-8 px-5 py-8 md:px-10 md:py-14 xl:grid-cols-[1.35fr_0.9fr]', isRtl && 'xl:[direction:rtl]')}>
+      {/* Mobile compact layout */}
+      <div className={cn('relative z-10 px-4 py-5 md:hidden', isRtl && 'text-right')}>
+        <div className="flex items-center justify-between gap-3">
+          <div className={cn('min-w-0 flex-1', isRtl && 'text-right')}>
+            <motion.p
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+              className="text-lg font-extralight tracking-tight text-slate-700"
+            >
+              {pickLocalized(config.title, locale)}
+            </motion.p>
+            <motion.p
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
+              className="text-2xl font-black tracking-tight"
+            >
+              <span className="gradient-text">{pickLocalized(config.subtitle, locale)}</span>
+            </motion.p>
+          </div>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <Link
+              href={`/${locale}${config.primaryCtaUrl.startsWith('/') ? config.primaryCtaUrl : `/${config.primaryCtaUrl}`}`}
+              className={cn(
+                'inline-flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary-600 to-primary-500 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-primary-500/25 transition-all active:scale-95',
+                isRtl && 'flex-row-reverse'
+              )}
+            >
+              <Search className="h-4 w-4" />
+              {pickLocalized(config.primaryCta, locale)}
+            </Link>
+          </motion.div>
+        </div>
+      </div>
+
+      {/* Desktop/tablet layout */}
+      <div className={cn('relative z-10 hidden gap-8 px-5 py-8 md:grid md:px-10 md:py-14 xl:grid-cols-[1.35fr_0.9fr]', isRtl && 'xl:[direction:rtl]')}>
         <div className={cn(isRtl ? 'text-right' : 'text-left')}>
           {/* Badge */}
           <motion.div

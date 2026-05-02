@@ -534,6 +534,17 @@ html[data-theme='dark'] ::-webkit-scrollbar-thumb:hover {
 }
 
 /* ============================================
+   SCROLLBAR-NONE UTILITY
+   ============================================ */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* ============================================
    MOBILE-OPTIMIZED TOUCH TARGETS
    ============================================ */
 @media (max-width: 768px) {
@@ -544,6 +555,34 @@ html[data-theme='dark'] ::-webkit-scrollbar-thumb:hover {
 
   input, textarea, select {
     font-size: 16px; /* Prevents iOS zoom */
+  }
+
+  /* Reduce hero section visual weight on mobile */
+  .floating-orb {
+    width: 120px !important;
+    height: 120px !important;
+    filter: blur(40px);
+    opacity: 0.1;
+  }
+
+  .floating-orb-1 {
+    top: -40px !important;
+    left: -40px !important;
+  }
+
+  .floating-orb-2 {
+    bottom: -30px !important;
+    right: -30px !important;
+  }
+
+  .floating-orb-3 {
+    display: none;
+  }
+
+  /* Ensure bottom sheet content is touch-scrollable */
+  .bottom-sheet-content {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
   }
 }
 
