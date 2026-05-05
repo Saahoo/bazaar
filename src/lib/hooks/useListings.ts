@@ -330,6 +330,43 @@ export interface ServicesFilters {
   description_detail?: string;
 }
 
+export interface AnimalsLivestockFilters {
+  subcategory?: string;
+  keywords?: string;
+  condition?: string;
+  postedDate?: string;
+  sellerType?: string;
+  breed?: string;
+  quantity?: number;
+  age?: number;
+  ageUnit?: string;
+  healthStatus?: string;
+  price?: number;
+  priceType?: string;
+  color?: string;
+  weight?: string;
+  gender?: string;
+  milkProduction?: string;
+  pregnancyStatus?: string;
+  hornStatus?: string;
+  eggProduction?: string;
+  housingType?: string;
+  vaccinationRecord?: string;
+  woolType?: string;
+  meatType?: string;
+  height?: string;
+  trainingLevel?: string;
+  discipline?: string;
+  petType?: string;
+  vaccinated?: string;
+  spayedNeutered?: string;
+  microchipped?: string;
+  pedigree?: string;
+  waterType?: string;
+  tankSize?: string;
+  breedingStatus?: string;
+}
+
 export interface ListingFilters {
   category?: number | null;
   query?: string;
@@ -350,6 +387,7 @@ export interface ListingFilters {
   homeFurnitureFilters?: HomeFurnitureFilters;
   jobsFilters?: JobsFilters;
   servicesFilters?: ServicesFilters;
+  animalsLivestockFilters?: AnimalsLivestockFilters;
 }
 
 // ─── Engine Power / Capacity helpers ────────────────────────────────────────
@@ -880,6 +918,62 @@ function applyServicesFilters(listings: Listing[], sf?: ServicesFilters): Listin
   });
 }
 
+function applyAnimalsLivestockFilters(listings: Listing[], af?: AnimalsLivestockFilters): Listing[] {
+  if (!af) return listings;
+
+  const skipFields = new Set(['subcategory', 'keywords', 'condition', 'postedDate', 'sellerType', 'quantity', 'age', 'price']);
+
+  return listings.filter((l) => {
+    const m = l.metadata as Record<string, unknown>;
+
+    if (af.condition && !matchesLooseToken(m.condition ?? l.condition, af.condition)) return false;
+
+    // Handle numeric range filters
+    if (af.quantity !== undefined && af.quantity !== 0) {
+      const q = typeof m.quantity === 'number' ? m.quantity : parseFloat(String(m.quantity ?? ''));
+      if (isNaN(q) || q < af.quantity!) return false;
+    }
+    if (af.age !== undefined && af.age !== 0) {
+      const a = typeof m.age === 'number' ? m.age : parseFloat(String(m.age ?? ''));
+      if (isNaN(a) || a < af.age!) return false;
+    }
+    if (af.price !== undefined && af.price !== 0) {
+      const p = typeof m.price === 'number' ? m.price : parseFloat(String(m.price ?? ''));
+      if (isNaN(p) || p > af.price!) return false;
+    }
+
+    for (const [key, rawValue] of Object.entries(af)) {
+      if (skipFields.has(key) || rawValue === undefined || rawValue === '' || rawValue === 0) continue;
+
+      const metadataValue = m[key];
+
+      if (Array.isArray(rawValue)) {
+        if (rawValue.length === 0) continue;
+
+        if (Array.isArray(metadataValue)) {
+          const selectedTokens = rawValue.map((v) => normalizeToken(v));
+          const metadataTokens = metadataValue.map((v) => normalizeToken(v));
+          if (!selectedTokens.some((token) => metadataTokens.includes(token))) return false;
+        } else {
+          const metadataToken = normalizeToken(metadataValue);
+          if (!rawValue.some((v) => normalizeToken(v) === metadataToken)) return false;
+        }
+        continue;
+      }
+
+      const selectedString = String(rawValue);
+      if (selectedString === 'yes' || selectedString === 'no') {
+        if (normalizeYesNo(metadataValue) !== selectedString) return false;
+        continue;
+      }
+
+      if (!matchesLooseToken(metadataValue, selectedString)) return false;
+    }
+
+    return true;
+  });
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function useListings(filters: ListingFilters = {}) {
@@ -1080,6 +1174,31 @@ export function useListings(filters: ListingFilters = {}) {
         }
       }
 
+      // Animals & Livestock-specific filters
+      if (filters.animalsLivestockFilters?.subcategory) {
+        query = query.contains('metadata', { subcategory: filters.animalsLivestockFilters.subcategory });
+      }
+      if (filters.animalsLivestockFilters?.sellerType === 'individual') {
+        query = query.eq('from_owner', true);
+      }
+      if (filters.animalsLivestockFilters?.sellerType === 'dealer') {
+        query = query.eq('from_owner', false);
+      }
+      if (filters.animalsLivestockFilters?.postedDate) {
+        const now = new Date();
+        const from = new Date(now);
+        if (filters.animalsLivestockFilters.postedDate === 'today') {
+          from.setHours(0, 0, 0, 0);
+          query = query.gte('created_at', from.toISOString());
+        } else if (filters.animalsLivestockFilters.postedDate === 'last7') {
+          from.setDate(now.getDate() - 7);
+          query = query.gte('created_at', from.toISOString());
+        } else if (filters.animalsLivestockFilters.postedDate === 'last30') {
+          from.setDate(now.getDate() - 30);
+          query = query.gte('created_at', from.toISOString());
+        }
+      }
+
       // Vehicle-specific: fromOwner is a direct column
       const vf = filters.vehicleFilters;
       if (vf?.fromOwner !== undefined && vf?.fromOwner !== null) {
@@ -1140,7 +1259,8 @@ export function useListings(filters: ListingFilters = {}) {
       const homeFurnitureFiltered = applyHomeFurnitureFilters(healthBeautyFiltered, filters.homeFurnitureFilters);
       const jobsFiltered = applyJobsFilters(homeFurnitureFiltered, filters.jobsFilters);
       const servicesFiltered = applyServicesFilters(jobsFiltered, filters.servicesFilters);
-      setListings(servicesFiltered);
+      const animalsLivestockFiltered = applyAnimalsLivestockFilters(servicesFiltered, filters.animalsLivestockFilters);
+      setListings(animalsLivestockFiltered);
     } catch (err: unknown) {      const message = err instanceof Error ? err.message : 'Failed to load listings.';
       setError(message);
       console.error('Fetch listings error:', err);
@@ -1168,6 +1288,7 @@ export function useListings(filters: ListingFilters = {}) {
     filters.homeFurnitureFilters,
     filters.jobsFilters,
     filters.servicesFilters,
+    filters.animalsLivestockFilters,
   ]);
 
   // Initial fetch

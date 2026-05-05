@@ -16,6 +16,7 @@ import { BooksEducationFilterEnhanced } from './BooksEducationFilterEnhanced';
 import { BabyKidsFilterEnhanced } from './BabyKidsFilterEnhanced';
 import { BusinessIndustryFilterEnhanced } from './BusinessIndustryFilterEnhanced';
 import { ShoppingGroceriesFilterEnhanced } from './ShoppingGroceriesFilterEnhanced';
+import { ConstructionMaterialsFilterEnhanced } from './ConstructionMaterialsFilterEnhanced';
 import {
   AnimalsLivestockSubcategory,
 } from '@/lib/constants/animals-livestock-wizard';
@@ -34,6 +35,9 @@ import {
 import {
   ShoppingGroceriesSubcategory,
 } from '@/lib/constants/shopping-groceries-wizard';
+import {
+  ConstructionMaterialsSubcategory,
+} from '@/lib/constants/construction-materials-wizard';
 
 // â”€â”€â”€ Animals & Livestock Filter State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export interface AnimalsLivestockFilterState {
@@ -573,6 +577,113 @@ export const EMPTY_SHOPPING_GROCERIES_FILTERS: ShoppingGroceriesFilterState = {
   certification: '',
   spiceType: '',
   formType: '',
+};
+
+// ──── Construction & Materials Filter State ──────────────────────────────────
+export interface ConstructionMaterialsFilterState {
+  subcategory: ConstructionMaterialsSubcategory | '';
+  keywords: string;
+  sellerType: string;
+  postedDate: string;
+  quantity: string;
+  unit: string;
+  condition: string;
+  price: string;
+  priceType: string;
+  deliveryAvailable: string;
+  minOrder: string;
+  cementType: string;
+  cementGrade: string;
+  packagingType: string;
+  steelType: string;
+  diameter: string;
+  length: string;
+  steelGrade: string;
+  brickType: string;
+  brickSize: string;
+  compressiveStrength: string;
+  woodType: string;
+  treatment: string;
+  dimensions: string;
+  aggregateType: string;
+  grainSize: string;
+  source: string;
+  plumbingType: string;
+  plumbingMaterial: string;
+  electricalType: string;
+  voltage: string;
+  electricalCert: string;
+  roofingType: string;
+  roofingMaterial: string;
+  thickness: string;
+  paintType: string;
+  finishType: string;
+  coverage: string;
+  tileType: string;
+  tileMaterial: string;
+  tileSize: string;
+  hardwareType: string;
+  hardwareMaterial: string;
+  brand: string;
+  insulationType: string;
+  rValue: string;
+  insulationThickness: string;
+  glassType: string;
+  glassThickness: string;
+  frameType: string;
+}
+
+export const EMPTY_CONSTRUCTION_MATERIALS_FILTERS: ConstructionMaterialsFilterState = {
+  subcategory: '',
+  keywords: '',
+  sellerType: '',
+  postedDate: '',
+  quantity: '',
+  unit: '',
+  condition: '',
+  price: '',
+  priceType: '',
+  deliveryAvailable: '',
+  minOrder: '',
+  cementType: '',
+  cementGrade: '',
+  packagingType: '',
+  steelType: '',
+  diameter: '',
+  length: '',
+  steelGrade: '',
+  brickType: '',
+  brickSize: '',
+  compressiveStrength: '',
+  woodType: '',
+  treatment: '',
+  dimensions: '',
+  aggregateType: '',
+  grainSize: '',
+  source: '',
+  plumbingType: '',
+  plumbingMaterial: '',
+  electricalType: '',
+  voltage: '',
+  electricalCert: '',
+  roofingType: '',
+  roofingMaterial: '',
+  thickness: '',
+  paintType: '',
+  finishType: '',
+  coverage: '',
+  tileType: '',
+  tileMaterial: '',
+  tileSize: '',
+  hardwareType: '',
+  hardwareMaterial: '',
+  brand: '',
+  insulationType: '',
+  rValue: '',
+  insulationThickness: '',
+  glassType: '',
+  glassThickness: '',
+  frameType: '',
 };
 
 import {
@@ -1507,6 +1618,10 @@ interface FilterSidebarProps {
   onShoppingGroceriesFiltersChange: (filters: ShoppingGroceriesFilterState) => void;
   onShoppingGroceriesClear?: () => void;
   onShoppingGroceriesSearch?: () => void;
+  constructionMaterialsFilters: ConstructionMaterialsFilterState;
+  onConstructionMaterialsFiltersChange: (filters: ConstructionMaterialsFilterState) => void;
+  onConstructionMaterialsClear?: () => void;
+  onConstructionMaterialsSearch?: () => void;
 }
 
 const CONDITIONS = [
@@ -1656,6 +1771,10 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
   onShoppingGroceriesFiltersChange,
   onShoppingGroceriesClear,
   onShoppingGroceriesSearch,
+  constructionMaterialsFilters,
+  onConstructionMaterialsFiltersChange,
+  onConstructionMaterialsClear,
+  onConstructionMaterialsSearch,
   vehicleFilters,
   onVehicleFiltersChange,
 }) => {
@@ -1861,6 +1980,10 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
     selectedCategorySlug === 'shopping-groceries' ||
     correctedSelectedCategory === 17;
 
+  const isConstructionMaterials =
+    selectedCategorySlug === 'construction-materials' ||
+    correctedSelectedCategory === 18;
+
   const [fashionGeneralOpen, setFashionGeneralOpen] = React.useState(true);
   const [fashionSpecificOpen, setFashionSpecificOpen] = React.useState(true);
   const [hbGeneralOpen, setHbGeneralOpen] = React.useState(true);
@@ -2041,7 +2164,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
       </Section>
 
       {/* Price Range (only for generic/non-category-specific searches) */}
-      {!isVehicles && !isRealEstate && !isElectronics && !isFashion && !isSpareParts && !isAnimalsLivestock && !isHealthBeauty && !isHomeFurniture && !isJobs && !isServices && !isSportsHobby && !isFoodAgriculture && !isBooksEducation && !isBabyKids && !isBusinessIndustry && !isShoppingGroceries && (
+      {!isVehicles && !isRealEstate && !isElectronics && !isFashion && !isSpareParts && !isAnimalsLivestock && !isHealthBeauty && !isHomeFurniture && !isJobs && !isServices && !isSportsHobby && !isFoodAgriculture && !isBooksEducation && !isBabyKids && !isBusinessIndustry && !isShoppingGroceries && !isConstructionMaterials && (
         <Section label={t('priceRange')} isRtl={isRtl}>
           <div className={`flex gap-2 ${isRtl ? 'flex-row-reverse' : ''}`}>
             <input type="number" placeholder={t('minPrice')} value={priceMin} onChange={(e) => onPriceMinChange(e.target.value)} min="0"
@@ -2053,7 +2176,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
       )}
 
       {/* Condition (non-vehicle/non-real-estate/non-electronics) */}
-      {!isVehicles && !isRealEstate && !isElectronics && !isFashion && !isSpareParts && !isAnimalsLivestock && !isHealthBeauty && !isHomeFurniture && !isJobs && !isServices && !isSportsHobby && !isFoodAgriculture && !isBooksEducation && !isBabyKids && !isBusinessIndustry && !isShoppingGroceries && (
+      {!isVehicles && !isRealEstate && !isElectronics && !isFashion && !isSpareParts && !isAnimalsLivestock && !isHealthBeauty && !isHomeFurniture && !isJobs && !isServices && !isSportsHobby && !isFoodAgriculture && !isBooksEducation && !isBabyKids && !isBusinessIndustry && !isShoppingGroceries && !isConstructionMaterials && (
         <Section label={t('condition')} isRtl={isRtl}>
           <div className="space-y-2">
             {CONDITIONS.map(({ value, translationKey }) => (
@@ -3050,6 +3173,19 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
           onFiltersChange={onShoppingGroceriesFiltersChange}
           onClear={onShoppingGroceriesClear}
           onSearch={onShoppingGroceriesSearch}
+        />
+      )}
+
+      {/* ═══════════════════════════════════════════════════════════
+          CONSTRUCTION & MATERIALS FILTERS (Enhanced)
+         ═══════════════════════════════════════════════════════════ */}
+      {isConstructionMaterials && (
+        <ConstructionMaterialsFilterEnhanced
+          locale={locale}
+          filters={constructionMaterialsFilters}
+          onFiltersChange={onConstructionMaterialsFiltersChange}
+          onClear={onConstructionMaterialsClear}
+          onSearch={onConstructionMaterialsSearch}
         />
       )}
 

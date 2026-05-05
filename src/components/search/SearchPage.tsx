@@ -39,6 +39,8 @@ import {
   EMPTY_BUSINESS_INDUSTRY_FILTERS,
   ShoppingGroceriesFilterState,
   EMPTY_SHOPPING_GROCERIES_FILTERS,
+  ConstructionMaterialsFilterState,
+  EMPTY_CONSTRUCTION_MATERIALS_FILTERS,
 } from './FilterSidebar';
 
 import { VehicleFilterState, EMPTY_VEHICLE_FILTERS } from './VehicleFilter';
@@ -68,6 +70,8 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory,
   const [businessIndustryFilters, setBusinessIndustryFilters] = useState<BusinessIndustryFilterState>(EMPTY_BUSINESS_INDUSTRY_FILTERS);
   // Shopping & Groceries-specific filter group
   const [shoppingGroceriesFilters, setShoppingGroceriesFilters] = useState<ShoppingGroceriesFilterState>(EMPTY_SHOPPING_GROCERIES_FILTERS);
+  // Construction & Materials-specific filter group
+  const [constructionMaterialsFilters, setConstructionMaterialsFilters] = useState<ConstructionMaterialsFilterState>(EMPTY_CONSTRUCTION_MATERIALS_FILTERS);
   const t = useTranslations('search');
   const tCommon = useTranslations('common');
   const isRtl = isRTL(locale);
@@ -104,6 +108,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory,
       'kids-baby': 15,
       'business-industry': 16,
       'shopping-groceries': 17,
+      'construction-materials': 18,
     };
     
     return slugToId[slug] || null;
@@ -138,6 +143,8 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory,
   const [babyKidsSearchTick, setBabyKidsSearchTick] = useState(0);
   const [businessIndustrySearchTick, setBusinessIndustrySearchTick] = useState(0);
   const [shoppingGroceriesSearchTick, setShoppingGroceriesSearchTick] = useState(0);
+  const [constructionMaterialsSearchTick, setConstructionMaterialsSearchTick] = useState(0);
+  const [animalsLivestockSearchTick, setAnimalsLivestockSearchTick] = useState(0);
 
   // Vehicle-specific filter group
   const [vehicleFilters, setVehicleFilters] = useState<VehicleFilterState>(EMPTY_VEHICLE_FILTERS);
@@ -176,6 +183,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory,
     if (correctedId !== 15) setBabyKidsFilters(EMPTY_BABY_KIDS_FILTERS);
     if (correctedId !== 16) setBusinessIndustryFilters(EMPTY_BUSINESS_INDUSTRY_FILTERS);
     if (correctedId !== 17) setShoppingGroceriesFilters(EMPTY_SHOPPING_GROCERIES_FILTERS);
+    if (correctedId !== 18) setConstructionMaterialsFilters(EMPTY_CONSTRUCTION_MATERIALS_FILTERS);
     if (correctedId !== 13) setHealthBeautyFilters(EMPTY_HEALTH_BEAUTY_FILTERS);
     if (correctedId !== 6) setHomeFurnitureFilters(EMPTY_HOME_FURNITURE_FILTERS);
     if (correctedId !== 8) setJobsFilters(EMPTY_JOBS_FILTERS);
@@ -202,6 +210,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory,
   const isBabyKids = correctedSelectedCategory === 15;
   const isBusinessIndustry = correctedSelectedCategory === 16;
   const isShoppingGroceries = correctedSelectedCategory === 17;
+  const isConstructionMaterials = correctedSelectedCategory === 18;
 
   // Build filters for the hook
   // Use selectedCategory (database ID) for filtering, not correctedSelectedCategory (constant ID)
@@ -227,7 +236,9 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory,
                       ? businessIndustryFilters.keywords
                       : isShoppingGroceries
                         ? shoppingGroceriesFilters.keywords
-                        : isHealthBeauty
+                        : isConstructionMaterials
+                          ? constructionMaterialsFilters.keywords
+                          : isHealthBeauty
                 ? healthBeautyFilters.keywords
                 : isHomeFurniture
                   ? homeFurnitureFilters.keywords
@@ -282,12 +293,27 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory,
           quantity: shoppingGroceriesFilters.quantity ? Number(shoppingGroceriesFilters.quantity) : undefined,
           minOrder: shoppingGroceriesFilters.minOrder ? Number(shoppingGroceriesFilters.minOrder) : undefined,
         } : undefined,
+        constructionMaterialsFilters: isConstructionMaterials ? {
+          ...constructionMaterialsFilters,
+          quantity: constructionMaterialsFilters.quantity ? Number(constructionMaterialsFilters.quantity) : undefined,
+          price: constructionMaterialsFilters.price ? Number(constructionMaterialsFilters.price) : undefined,
+          minOrder: constructionMaterialsFilters.minOrder ? Number(constructionMaterialsFilters.minOrder) : undefined,
+          diameter: constructionMaterialsFilters.diameter ? Number(constructionMaterialsFilters.diameter) : undefined,
+          length: constructionMaterialsFilters.length ? Number(constructionMaterialsFilters.length) : undefined,
+          compressiveStrength: constructionMaterialsFilters.compressiveStrength ? Number(constructionMaterialsFilters.compressiveStrength) : undefined,
+          thickness: constructionMaterialsFilters.thickness ? Number(constructionMaterialsFilters.thickness) : undefined,
+          coverage: constructionMaterialsFilters.coverage ? Number(constructionMaterialsFilters.coverage) : undefined,
+          rValue: constructionMaterialsFilters.rValue ? Number(constructionMaterialsFilters.rValue) : undefined,
+          insulationThickness: constructionMaterialsFilters.insulationThickness ? Number(constructionMaterialsFilters.insulationThickness) : undefined,
+          glassThickness: constructionMaterialsFilters.glassThickness ? Number(constructionMaterialsFilters.glassThickness) : undefined,
+          voltage: constructionMaterialsFilters.voltage ? Number(constructionMaterialsFilters.voltage) : undefined,
+        } : undefined,
     city: selectedCity || undefined,
     priceMin: priceMin ? Number(priceMin) : undefined,
     priceMax: priceMax ? Number(priceMax) : undefined,
     conditions: selectedConditions.length > 0 ? selectedConditions : undefined,
     sortBy: sortBy as 'newest' | 'oldest' | 'priceLow' | 'priceHigh',
-    searchTick: electronicsSearchTick + fashionSearchTick + sparePartsSearchTick + healthBeautySearchTick + homeFurnitureSearchTick + jobsSearchTick + servicesSearchTick + sportsHobbySearchTick + foodAgricultureSearchTick + booksEducationSearchTick + babyKidsSearchTick + businessIndustrySearchTick + shoppingGroceriesSearchTick,
+    searchTick: electronicsSearchTick + fashionSearchTick + sparePartsSearchTick + healthBeautySearchTick + homeFurnitureSearchTick + jobsSearchTick + servicesSearchTick + sportsHobbySearchTick + foodAgricultureSearchTick + booksEducationSearchTick + babyKidsSearchTick + businessIndustrySearchTick + shoppingGroceriesSearchTick + constructionMaterialsSearchTick + animalsLivestockSearchTick,
     vehicleFilters: isVehicles ? {
       vehicleMake: vehicleFilters.make || undefined,
       vehicleModel: vehicleFilters.model || undefined,
@@ -367,7 +393,7 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory,
     } : undefined,
   }), [
     selectedCategory, initialQuery, selectedCity, priceMin, priceMax,
-    selectedConditions, sortBy, isVehicles, isRealEstate, isElectronics, isFashion, isSpareParts, isHealthBeauty, isHomeFurniture, isJobs, isServices, isSportsHobby, isFoodAgriculture, isBooksEducation, isBabyKids, isBusinessIndustry, isShoppingGroceries, vehicleFilters, realEstateFilters, electronicsFilters, fashionFilters, sparePartsFilters, healthBeautyFilters, homeFurnitureFilters, jobsFilters, servicesFilters, sportsHobbyFilters, foodAgricultureFilters, booksEducationFilters, babyKidsFilters, businessIndustryFilters, shoppingGroceriesFilters, electronicsSearchTick, fashionSearchTick, sparePartsSearchTick, healthBeautySearchTick, homeFurnitureSearchTick, jobsSearchTick, servicesSearchTick, sportsHobbySearchTick, foodAgricultureSearchTick, booksEducationSearchTick, babyKidsSearchTick, businessIndustrySearchTick, shoppingGroceriesSearchTick,
+    selectedConditions, sortBy, isVehicles, isRealEstate, isElectronics, isFashion, isSpareParts, isHealthBeauty, isHomeFurniture, isJobs, isServices, isSportsHobby, isFoodAgriculture, isBooksEducation, isBabyKids, isBusinessIndustry, isShoppingGroceries, isConstructionMaterials, isAnimalsLivestock, vehicleFilters, realEstateFilters, electronicsFilters, fashionFilters, sparePartsFilters, healthBeautyFilters, homeFurnitureFilters, jobsFilters, servicesFilters, sportsHobbyFilters, foodAgricultureFilters, booksEducationFilters, babyKidsFilters, businessIndustryFilters, shoppingGroceriesFilters, constructionMaterialsFilters, animalsLivestockFilters, electronicsSearchTick, fashionSearchTick, sparePartsSearchTick, healthBeautySearchTick, homeFurnitureSearchTick, jobsSearchTick, servicesSearchTick, sportsHobbySearchTick, foodAgricultureSearchTick, booksEducationSearchTick, babyKidsSearchTick, businessIndustrySearchTick, shoppingGroceriesSearchTick, constructionMaterialsSearchTick, animalsLivestockSearchTick,
   ]);
 
   const deferredFilters = useDeferredValue(filters);
@@ -387,7 +413,9 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory,
     if (isBabyKids) setBabyKidsSearchTick((value) => value + 1);
     if (isBusinessIndustry) setBusinessIndustrySearchTick((value) => value + 1);
     if (isShoppingGroceries) setShoppingGroceriesSearchTick((value) => value + 1);
-  }, [isElectronics, isFashion, isHealthBeauty, isHomeFurniture, isSpareParts, isJobs, isServices, isSportsHobby, isFoodAgriculture, isBooksEducation, isBabyKids, isBusinessIndustry, isShoppingGroceries]);
+    if (isConstructionMaterials) setConstructionMaterialsSearchTick((value) => value + 1);
+    if (isAnimalsLivestock) setAnimalsLivestockSearchTick((value) => value + 1);
+  }, [isElectronics, isFashion, isHealthBeauty, isHomeFurniture, isSpareParts, isJobs, isServices, isSportsHobby, isFoodAgriculture, isBooksEducation, isBabyKids, isBusinessIndustry, isShoppingGroceries, isConstructionMaterials, isAnimalsLivestock]);
 
   const activeFilterCount = useMemo(() => {
     return [correctedSelectedCategory, priceMin, priceMax, selectedCity]
@@ -413,9 +441,11 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory,
               setPriceMin('');
               setPriceMax('');
               setSelectedCity('');
+              setAnimalsLivestockSearchTick((value) => value + 1);
               setMobileFiltersOpen(false);
             }}
             onAnimalsLivestockSearch={() => {
+              setAnimalsLivestockSearchTick((value) => value + 1);
               setMobileFiltersOpen(false);
             }}
       locale={locale}
@@ -605,6 +635,20 @@ export const SearchPage: React.FC<SearchPageProps> = ({ locale, initialCategory,
       }}
       onShoppingGroceriesSearch={() => {
         setShoppingGroceriesSearchTick((value) => value + 1);
+        setMobileFiltersOpen(false);
+      }}
+      constructionMaterialsFilters={constructionMaterialsFilters}
+      onConstructionMaterialsFiltersChange={setConstructionMaterialsFilters}
+      onConstructionMaterialsClear={() => {
+        setConstructionMaterialsFilters(EMPTY_CONSTRUCTION_MATERIALS_FILTERS);
+        setPriceMin('');
+        setPriceMax('');
+        setSelectedCity('');
+        setConstructionMaterialsSearchTick((value) => value + 1);
+        setMobileFiltersOpen(false);
+      }}
+      onConstructionMaterialsSearch={() => {
+        setConstructionMaterialsSearchTick((value) => value + 1);
         setMobileFiltersOpen(false);
       }}
     />

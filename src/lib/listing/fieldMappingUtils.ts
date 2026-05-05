@@ -265,6 +265,147 @@ function getCategorySectionOverrides(categoryId: number): Record<string, Display
       'usage': 'details',
       'skinType': 'details',
     },
+    // Jobs category
+    8: {
+      'jobTitle': 'highlights',
+      'employmentType': 'specs',
+      'remotePosition': 'highlights',
+      'experienceLevel': 'specs',
+      'minSalary': 'specs',
+      'maxSalary': 'specs',
+      'applicationDeadline': 'specs',
+      'applicationMethod': 'specs',
+      'benefits': 'details',
+      'responsibilities': 'details',
+      'requirements': 'details',
+    },
+    // Services category
+    9: {
+      'serviceType': 'highlights',
+      'experienceYears': 'specs',
+      'certification': 'specs',
+      'warranty': 'details',
+      'serviceDuration': 'specs',
+      'homeServiceAvailable': 'highlights',
+      'certifiedProfessional': 'highlights',
+      'emergencyAvailable': 'highlights',
+      'licenseVerified': 'highlights',
+    },
+    // Animals category
+    10: {
+      'breed': 'highlights',
+      'petType': 'highlights',
+      'age': 'specs',
+      'gender': 'specs',
+      'healthStatus': 'specs',
+      'vaccinated': 'highlights',
+      'vaccinationRecord': 'highlights',
+      'pedigree': 'highlights',
+      'priceType': 'highlights',
+      'quantity': 'specs',
+    },
+    // Food & Agriculture category
+    11: {
+      'quantity': 'specs',
+      'unit': 'specs',
+      'grade': 'specs',
+      'freshness': 'specs',
+      'origin': 'specs',
+      'certification': 'highlights',
+      'organicCertification': 'highlights',
+      'deliveryAvailable': 'highlights',
+      'brand': 'highlights',
+    },
+    // Books & Education category
+    12: {
+      'subjectMatter': 'highlights',
+      'educationLevel': 'specs',
+      'author': 'specs',
+      'bookCondition': 'specs',
+      'bookFormat': 'specs',
+      'certification': 'highlights',
+      'deliveryAvailable': 'highlights',
+      'brand': 'highlights',
+    },
+    // Sports & Hobby category
+    14: {
+      'brand': 'highlights',
+      'condition': 'highlights',
+      'sport': 'specs',
+      'equipmentType': 'specs',
+      'skillLevel': 'specs',
+      'ageGroup': 'specs',
+      'material': 'specs',
+      'size': 'specs',
+      'authenticity': 'highlights',
+      'limitedEdition': 'highlights',
+      'waterproof': 'highlights',
+      'foldable': 'highlights',
+    },
+    // Baby & Kids category
+    15: {
+      'condition': 'highlights',
+      'ageRange': 'highlights',
+      'gender': 'specs',
+      'brand': 'highlights',
+      'safetyCertified': 'highlights',
+      'clothingType': 'specs',
+      'toyType': 'specs',
+      'gearType': 'specs',
+      'size': 'specs',
+      'material': 'specs',
+      'deliveryAvailable': 'highlights',
+    },
+    // Business & Industry category
+    16: {
+      'businessType': 'highlights',
+      'industrySector': 'highlights',
+      'condition': 'highlights',
+      'brand': 'highlights',
+      'certification': 'highlights',
+      'licensed': 'highlights',
+      'machineryType': 'specs',
+      'equipmentType': 'specs',
+      'serviceType': 'specs',
+      'manufacturingType': 'specs',
+      'deliveryAvailable': 'highlights',
+      'warranty': 'details',
+    },
+    // Shopping & Groceries category
+    17: {
+      'brand': 'highlights',
+      'condition': 'highlights',
+      'quantity': 'specs',
+      'unit': 'specs',
+      'foodType': 'specs',
+      'productType': 'specs',
+      'certification': 'highlights',
+      'dietaryInfo': 'highlights',
+      'safetyCert': 'highlights',
+      'deliveryAvailable': 'highlights',
+      'freshness': 'specs',
+    },
+    // Construction Materials category
+    18: {
+      'condition': 'highlights',
+      'brand': 'highlights',
+      'quantity': 'specs',
+      'unit': 'specs',
+      'cementType': 'specs',
+      'steelType': 'specs',
+      'brickType': 'specs',
+      'woodType': 'specs',
+      'tileType': 'specs',
+      'electricalType': 'specs',
+      'plumbingType': 'specs',
+      'roofingType': 'specs',
+      'paintType': 'specs',
+      'insulationType': 'specs',
+      'glassType': 'specs',
+      'hardwareType': 'specs',
+      'electricalCert': 'highlights',
+      'deliveryAvailable': 'highlights',
+    },
   };
   
   return overrides[categoryId] || {};
@@ -342,6 +483,7 @@ export function transformFieldsForDisplay(
 
 /**
  * Get field value from listing data (root level or metadata)
+ * Handles nested metadata objects like location.city, contact.phone, etc.
  */
 function getFieldValue(listingData: Record<string, unknown>, fieldId: string): unknown {
   if (!listingData) return '';
@@ -350,6 +492,22 @@ function getFieldValue(listingData: Record<string, unknown>, fieldId: string): u
   // Handle metadata access with proper typing
   const metadata = listingData.metadata as Record<string, unknown> | undefined;
   if (metadata && metadata[fieldId] !== undefined) return metadata[fieldId];
+  
+  // Fallback: check wizardForms (used by Jobs/Animals categories that store data
+  // only in metadata.wizardForms via the else block in handleSubmit)
+  if (metadata) {
+    const wizardForms = metadata.wizardForms as Record<string, unknown> | undefined;
+    if (wizardForms && wizardForms[fieldId] !== undefined) return wizardForms[fieldId];
+    
+    // Fallback: check inside nested objects in metadata (e.g., location.city, contact.phone)
+    // This handles Animals & Livestock and Food & Agriculture which store location/contact as nested objects
+    for (const [_key, value] of Object.entries(metadata)) {
+      if (value && typeof value === 'object' && !Array.isArray(value)) {
+        const nested = value as Record<string, unknown>;
+        if (nested[fieldId] !== undefined) return nested[fieldId];
+      }
+    }
+  }
   
   return '';
 }
@@ -375,19 +533,14 @@ export function groupFieldsBySection(fields: MappedField[]): Record<DisplaySecti
  * Validate field mapping against original wizard schema
  */
 export function validateFieldMapping(
-  originalFields: ListingField[],
+  _originalFields: ListingField[],
   mappedFields: MappedField[]
 ): { isValid: boolean; errors: string[] } {
   const errors: string[] = [];
   
-  // Check that all non-empty original fields are represented
-  const mappedIds = new Set(mappedFields.map(f => f.id));
-  
-  originalFields.forEach(field => {
-    if (!mappedIds.has(field.key)) {
-      errors.push(`Field "${field.key}" (${field.labelKey}) not mapped`);
-    }
-  });
+  // Note: We intentionally do NOT check that all original fields are mapped,
+  // because transformFieldsForDisplay filters out fields with empty values.
+  // It is expected that many fields will be unmapped for any given listing.
   
   // Check for duplicate mappings
   const idCounts: Record<string, number> = {};

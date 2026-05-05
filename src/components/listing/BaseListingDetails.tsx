@@ -221,11 +221,19 @@ export const BaseListingDetails = <T extends ListingCategory>({
   // Image gallery state
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
-  const images = listingData.photos?.length > 0 ? listingData.photos : ['/placeholder-image.jpg'];
+  const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
+  const images = listingData.photos?.length > 0 ? listingData.photos : [];
 
   // Get category-specific fields using dynamic field mapping system
   const { specsFields, highlightsFields, detailsFields } = useMemo(() => {
     const allFields = getFieldsForCategory(listingData.category_id);
+    
+    // Debug: log raw data for Animals & Livestock (category 10)
+    if (listingData.category_id === 10) {
+      console.log('[BaseListingDetails] Animals category - allFields count:', allFields.length);
+      console.log('[BaseListingDetails] Animals category - metadata:', JSON.stringify(listingData.metadata, null, 2));
+      console.log('[BaseListingDetails] Animals category - listingData keys:', Object.keys(listingData as unknown as Record<string, unknown>));
+    }
     
     // Transform fields for display using comprehensive mapping system
     const mappedFields = transformFieldsForDisplay(
@@ -234,6 +242,12 @@ export const BaseListingDetails = <T extends ListingCategory>({
       listingData.category_id,
       locale
     );
+    
+    // Debug: log mapped fields for Animals & Livestock
+    if (listingData.category_id === 10) {
+      console.log('[BaseListingDetails] Animals category - mappedFields count:', mappedFields.length);
+      console.log('[BaseListingDetails] Animals category - mappedFields:', mappedFields.map(f => ({ id: f.id, value: f.value, section: f.section })));
+    }
     
     // Group fields by display section
     const groupedFields = groupFieldsBySection(mappedFields);
@@ -377,7 +391,7 @@ export const BaseListingDetails = <T extends ListingCategory>({
           <section className="rounded-2xl border border-slate-200/60 bg-white/80 shadow-lg shadow-slate-900/5 backdrop-blur-xl overflow-hidden">
             <div className="relative">
               <div className="relative h-96 bg-slate-100 cursor-zoom-in">
-                {images.length > 0 ? (
+                {images.length > 0 && !imageErrors.has(currentImageIndex) ? (
                   <button
                     onClick={() => setIsLightboxOpen(true)}
                     className="w-full h-full"
@@ -387,9 +401,13 @@ export const BaseListingDetails = <T extends ListingCategory>({
                       src={images[currentImageIndex]}
                       alt={listingData.title}
                       fill
+                      unoptimized
                       className="object-contain"
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 66vw, 800px"
                       priority
+                      onError={() => {
+                        setImageErrors((prev) => new Set(prev).add(currentImageIndex));
+                      }}
                     />
                   </button>
                 ) : (
@@ -441,8 +459,12 @@ export const BaseListingDetails = <T extends ListingCategory>({
                             src={img}
                             alt={`${listingData.title} - ${idx + 1}`}
                             fill
+                            unoptimized
                             className="object-cover rounded"
                             sizes="80px"
+                            onError={() => {
+                              setImageErrors((prev) => new Set(prev).add(idx));
+                            }}
                           />
                         </div>
                       </button>

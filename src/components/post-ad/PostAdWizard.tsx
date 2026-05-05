@@ -120,6 +120,13 @@ import { StepShoppingGroceriesLocationContact } from './shopping-groceries/StepS
 import { StepShoppingGroceriesMedia, ShoppingGroceriesMediaData } from './shopping-groceries/StepShoppingGroceriesMedia';
 import { StepShoppingGroceriesReview } from './shopping-groceries/StepShoppingGroceriesReview';
 import { ShoppingGroceriesSubcategory, getShoppingGroceriesSpecsConfig } from '@/lib/constants/shopping-groceries-wizard';
+// Construction & Materials steps
+import { StepConstructionMaterialsBasicInfo } from './construction-materials/StepConstructionMaterialsBasicInfo';
+import { StepConstructionMaterialsSpecs } from './construction-materials/StepConstructionMaterialsSpecs';
+import { StepConstructionMaterialsLocationContact } from './construction-materials/StepConstructionMaterialsLocationContact';
+import { StepConstructionMaterialsMedia, ConstructionMaterialsMediaData } from './construction-materials/StepConstructionMaterialsMedia';
+import { StepConstructionMaterialsReview } from './construction-materials/StepConstructionMaterialsReview';
+import { ConstructionMaterialsSubcategory, CONSTRUCTION_MATERIALS_SUBCATEGORY_LABEL_KEYS, getConstructionMaterialsSpecsConfig } from '@/lib/constants/construction-materials-wizard';
 import { DynamicWizardFields, WizardFormConfig, isWizardRequiredFieldsValid } from './DynamicWizardFields';
 import { ElectronicsSubcategory, getElectronicsSpecsConfig, hasConditionInSpecs } from '@/lib/constants/electronics-wizard';
 import { FashionSubcategory, FASHION_BRANDS_BY_SUBCATEGORY, FASHION_SUBCATEGORY_LABEL_KEYS, getFashionSpecsConfig } from '@/lib/constants/fashion-wizard';
@@ -150,6 +157,7 @@ const BOOKS_EDUCATION_SLUG = 'books-education';
 const BABY_KIDS_SLUG = 'kids-baby';
 const BUSINESS_INDUSTRY_SLUG = 'business-industry';
 const SHOPPING_GROCERIES_SLUG = 'shopping-groceries';
+const CONSTRUCTION_MATERIALS_SLUG = 'construction-materials';
 
 export interface PostAdFormData {
   categoryId: number | null;
@@ -549,6 +557,31 @@ export interface ShoppingGroceriesFormData {
   hidePhone: boolean;
   specs: Record<string, unknown>;
   media: ShoppingGroceriesMediaData;
+}
+
+export interface ConstructionMaterialsFormData {
+  subcategory: ConstructionMaterialsSubcategory | '';
+  title: string;
+  description: string;
+  quantity: number | '';
+  unit: string;
+  condition: string;
+  price: number | '';
+  priceType: string;
+  deliveryAvailable: string;
+  minOrder: string;
+  street: string;
+  city: string;
+  postalCode: string;
+  lat: number | null;
+  lng: number | null;
+  sellerName: string;
+  phone: string;
+  email: string;
+  preferredContact: 'phone' | 'email' | 'both';
+  hidePhone: boolean;
+  specs: Record<string, unknown>;
+  media: ConstructionMaterialsMediaData;
 }
 
 const INITIAL_FORM_DATA: PostAdFormData = {
@@ -993,6 +1026,34 @@ const INITIAL_SG_DATA: ShoppingGroceriesFormData = {
   },
 };
 
+const INITIAL_CM_DATA: ConstructionMaterialsFormData = {
+  subcategory: '',
+  title: '',
+  description: '',
+  quantity: '',
+  unit: '',
+  condition: '',
+  price: '',
+  priceType: 'Fixed',
+  deliveryAvailable: '',
+  minOrder: '',
+  street: '',
+  city: '',
+  postalCode: '',
+  lat: null,
+  lng: null,
+  sellerName: '',
+  phone: '',
+  email: '',
+  preferredContact: 'both',
+  hidePhone: false,
+  specs: {},
+  media: {
+    photos: [],
+    videos: [],
+  },
+};
+
 const INITIAL_SERVICES_DATA: ServicesFormData = {
   subcategory: '',
   service_type: '',
@@ -1136,6 +1197,8 @@ const BK_STEPS = ['stepCategory', 'bkStepBasic', 'bkStepSpecs', 'bkStepLocationC
 const BI_STEPS = ['stepCategory', 'biStepBasic', 'biStepSpecs', 'biStepLocationContact', 'biStepMedia', 'biStepReview'] as const;
 // Shopping & Groceries steps
 const SG_STEPS = ['stepCategory', 'sgStepBasic', 'sgStepSpecs', 'sgStepLocationContact', 'sgStepMedia', 'sgStepReview'] as const;
+// Construction & Materials steps
+const CM_STEPS = ['stepCategory', 'cmStepBasic', 'cmStepSpecs', 'cmStepLocationContact', 'cmStepMedia', 'cmStepReview'] as const;
 
 const isFashionSlug = (categorySlug: string | null): boolean => {
   if (!categorySlug) return false;
@@ -1159,6 +1222,7 @@ const getStepsForCategorySlug = (categorySlug: string | null): readonly string[]
   if (categorySlug === BABY_KIDS_SLUG) return BK_STEPS;
   if (categorySlug === BUSINESS_INDUSTRY_SLUG) return BI_STEPS;
   if (categorySlug === SHOPPING_GROCERIES_SLUG) return SG_STEPS;
+  if (categorySlug === CONSTRUCTION_MATERIALS_SLUG) return CM_STEPS;
   return DEFAULT_STEPS;
 };
 
@@ -1311,7 +1375,8 @@ type StepKey =
   | typeof BE_STEPS[number]
   | typeof BK_STEPS[number]
   | typeof BI_STEPS[number]
-  | typeof SG_STEPS[number];
+  | typeof SG_STEPS[number]
+  | typeof CM_STEPS[number];
 
 interface PostAdWizardProps {
   locale: Locale;
@@ -1334,6 +1399,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
   const tBK = useTranslations('postAd.babyKids');
   const tBI = useTranslations('postAd.businessIndustry');
   const tSG = useTranslations('postAd.shoppingGroceries');
+  const tCM = useTranslations('postAd.constructionMaterials');
   const tCommon = useTranslations('common');
   const tAuth = useTranslations('auth');
   const rtl = isRTL(locale);
@@ -1358,6 +1424,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
   const [bkData, setBkData] = useState<BabyKidsFormData>(INITIAL_BK_DATA);
   const [biData, setBiData] = useState<BusinessIndustryFormData>(INITIAL_BI_DATA);
   const [sgData, setSgData] = useState<ShoppingGroceriesFormData>(INITIAL_SG_DATA);
+  const [cmData, setCmData] = useState<ConstructionMaterialsFormData>(INITIAL_CM_DATA);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -1546,6 +1613,21 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
     setSgData((prev) => ({ ...prev, ...processedUpdates }));
   }, []);
 
+  const updateCMData = useCallback((updates: Partial<ConstructionMaterialsFormData>) => {
+    const processedUpdates: Partial<ConstructionMaterialsFormData> = { ...updates };
+    
+    if ('price' in processedUpdates) {
+      const p = processedUpdates.price;
+      if (typeof p === 'string' && p.trim() !== '') {
+        processedUpdates.price = Number(p);
+      } else if (p === '') {
+        processedUpdates.price = '';
+      }
+    }
+    
+    setCmData((prev) => ({ ...prev, ...processedUpdates }));
+  }, []);
+
   const handleCategorySelect = useCallback(
     (categoryId: number, categorySlug?: string, categoryName?: string) => {
       const changingCategory = formData.categoryId !== categoryId;
@@ -1567,6 +1649,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         setBkData(INITIAL_BK_DATA);
         setBiData(INITIAL_BI_DATA);
         setSgData(INITIAL_SG_DATA);
+        setCmData(INITIAL_CM_DATA);
         setWizardValues({});
       }
     },
@@ -1887,6 +1970,19 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
           ...(((draftData.sgData as Partial<ShoppingGroceriesFormData> | undefined) || {}).media as Partial<ShoppingGroceriesMediaData> || {}),
         },
       });
+      setCmData({
+        ...INITIAL_CM_DATA,
+        ...(draftData.cmData as Partial<ConstructionMaterialsFormData> | undefined) || {},
+        subcategory: ((draftData.cmData as Partial<ConstructionMaterialsFormData> | undefined)?.subcategory) ?? INITIAL_CM_DATA.subcategory,
+        specs: {
+          ...INITIAL_CM_DATA.specs,
+          ...(((draftData.cmData as Partial<ConstructionMaterialsFormData> | undefined) || {}).specs as Record<string, unknown> || {}),
+        },
+        media: {
+          ...INITIAL_CM_DATA.media,
+          ...(((draftData.cmData as Partial<ConstructionMaterialsFormData> | undefined) || {}).media as Partial<ConstructionMaterialsMediaData> || {}),
+        },
+      });
       setWizardValues(((draftData.wizardValues as Record<string, unknown> | undefined) || {}));
 
       const savedStep = typeof draftData.currentStep === 'number' ? draftData.currentStep : (categoryId ? 1 : 0);
@@ -1957,7 +2053,8 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
   const isBabyKids = selectedCategorySlug === BABY_KIDS_SLUG;
   const isBusinessIndustry = selectedCategorySlug === BUSINESS_INDUSTRY_SLUG;
   const isShoppingGroceries = selectedCategorySlug === SHOPPING_GROCERIES_SLUG;
-  const steps: readonly string[] = isJobs ? JOBS_STEPS : isServices ? SERVICES_STEPS : isHomeFurniture ? HF_STEPS : isHealthBeauty ? HB_STEPS : isSportsHobby ? SPORTS_HOBBY_STEPS : isAnimals ? ANIMALS_STEPS : isFoodAgriculture ? FAG_STEPS : isBooksEducation ? BE_STEPS : isBabyKids ? BK_STEPS : isBusinessIndustry ? BI_STEPS : isShoppingGroceries ? SG_STEPS : getStepsForCategorySlug(selectedCategorySlug);
+  const isConstructionMaterials = selectedCategorySlug === CONSTRUCTION_MATERIALS_SLUG;
+  const steps: readonly string[] = isJobs ? JOBS_STEPS : isServices ? SERVICES_STEPS : isHomeFurniture ? HF_STEPS : isHealthBeauty ? HB_STEPS : isSportsHobby ? SPORTS_HOBBY_STEPS : isAnimals ? ANIMALS_STEPS : isFoodAgriculture ? FAG_STEPS : isBooksEducation ? BE_STEPS : isBabyKids ? BK_STEPS : isBusinessIndustry ? BI_STEPS : isShoppingGroceries ? SG_STEPS : isConstructionMaterials ? CM_STEPS : getStepsForCategorySlug(selectedCategorySlug);
 
   const getStepLabel = (step: string): string => {
     switch (step) {
@@ -2056,6 +2153,12 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       case 'sgStepLocationContact': return tSG('stepLocationContact');
       case 'sgStepMedia': return tSG('stepMedia');
       case 'sgStepReview': return tSG('stepReview');
+      // Construction & Materials steps
+      case 'cmStepBasic': return tCM('stepBasic');
+      case 'cmStepSpecs': return tCM('stepSpecs');
+      case 'cmStepLocationContact': return tCM('stepLocationContact');
+      case 'cmStepMedia': return tCM('stepMedia');
+      case 'cmStepReview': return tCM('stepReview');
       default: return '';
     }
   };
@@ -2661,6 +2764,54 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         return sgData.media.photos.length >= 1;
       case 'sgStepReview':
         return true;
+      // Construction & Materials validation
+      case 'cmStepBasic':
+        return (
+          cmData.subcategory !== '' &&
+          cmData.title.trim().length >= 3 &&
+          cmData.description.trim().length >= 10
+        );
+      case 'cmStepSpecs': {
+        const cmFields = getConstructionMaterialsSpecsConfig(cmData.subcategory as ConstructionMaterialsSubcategory);
+        const cmAllValid = cmFields.every((field) => {
+          if (!field.required) return true;
+          let value: unknown;
+          if (field.key === 'condition') {
+            value = cmData.condition;
+          } else if (field.key === 'price') {
+            value = cmData.price;
+          } else if (field.key === 'priceType') {
+            value = cmData.priceType;
+          } else if (field.key === 'deliveryAvailable') {
+            value = cmData.deliveryAvailable;
+          } else if (field.key === 'minOrder') {
+            value = cmData.minOrder;
+          } else if (field.key === 'quantity') {
+            value = cmData.quantity;
+          } else if (field.key === 'unit') {
+            value = cmData.unit;
+          } else {
+            value = cmData.specs[field.key];
+          }
+          if (field.type === 'toggle') {
+            return typeof value === 'boolean';
+          }
+          if (field.type === 'number') {
+            return typeof value === 'number' || (typeof value === 'string' && value.trim() !== '');
+          }
+          return typeof value === 'string' && value.trim().length > 0;
+        });
+        return cmAllValid;
+      }
+      case 'cmStepLocationContact':
+        return (
+          cmData.city.trim() !== '' &&
+          cmData.phone.trim() !== ''
+        );
+      case 'cmStepMedia':
+        return cmData.media.photos.length >= 1;
+      case 'cmStepReview':
+        return true;
       default:
         return false;
     }
@@ -2995,6 +3146,39 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         _phone = shData.phone || _phone;
         condition = (shData.condition || condition || 'good') as string;
         photosList = shData.media.photos;
+      } else if (isAnimals) {
+        metadata = {
+          subcategory: anData.subcategory,
+          breed: anData.breed,
+          quantity: anData.quantity,
+          age: anData.age,
+          ageUnit: anData.ageUnit,
+          healthStatus: anData.healthStatus,
+          priceType: anData.priceType,
+          ...anData.specs,
+          location: {
+            street: anData.street,
+            city: anData.city,
+            postalCode: anData.postalCode,
+            lat: anData.lat,
+            lng: anData.lng,
+          },
+          contact: {
+            sellerName: anData.sellerName,
+            phone: anData.phone,
+            email: anData.email,
+            preferredContact: anData.preferredContact,
+            hidePhone: anData.hidePhone,
+          },
+          wizard_forms: wizardValues,
+        };
+        title = anData.title || title;
+        description = anData.description || description;
+        price = Number(anData.price) || price;
+        city = anData.city || city;
+        _phone = anData.phone || _phone;
+        condition = (condition || 'good') as string;
+        photosList = anData.media.photos;
       } else if (isFoodAgriculture) {
         metadata = {
           subcategory: fagData.subcategory,
@@ -3169,6 +3353,41 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         city = sgData.city || city;
         _phone = sgData.phone || _phone;
         photosList = sgData.media.photos;
+      } else if (isConstructionMaterials) {
+        metadata = {
+          subcategory: cmData.subcategory,
+          condition: cmData.condition,
+          priceType: cmData.priceType,
+          deliveryAvailable: cmData.deliveryAvailable,
+          minOrder: cmData.minOrder,
+          quantity: cmData.quantity,
+          unit: cmData.unit,
+          ...cmData.specs,
+          location: {
+            street: cmData.street,
+            city: cmData.city,
+            postalCode: cmData.postalCode,
+            lat: cmData.lat,
+            lng: cmData.lng,
+          },
+          contact: {
+            sellerName: cmData.sellerName,
+            phone: cmData.phone,
+            email: cmData.email,
+            preferredContact: cmData.preferredContact,
+            hidePhone: cmData.hidePhone,
+          },
+          media: {
+            videos: cmData.media.videos,
+          },
+          wizard_forms: wizardValues,
+        };
+        title = cmData.title || title;
+        description = cmData.description || description;
+        price = Number(cmData.price) || price;
+        city = cmData.city || city;
+        _phone = cmData.phone || _phone;
+        photosList = cmData.media.photos;
       } else {
         metadata = {
           ...metadata,
@@ -3281,6 +3500,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
     setBkData(INITIAL_BK_DATA);
     setBiData(INITIAL_BI_DATA);
     setSgData(INITIAL_SG_DATA);
+    setCmData(INITIAL_CM_DATA);
     setCurrentStep(0);
     setSubmitted(false);
     setSubmittedListingId(null);
@@ -3348,6 +3568,12 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
     setSubmitError(null);
   };
 
+  const handleClearConstructionMaterialsForm = () => {
+    setCmData(INITIAL_CM_DATA);
+    setCurrentStep(1);
+    setSubmitError(null);
+  };
+
   const handleSaveDraft = async () => {
     if (!user) return;
     setSavingDraft(true);
@@ -3379,6 +3605,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       else if (isBabyKids) draftData = { ...draftData, bkData };
       else if (isBusinessIndustry) draftData = { ...draftData, biData };
       else if (isShoppingGroceries) draftData = { ...draftData, sgData };
+      else if (isConstructionMaterials) draftData = { ...draftData, cmData };
 
       const { data: savedDraft, error: draftError } = await supabase.from('listing_drafts').upsert({
         user_id: user.id,
@@ -5150,6 +5377,111 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
             onEdit={(stepIndex) => setCurrentStep(stepIndex)}
           />
         );
+      // Construction & Materials steps
+      case 'cmStepBasic':
+        return (
+          <StepConstructionMaterialsBasicInfo
+            locale={locale}
+            data={{ title: cmData.title, description: cmData.description, subcategory: cmData.subcategory }}
+            onChange={(updates) => {
+              updateCMData(updates);
+            }}
+          />
+        );
+      case 'cmStepSpecs':
+        return (
+          <StepConstructionMaterialsSpecs
+            locale={locale}
+            subcategory={cmData.subcategory}
+            data={{
+              quantity: cmData.quantity,
+              unit: cmData.unit,
+              condition: cmData.condition,
+              price: cmData.price,
+              priceType: cmData.priceType,
+              deliveryAvailable: cmData.deliveryAvailable,
+              minOrder: cmData.minOrder,
+              ...cmData.specs,
+            }}
+            onChange={(updates) => {
+              Object.entries(updates as Record<string, unknown>).forEach(([key, value]) => {
+                if (key === 'subcategory') {
+                  updateCMData({ subcategory: value as ConstructionMaterialsSubcategory });
+                } else if (['quantity', 'unit', 'condition', 'price', 'priceType', 'deliveryAvailable', 'minOrder'].includes(key)) {
+                  updateCMData({ [key]: value as string | number | '' });
+                } else {
+                  updateCMData({ specs: { ...cmData.specs, [key]: value } });
+                }
+              });
+            }}
+          />
+        );
+      case 'cmStepLocationContact':
+        return (
+          <StepConstructionMaterialsLocationContact
+            locale={locale}
+            data={{
+              street: cmData.street,
+              city: cmData.city,
+              postalCode: cmData.postalCode,
+              lat: cmData.lat,
+              lng: cmData.lng,
+              sellerName: cmData.sellerName,
+              phone: cmData.phone,
+              email: cmData.email,
+              preferredContact: cmData.preferredContact,
+              hidePhone: cmData.hidePhone,
+            }}
+            onChange={(data) =>
+              setCmData((prev) => ({
+                ...prev,
+                ...data,
+              }))
+            }
+          />
+        );
+      case 'cmStepMedia':
+        return (
+          <StepConstructionMaterialsMedia
+            locale={locale}
+            data={cmData.media}
+            onChange={(mediaUpdate) =>
+              setCmData((prev) => ({
+                ...prev,
+                media: { ...prev.media, ...mediaUpdate },
+              }))
+            }
+          />
+        );
+      case 'cmStepReview':
+        return (
+          <StepConstructionMaterialsReview
+            locale={locale}
+            title={cmData.title}
+            description={cmData.description}
+            subcategory={cmData.subcategory}
+            quantity={cmData.quantity}
+            unit={cmData.unit}
+            condition={cmData.condition}
+            price={cmData.price}
+            priceType={cmData.priceType}
+            deliveryAvailable={cmData.deliveryAvailable}
+            minOrder={cmData.minOrder}
+            street={cmData.street}
+            city={cmData.city}
+            postalCode={cmData.postalCode}
+            lat={cmData.lat}
+            lng={cmData.lng}
+            sellerName={cmData.sellerName}
+            phone={cmData.phone}
+            email={cmData.email}
+            preferredContact={cmData.preferredContact}
+            hidePhone={cmData.hidePhone}
+            specs={cmData.specs}
+            media={cmData.media}
+            onEdit={(stepIndex) => setCurrentStep(stepIndex)}
+          />
+        );
       default:
         return null;
     }
@@ -5350,6 +5682,15 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
             </button>
           )}
 
+          {isConstructionMaterials && (
+            <button
+              onClick={handleClearConstructionMaterialsForm}
+              className={`px-4 py-2.5 rounded-lg font-medium transition border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 ${rtl ? 'text-right' : 'text-left'}`}
+            >
+              Clear form
+            </button>
+          )}
+
           {currentStep < steps.length - 1 ? (
             <button
               onClick={handleNext}
@@ -5531,7 +5872,17 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
                   <div><span className="font-semibold text-slate-700">{tSG('photos')}:</span> {sgData.media.photos.length}</div>
                 </>
               )}
-              {!isVehicles && !isRealEstate && !isElectronics && !isFashion && !isSpareParts && !isHealthBeauty && !isAnimals && !isFoodAgriculture && !isBooksEducation && !isBabyKids && !isBusinessIndustry && !isShoppingGroceries && (
+              {isConstructionMaterials && (
+                <>
+                  <div><span className="font-semibold text-slate-700">{tCM('subcategory')}:</span> {cmData.subcategory ? tCM(`subcategories.${CONSTRUCTION_MATERIALS_SUBCATEGORY_LABEL_KEYS[cmData.subcategory]}`) : '-'}</div>
+                  <div><span className="font-semibold text-slate-700">{tCM('title')}:</span> {cmData.title || '-'}</div>
+                  <div><span className="font-semibold text-slate-700">{tCM('price')}:</span> {cmData.price === '' ? '-' : `${cmData.price} ${cmData.priceType === 'negotiable' ? tCM('priceNegotiable') : tCM('priceFixed')}`}</div>
+                  <div><span className="font-semibold text-slate-700">{tCM('city')}:</span> {cmData.city || '-'}</div>
+                  <div><span className="font-semibold text-slate-700">{tCM('phone')}:</span> {cmData.phone || '-'}</div>
+                  <div><span className="font-semibold text-slate-700">{tCM('photos')}:</span> {cmData.media.photos.length}</div>
+                </>
+              )}
+              {!isVehicles && !isRealEstate && !isElectronics && !isFashion && !isSpareParts && !isHealthBeauty && !isAnimals && !isFoodAgriculture && !isBooksEducation && !isBabyKids && !isBusinessIndustry && !isShoppingGroceries && !isConstructionMaterials && (
                 <>
                   <div><span className="font-semibold text-slate-700">{t('stepDetails')}:</span> {formData.title}</div>
                   <div><span className="font-semibold text-slate-700">{tCommon('price')}:</span> {formData.price} {formData.currency}</div>

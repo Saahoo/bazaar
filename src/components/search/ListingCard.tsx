@@ -96,6 +96,7 @@ export const ListingCard: React.FC<ListingCardProps> = ({ listing, locale }) => 
   const [favoriteLoading, setFavoriteLoading] = React.useState(false);
   const [chatLoading, setChatLoading] = React.useState(false);
   const [imageLoaded, setImageLoaded] = React.useState(false);
+  const [imageError, setImageError] = React.useState(false);
   const [isHovered, setIsHovered] = React.useState(false);
   const { showToast } = useToast();
 
@@ -225,10 +226,10 @@ export const ListingCard: React.FC<ListingCardProps> = ({ listing, locale }) => 
       <Link href={`/${locale}/listing/${listing.id}`} className="block">
         {/* Image Section */}
         <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-gradient-to-br from-slate-100 to-slate-50">
-          {!imageLoaded && photos.length > 0 && (
+          {!imageLoaded && photos.length > 0 && !imageError && (
             <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-slate-200 to-slate-100" />
           )}
-          {photos.length > 0 ? (
+          {photos.length > 0 && !imageError ? (
             <Image
               src={photos[0]}
               alt={title}
@@ -237,6 +238,7 @@ export const ListingCard: React.FC<ListingCardProps> = ({ listing, locale }) => 
               sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw"
               className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
               onLoad={() => setImageLoaded(true)}
+              onError={() => setImageError(true)}
             />
           ) : (
             <div className="flex flex-col items-center gap-2 text-slate-300">

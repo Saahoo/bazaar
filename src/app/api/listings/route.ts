@@ -26,7 +26,18 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    // Debug: log Animals & Livestock metadata
+    if (Number(category_id) === 10) {
+      console.log('[API /api/listings] Animals category - raw metadata:', JSON.stringify(metadata, null, 2));
+    }
+
     const normalized = normalizeKeysToCamel(metadata || {});
+    
+    // Debug: log normalized Animals metadata
+    if (Number(category_id) === 10) {
+      console.log('[API /api/listings] Animals category - normalized metadata:', JSON.stringify(normalized, null, 2));
+    }
+    
     const validation = validateMetadata(Number(category_id), normalized);
     if (!validation.ok) {
       return NextResponse.json({ error: 'Invalid metadata', details: validation.errors }, { status: 400 });

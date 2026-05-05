@@ -58,8 +58,8 @@ export function getMockListing(id: string): MockListing {
     favorite_count: 0,
     status: 'active',
     from_owner: true,
-    photos: ['/placeholder-image.jpg'],
-    images: ['/placeholder-image.jpg'],
+    photos: ['/placeholder-image.svg'],
+    images: ['/placeholder-image.svg'],
     created_at: new Date().toISOString(),
     user_id: 'user-123'
   };

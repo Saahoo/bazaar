@@ -1,6 +1,5 @@
 // src/app/[lang]/page.tsx
 import { HeroSection } from '@/components/homepage/HeroSection';
-import { CategoryGrid } from '@/components/homepage/CategoryGrid';
 import { CategorySidebar } from '@/components/homepage/CategorySidebar';
 import { FeaturedListings } from '@/components/homepage/FeaturedListings';
 import { TrendingItems } from '@/components/homepage/TrendingItems';
@@ -54,11 +53,6 @@ export default async function HomePage({ params }: PageProps) {
           {/* Hero banner - compact on mobile, full on desktop */}
           <div className="mb-4 md:mb-8">
             <HeroSection locale={locale as Locale} config={homepageConfig.header} />
-          </div>
-
-          {/* Desktop category grid (hidden on mobile, shown on lg+) */}
-          <div className="mb-8 hidden lg:block">
-            <CategoryGrid locale={locale as Locale} />
           </div>
 
           {/* Marketplace body */}
