@@ -16,7 +16,8 @@ type AnimalsSpecsData = {
   healthStatus: string;
   price: string;
   priceType: string;
-  [key: string]: string | number | boolean | undefined;
+  specs: Record<string, unknown>;
+  [key: string]: string | number | boolean | Record<string, unknown> | undefined;
 };
 
 interface StepAnimalsSpecsProps {
@@ -50,10 +51,16 @@ export const StepAnimalsSpecs: React.FC<StepAnimalsSpecsProps> = ({ locale, data
     onChange({ [key]: value });
   };
 
+  // Handler for dynamic spec fields stored inside data.specs
+  const handleSpecFieldChange = (key: string, value: string | number | boolean | undefined) => {
+    onChange({ specs: { ...(data.specs || {}), [key]: value } } as Partial<AnimalsSpecsData>);
+  };
+
 
   const renderField = (field: import('@/lib/constants/animals-livestock-wizard').AnimalsSpecField) => {
     const { key, label, type, required, options, unitOptions, placeholder } = field;
-    const value = data[key] !== undefined && data[key] !== null ? String(data[key]) : '';
+    // Dynamic fields are stored inside data.specs, not at the top level
+    const value = data.specs?.[key] !== undefined && data.specs?.[key] !== null ? String(data.specs[key]) : '';
 
     // Helper to create option objects with translated labels
     const createTranslatedOptions = (opts: string[]) =>
@@ -84,7 +91,7 @@ export const StepAnimalsSpecs: React.FC<StepAnimalsSpecsProps> = ({ locale, data
             required={required}
             rtl={rtl}
             value={value}
-            onChange={(val) => handleFieldChange(key, val)}
+            onChange={(val) => handleSpecFieldChange(key, val)}
             placeholder={placeholder ? t(placeholder) || placeholder : undefined}
           />
         );
@@ -96,7 +103,7 @@ export const StepAnimalsSpecs: React.FC<StepAnimalsSpecsProps> = ({ locale, data
             required={required}
             rtl={rtl}
             value={value}
-            onChange={(val) => handleFieldChange(key, val)}
+            onChange={(val) => handleSpecFieldChange(key, val)}
             placeholder={placeholder ? t(placeholder) || placeholder : undefined}
             type="number"
           />
@@ -109,7 +116,7 @@ export const StepAnimalsSpecs: React.FC<StepAnimalsSpecsProps> = ({ locale, data
             required={required}
             rtl={rtl}
             value={value}
-            onChange={(val) => handleFieldChange(key, val)}
+            onChange={(val) => handleSpecFieldChange(key, val)}
             options={options ? createTranslatedOptions(options) : []}
             placeholder={placeholder ? t(placeholder) || placeholder : undefined}
           />
@@ -121,10 +128,10 @@ export const StepAnimalsSpecs: React.FC<StepAnimalsSpecsProps> = ({ locale, data
             label={fieldLabel}
             required={required}
             rtl={rtl}
-            value={data[key] !== undefined && data[key] !== null ? String(data[key]) : ''}
-            unitValue={data[`${key}Unit`] !== undefined && data[`${key}Unit`] !== null ? String(data[`${key}Unit`]) : (unitOptions?.[0] || '')}
-            onChange={(val) => handleFieldChange(key, val)}
-            onUnitChange={(unit) => handleFieldChange(`${key}Unit`, unit)}
+            value={data.specs?.[key] !== undefined && data.specs?.[key] !== null ? String(data.specs[key]) : ''}
+            unitValue={data.specs?.[`${key}Unit`] !== undefined && data.specs?.[`${key}Unit`] !== null ? String(data.specs[`${key}Unit`]) : (unitOptions?.[0] || '')}
+            onChange={(val) => handleSpecFieldChange(key, val)}
+            onUnitChange={(unit) => handleSpecFieldChange(`${key}Unit`, unit)}
             unitOptions={unitOptions ? createTranslatedUnitOptions(unitOptions) : []}
             placeholder={placeholder ? t(placeholder) || placeholder : undefined}
           />
@@ -136,7 +143,7 @@ export const StepAnimalsSpecs: React.FC<StepAnimalsSpecsProps> = ({ locale, data
             label={fieldLabel}
             rtl={rtl}
             checked={!!value}
-            onChange={(checked) => handleFieldChange(key, checked)}
+            onChange={(checked) => handleSpecFieldChange(key, checked)}
           />
         );
       default:

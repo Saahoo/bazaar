@@ -12,6 +12,7 @@ export interface ElectronicsLocationData {
   street: string;
   lat: number | null;
   lng: number | null;
+  sellerType: 'individual' | 'dealer' | '';
 }
 
 interface StepElectronicsLocationProps {
@@ -139,6 +140,22 @@ export const StepElectronicsLocation: React.FC<StepElectronicsLocationProps> = (
           </select>
           <MapPin className={`w-4 h-4 text-slate-400 absolute top-1/2 -translate-y-1/2 pointer-events-none ${rtl ? 'left-3' : 'right-3'}`} />
         </div>
+      </div>
+
+      <div>
+        <label className={labelClass}>{t('sellerType')}</label>
+        <select
+          value={data.sellerType}
+          onChange={(e) => onChange({ sellerType: e.target.value as 'individual' | 'dealer' | '' })}
+          className={`${inputClass} appearance-none bg-white`}
+          dir={rtl ? 'rtl' : 'ltr'}
+          aria-label={t('sellerType')}
+          title={t('sellerType')}
+        >
+          <option value="">{t('sellerTypePlaceholder')}</option>
+          <option value="individual">{t('sellerTypeIndividual')}</option>
+          <option value="dealer">{t('sellerTypeDealer')}</option>
+        </select>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

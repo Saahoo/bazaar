@@ -32,7 +32,7 @@ import { StepVehicleContact, VehicleContactData } from './vehicles/StepVehicleCo
 import { StepElectronicsBasicInfo } from './electronics/StepElectronicsBasicInfo';
 import { StepElectronicsSpecs } from './electronics/StepElectronicsSpecs';
 import { StepElectronicsMedia, ElectronicsMediaData } from './electronics/StepElectronicsMedia';
-import { StepElectronicsDetails } from './electronics/StepElectronicsDetails';
+import { StepElectronicsLocation } from './electronics/StepElectronicsLocation';
 import { StepElectronicsContact } from './electronics/StepElectronicsContact';
 import { StepElectronicsReview } from './electronics/StepElectronicsReview';
 import { StepFashionBasicInfo } from './fashion/StepFashionBasicInfo';
@@ -213,6 +213,10 @@ export interface ElectronicsFormData {
   condition: string;
   media: ElectronicsMediaData;
   city: string;
+  area: string;
+  street: string;
+  lat: number | null;
+  lng: number | null;
   sellerType: 'individual' | 'dealer' | '';
   phone: string;
   whatsapp: string;
@@ -428,6 +432,7 @@ export interface AnimalsFormData {
   email: string;
   preferredContact: 'phone' | 'email' | 'both';
   hidePhone: boolean;
+  termsAccepted: boolean;
   specs: Record<string, unknown>;
   media: AnimalsMediaData;
 }
@@ -739,6 +744,10 @@ const INITIAL_EL_DATA: ElectronicsFormData = {
     videoUrl: '',
   },
   city: '',
+  area: '',
+  street: '',
+  lat: null,
+  lng: null,
   sellerType: '',
   phone: '',
   whatsapp: '',
@@ -877,6 +886,7 @@ const INITIAL_ANIMALS_DATA: AnimalsFormData = {
   email: '',
   preferredContact: 'both',
   hidePhone: false,
+  termsAccepted: false,
   specs: {},
   media: {
     photos: [],
@@ -1170,7 +1180,7 @@ const RE_STEPS = [
 // Vehicle steps
 const VH_STEPS = ['stepCategory', 'vhStepType', 'vhStepSpecs', 'vhStepCondition', 'vhStepAddress', 'vhStepMedia', 'vhStepContact'] as const;
 // Electronics steps
-const EL_STEPS = ['stepCategory', 'elStepBasic', 'elStepSpecs', 'elStepMedia', 'elStepDetails', 'elStepContact', 'elStepReview'] as const;
+const EL_STEPS = ['stepCategory', 'elStepBasic', 'elStepSpecs', 'elStepMedia', 'elStepLocation', 'elStepContact', 'elStepReview'] as const;
 // Fashion & Clothing steps
 const FA_STEPS = ['stepCategory', 'faStepBasic', 'faStepGeneral', 'faStepSpecs', 'faStepMedia', 'faStepContact', 'faStepReview'] as const;
 // Spare parts steps
@@ -2078,7 +2088,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       case 'elStepBasic': return tEL('stepBasic');
       case 'elStepSpecs': return tEL('stepSpecs');
       case 'elStepMedia': return tEL('stepMedia');
-      case 'elStepDetails': return tEL('stepDetails');
+      case 'elStepLocation': return tEL('stepLocation');
       case 'elStepContact': return tEL('stepContact');
       case 'elStepReview': return tEL('stepReview');
       case 'faStepBasic': return tFA('stepBasic');
@@ -2249,7 +2259,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       }
       case 'elStepMedia':
         return elData.media.photos.length >= 1;
-      case 'elStepDetails':
+      case 'elStepLocation':
         return elData.city !== '' && elData.sellerType !== '';
       case 'elStepContact':
         return elData.phone.trim() !== '' && elData.termsAccepted;
@@ -2502,7 +2512,8 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       case 'anStepLocationContact':
         return (
           anData.city.trim() !== '' &&
-          anData.phone.trim() !== ''
+          anData.phone.trim() !== '' &&
+          anData.termsAccepted === true
         );
       case 'anStepMedia':
         return anData.media.photos.length >= 1;
@@ -2925,6 +2936,13 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
           ...specsWithCondition,
           negotiable: elData.negotiable,
           sellerType: elData.sellerType,
+          location: {
+            city: elData.city,
+            area: elData.area,
+            street: elData.street,
+            lat: elData.lat,
+            lng: elData.lng,
+          },
           media: {
             video: elData.media.videoUrl,
           },
@@ -3964,16 +3982,20 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
             }
           />
         );
-      case 'elStepDetails':
+      case 'elStepLocation':
         return (
-          <StepElectronicsDetails
+          <StepElectronicsLocation
             locale={locale}
             data={{
               city: elData.city,
+              area: elData.area,
+              street: elData.street,
+              lat: elData.lat,
+              lng: elData.lng,
               sellerType: elData.sellerType,
             }}
-            onChange={(detailsUpdate) => {
-              updateELData(detailsUpdate as Partial<ElectronicsFormData>);
+            onChange={(locationUpdate) => {
+              updateELData(locationUpdate as Partial<ElectronicsFormData>);
             }}
           />
         );
@@ -4004,6 +4026,10 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
             condition={elData.condition}
             contactData={{
               city: elData.city,
+              area: elData.area,
+              street: elData.street,
+              lat: elData.lat,
+              lng: elData.lng,
               sellerType: elData.sellerType,
               phone: elData.phone,
               whatsapp: elData.whatsapp,
@@ -4101,7 +4127,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
               email: faData.email,
               termsAccepted: faData.termsAccepted,
             }}
-            onChange={(updates) => updateFAData(updates)}
+            onChange={updateFAData}
           />
         );
       // Spare parts steps
@@ -4836,6 +4862,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
               email: anData.email,
               preferredContact: anData.preferredContact,
               hidePhone: anData.hidePhone,
+              termsAccepted: anData.termsAccepted,
             }}
             onChange={(updates) => updateANData(updates)}
           />

@@ -35,29 +35,50 @@ interface StepSpareReviewProps {
   onEdit: (stepIndex: number) => void;
 }
 
-const formatValue = (value: unknown): string => {
-  if (value === null || value === undefined || value === '') return '-';
-  if (Array.isArray(value)) return value.join(', ');
-  if (typeof value === 'boolean') return value ? 'Yes' : 'No';
-  return String(value);
-};
-
-const toDisplayRows = (source: Record<string, unknown>): Array<[string, string]> =>
-  Object.entries(source).map(([key, value]) => [key, formatValue(value)]);
-
 export const StepSpareReview: React.FC<StepSpareReviewProps> = ({ locale, basic, general, contact, compatibility, specs, media, onEdit }) => {
   const t = useTranslations('postAd.spareParts');
   const rtl = isRTL(locale);
 
+  const toOptionKey = (value: string): string =>
+    value.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+
+  const optionLabel = (value: string): string => {
+    const key = `optionLabels.${toOptionKey(value)}` as Parameters<typeof t>[0];
+    return t.has(key) ? t(key) : value;
+  };
+
+  const formatValue = (value: unknown): string => {
+    if (value === null || value === undefined || value === '') return '-';
+    if (Array.isArray(value)) return value.map((v) => optionLabel(String(v))).join(', ');
+    if (typeof value === 'boolean') return value ? t('yes') : t('no');
+    const str = String(value);
+    const optKey = `optionLabels.${toOptionKey(str)}` as Parameters<typeof t>[0];
+    return t.has(optKey) ? t(optKey) : str;
+  };
+
   const getLabel = (key: string) => {
-    const translationKey = `fields.${key}` as Parameters<typeof t>[0];
-    return t.has(translationKey) ? t(translationKey) : key;
+    const specKey = `specFields.${key}` as Parameters<typeof t>[0];
+    if (t.has(specKey)) return t(specKey);
+    const fieldKey = `fields.${key}` as Parameters<typeof t>[0];
+    return t.has(fieldKey) ? t(fieldKey) : key;
   };
 
   const subcategoryLabel = basic.subcategory
     ? (() => {
         const key = `subcategories.${basic.subcategory}` as Parameters<typeof t>[0];
         return t.has(key) ? t(key) : basic.subcategory;
+      })()
+    : '-';
+
+  const conditionLabel = general.condition
+    ? optionLabel(general.condition)
+    : '-';
+
+  const sellerTypeLabel = general.seller_type
+    ? (() => {
+        if (general.seller_type === 'Individual') return t('sellerTypeIndividual');
+        if (general.seller_type === 'Dealer') return t('sellerTypeDealer');
+        return general.seller_type;
       })()
     : '-';
 
@@ -77,20 +98,20 @@ export const StepSpareReview: React.FC<StepSpareReviewProps> = ({ locale, basic,
       rows: [
         ['price', general.price === '' ? '-' : `${general.price}`],
         ['currency', general.currency],
-        ['condition', general.condition],
+        ['condition', conditionLabel],
         ['brand', general.brand],
-        ['seller_type', general.seller_type],
+        ['seller_type', sellerTypeLabel],
       ],
     },
     {
       title: t('stepCompatibility'),
       stepIndex: 3,
-      rows: toDisplayRows(compatibility),
+      rows: Object.entries(compatibility).map(([key, value]) => [key, formatValue(value)]),
     },
     {
       title: t('stepSpecs'),
       stepIndex: 4,
-      rows: toDisplayRows(specs),
+      rows: Object.entries(specs).map(([key, value]) => [key, formatValue(value)]),
     },
     {
       title: t('stepMedia'),

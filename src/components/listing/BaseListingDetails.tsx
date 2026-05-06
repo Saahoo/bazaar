@@ -138,6 +138,16 @@ const formatFieldValue = (
       }
       return String(value);
     
+    case 'object':
+      if (value && typeof value === 'object' && !Array.isArray(value)) {
+        const obj = value as Record<string, unknown>;
+        return Object.entries(obj)
+          .filter(([, v]) => v === true || v === 'true')
+          .map(([k]) => k)
+          .join(', ');
+      }
+      return String(value);
+    
     default:
       return String(value);
   }
@@ -270,7 +280,19 @@ export const BaseListingDetails = <T extends ListingCategory>({
   // Helper function to format field value with fallback
   const formatMappedFieldValue = (field: MappedField): string | React.ReactNode => {
     if (field.format) {
-      return field.format(field.value, locale, listingData.metadata);
+      const result = field.format(field.value, locale, listingData.metadata);
+      // Handle amenities-style multi-value format (||| separated translation keys)
+      if (typeof result === 'string' && result.includes('|||')) {
+        return result
+          .split('|||')
+          .map(key => t(key))
+          .join(', ');
+      }
+      // Translate format results that are translation keys (contain a dot path)
+      if (typeof result === 'string' && result.includes('.')) {
+        return t(result);
+      }
+      return result;
     }
     return formatFieldValue(field.value, field.type, locale, listingData.metadata);
   };
@@ -310,13 +332,15 @@ export const BaseListingDetails = <T extends ListingCategory>({
   }, [listingData.price, listingData.currency, locale, getIntlLocale]);
 
   const formattedCondition = useMemo(() => {
+    const conditionKey = String(listingData.condition).toLowerCase().replace(/\s+/g, '_');
     const conditionMap: Record<string, string> = {
       new: tCommon('newCondition'),
       like_new: tCommon('likeNew'),
       used: tCommon('used'),
+      refurbished: tCommon('refurbished'),
       for_parts: tCommon('forParts') || 'For Parts',
     };
-    return conditionMap[listingData.condition] || listingData.condition;
+    return conditionMap[conditionKey] || listingData.condition;
   }, [listingData.condition, tCommon]);
 
   // Format created date with proper locale

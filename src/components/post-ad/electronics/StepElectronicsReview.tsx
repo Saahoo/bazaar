@@ -6,11 +6,11 @@ import { useTranslations } from 'next-intl';
 import { Edit2, Image as ImageIcon } from 'lucide-react';
 import { isRTL, Locale } from '@/lib/i18n/config';
 import { ElectronicsSubcategory, getElectronicsSpecsConfig } from '@/lib/constants/electronics-wizard';
-import { ElectronicsDetailsData } from './StepElectronicsDetails';
+import { ElectronicsLocationData } from './StepElectronicsLocation';
 import { ElectronicsContactData } from './StepElectronicsContact';
 import { ElectronicsMediaData } from './StepElectronicsMedia';
 
-interface ElectronicsReviewContactData extends ElectronicsDetailsData, ElectronicsContactData {}
+interface ElectronicsReviewContactData extends ElectronicsLocationData, ElectronicsContactData {}
 
 interface StepElectronicsReviewProps {
 	locale: Locale;
@@ -230,6 +230,24 @@ export const StepElectronicsReview: React.FC<StepElectronicsReviewProps> = ({
 						<span className="text-slate-500 min-w-[90px] shrink-0">{t('city')}:</span>
 						<span className="text-slate-800">{contactData.city || '—'}</span>
 					</div>
+					{contactData.area && (
+						<div className={fieldRowClass}>
+							<span className="text-slate-500 min-w-[90px] shrink-0">{t('area')}:</span>
+							<span className="text-slate-800">{contactData.area}</span>
+						</div>
+					)}
+					{contactData.street && (
+						<div className={fieldRowClass}>
+							<span className="text-slate-500 min-w-[90px] shrink-0">{t('street')}:</span>
+							<span className="text-slate-800">{contactData.street}</span>
+						</div>
+					)}
+					{contactData.lat !== null && contactData.lng !== null && (
+						<div className={fieldRowClass}>
+							<span className="text-slate-500 min-w-[90px] shrink-0">{t('mapPicker')}:</span>
+							<span className="text-slate-800 text-xs">{contactData.lat.toFixed(4)}, {contactData.lng.toFixed(4)}</span>
+						</div>
+					)}
 					{contactData.sellerType && (
 						<div className={fieldRowClass}>
 							<span className="text-slate-500 min-w-[90px] shrink-0">{t('sellerType')}:</span>

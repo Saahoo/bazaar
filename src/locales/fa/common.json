@@ -614,6 +614,10 @@
     "yearBuilt": "سال ساخت",
     "fullAddress": "آدرس کامل",
     "parkingSpaces": "جاهای پارک",
+    "livingRooms": "اتاق نشیمن",
+    "kitchenType": "نوع آشپزخانه",
+    "monthlyRent": "اجاره ماهانه",
+    "yearlyRent": "اجاره سالانه",
     "landType": "نوع زمین",
     "safetyTipContent": "قبل از دیدن موتر پول ارسال نکنید. در مکان عمومی ملاقات کرده و اسناد را بررسی کنید.",
     "priceChangeArrow": "→",
@@ -646,7 +650,18 @@
     "warranty": "گارانتی",
     "ageGroup": "گروه سنی",
     "shipping": "حمل و نقل",
-    "delivery": "تحویل"
+    "delivery": "تحویل",
+    "warrantyPeriod": "دوره گارانتی",
+    "ram": "رم",
+    "storage": "حافظه",
+    "screenSize": "اندازه صفحه",
+    "processor": "پردازنده",
+    "batteryHealth": "سلامت باتری",
+    "os": "سیستم عامل",
+    "resolution": "رزولوشن",
+    "camera": "دوربین",
+    "accessories": "لوازم جانبی",
+    "billAvailable": "فاکتور موجود"
   },
   "form": {
     "title": "عنوان",
@@ -2728,7 +2743,8 @@
         "bolts": "بولت",
         "nuts": "مهره",
         "wiring": "سیم‌کشی",
-        "bracket": "براکت"
+        "bracket": "براکت",
+        "instruction_manual": "دفترچه راهنما"
       },
       "fields": {
         "title": "عنوان",

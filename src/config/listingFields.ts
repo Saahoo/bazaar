@@ -1,5 +1,6 @@
 // src/config/listingFields.ts
 import { Locale } from '@/lib/i18n/config';
+import { getFashionOptionTranslationKey } from '@/lib/constants/fashion-wizard';
 
 export type FieldType = 'text' | 'number' | 'boolean' | 'array' | 'object' | 'currency' | 'area' | 'date';
 
@@ -30,6 +31,23 @@ const BABY_KIDS_CATEGORY = 15;
 const BUSINESS_INDUSTRY_CATEGORY = 16;
 const SHOPPING_GROCERIES_CATEGORY = 17;
 const CONSTRUCTION_MATERIALS_CATEGORY = 18;
+
+// Fashion option normalization helper - returns full dot-path translation key
+const formatFashionOption = (value: string): string => {
+  return `postAd.fashion.${getFashionOptionTranslationKey(value)}`;
+};
+
+// Fashion subcategory mapping to translation keys
+const FASHION_SUBCATEGORY_KEYS: Record<string, string> = {
+  'men-clothing': 'common.fashion.subcategoryMenClothing',
+  'women-clothing': 'common.fashion.subcategoryWomenClothing',
+  'kids-clothing': 'common.fashion.subcategoryKidsClothing',
+  'shoes': 'common.fashion.subcategoryShoes',
+  'bags': 'common.fashion.subcategoryBags',
+  'accessories': 'common.fashion.subcategoryAccessories',
+  'watches': 'common.fashion.subcategoryWatches',
+  'jewelry': 'common.fashion.subcategoryJewelry',
+};
 
 // All listing fields across categories
 export const LISTING_FIELDS: ListingField[] = [
@@ -191,20 +209,7 @@ export const LISTING_FIELDS: ListingField[] = [
     category: REAL_ESTATE_CATEGORY,
     section: 'overview',
     type: 'text',
-    format: (value) => {
-      const map: Record<string, string> = {
-        apartment: 'apartment',
-        house_villa: 'house',
-        commercial: 'commercial',
-        office: 'office',
-        shop_retail: 'shop',
-        land_plot: 'land',
-        industrial: 'warehouse',
-        room_shared: 'garage',
-        other: 'other',
-      };
-      return map[String(value)] || String(value);
-    },
+    format: (value) => `common.realEstate.${value}`,
   },
   {
     key: 'listingType',
@@ -212,18 +217,22 @@ export const LISTING_FIELDS: ListingField[] = [
     category: REAL_ESTATE_CATEGORY,
     section: 'overview',
     type: 'text',
-    format: (value) => (value === 'sale' ? 'forSale' : value === 'rent' ? 'forRent' : String(value)),
+    format: (value) => {
+      if (value === 'sale') return 'common.realEstate.forSale';
+      if (value === 'rent') return 'common.realEstate.forRent';
+      return String(value);
+    },
   },
   {
-    key: 'priceType',
+    key: 'price_type',
     labelKey: 'listing.priceType',
     category: REAL_ESTATE_CATEGORY,
     section: 'overview',
     type: 'text',
     format: (value) => {
-      if (value === 'total') return 'totalPrice';
-      if (value === 'monthly') return 'monthlyRent';
-      if (value === 'yearly') return 'yearlyRent';
+      if (value === 'total') return 'listing.totalPrice';
+      if (value === 'monthly') return 'listing.monthlyRent';
+      if (value === 'yearly') return 'listing.yearlyRent';
       return String(value);
     },
   },
@@ -244,37 +253,58 @@ export const LISTING_FIELDS: ListingField[] = [
     condition: (metadata) => Boolean(metadata.bathrooms),
   },
   {
-    key: 'areaSize',
+    key: 'living_rooms',
+    labelKey: 'listing.livingRooms',
+    category: REAL_ESTATE_CATEGORY,
+    section: 'specifications',
+    type: 'number',
+    condition: (metadata) => Boolean(metadata.living_rooms),
+  },
+  {
+    key: 'area_size',
     labelKey: 'listing.areaSize',
     category: REAL_ESTATE_CATEGORY,
     section: 'specifications',
     type: 'area',
-    condition: (metadata) => Boolean(metadata.areaSize),
+    condition: (metadata) => Boolean(metadata.area_size),
     format: (value, locale) => `${Number(value).toLocaleString(locale === 'en' ? 'en-US' : locale === 'fa' ? 'fa-IR' : 'ps-AF')} sqm`,
   },
   {
-    key: 'floorNumber',
+    key: 'kitchen_type',
+    labelKey: 'listing.kitchenType',
+    category: REAL_ESTATE_CATEGORY,
+    section: 'specifications',
+    type: 'text',
+    condition: (metadata) => Boolean(metadata.kitchen_type),
+    format: (value) => {
+      if (value === 'open') return 'common.realEstate.openKitchenType';
+      if (value === 'closed') return 'common.realEstate.closedKitchenType';
+      return String(value);
+    },
+  },
+  {
+    key: 'floor_number',
     labelKey: 'listing.floorNumber',
     category: REAL_ESTATE_CATEGORY,
     section: 'specifications',
     type: 'number',
-    condition: (metadata) => Boolean(metadata.floorNumber),
+    condition: (metadata) => Boolean(metadata.floor_number),
   },
   {
-    key: 'totalFloors',
+    key: 'total_floors',
     labelKey: 'listing.totalFloors',
     category: REAL_ESTATE_CATEGORY,
     section: 'specifications',
     type: 'number',
-    condition: (metadata) => Boolean(metadata.totalFloors),
+    condition: (metadata) => Boolean(metadata.total_floors),
   },
   {
-    key: 'yearBuilt',
+    key: 'year_built',
     labelKey: 'listing.yearBuilt',
     category: REAL_ESTATE_CATEGORY,
     section: 'specifications',
     type: 'number',
-    condition: (metadata) => Boolean(metadata.yearBuilt),
+    condition: (metadata) => Boolean(metadata.year_built),
   },
   {
     key: 'condition',
@@ -283,9 +313,9 @@ export const LISTING_FIELDS: ListingField[] = [
     section: 'specifications',
     type: 'text',
     format: (value) => {
-      if (value === 'new') return 'newCondition';
-      if (value === 'good') return 'good';
-      if (value === 'fair') return 'fair';
+      if (value === 'new') return 'common.realEstate.newCondition';
+      if (value === 'used') return 'common.realEstate.usedCondition';
+      if (value === 'renovated') return 'common.realEstate.renovatedCondition';
       return String(value);
     },
   },
@@ -304,14 +334,14 @@ export const LISTING_FIELDS: ListingField[] = [
     type: 'text',
   },
   {
-    key: 'areaDistrict',
+    key: 'area_district',
     labelKey: 'listing.areaDistrict',
     category: REAL_ESTATE_CATEGORY,
     section: 'location',
     type: 'text',
   },
   {
-    key: 'fullAddress',
+    key: 'full_address',
     labelKey: 'listing.fullAddress',
     category: REAL_ESTATE_CATEGORY,
     section: 'location',
@@ -323,14 +353,33 @@ export const LISTING_FIELDS: ListingField[] = [
     category: REAL_ESTATE_CATEGORY,
     section: 'amenities',
     type: 'object',
+    format: (value) => {
+      if (!value || typeof value !== 'object') return '';
+      const keyMap: Record<string, string> = {
+        security: 'postAd.realEstate.security',
+        gym: 'postAd.realEstate.gym',
+        swimming_pool: 'postAd.realEstate.swimmingPool',
+        garden: 'postAd.realEstate.garden',
+        internet: 'postAd.realEstate.internet',
+        cable_tv: 'postAd.realEstate.cableTV',
+        pets_allowed: 'postAd.realEstate.petsAllowed',
+        wheelchair_access: 'postAd.realEstate.wheelchairAccess',
+        smart_home_features: 'postAd.realEstate.smartHomeFeatures',
+      };
+      const obj = value as Record<string, unknown>;
+      return Object.entries(obj)
+        .filter(([, v]) => v === true)
+        .map(([k]) => keyMap[k] || k)
+        .join('|||');
+    },
   },
   {
-    key: 'parkingSpaces',
+    key: 'parking_spaces',
     labelKey: 'listing.parkingSpaces',
     category: REAL_ESTATE_CATEGORY,
     section: 'additional',
     type: 'number',
-    condition: (metadata) => Boolean(metadata.parkingSpaces),
+    condition: (metadata) => Boolean(metadata.parking_spaces),
   },
   {
     key: 'negotiable',
@@ -340,7 +389,7 @@ export const LISTING_FIELDS: ListingField[] = [
     type: 'boolean',
   },
   {
-    key: 'availableFrom',
+    key: 'available_from',
     labelKey: 'listing.availableFrom',
     category: REAL_ESTATE_CATEGORY,
     section: 'additional',
@@ -406,10 +455,10 @@ export const LISTING_FIELDS: ListingField[] = [
     type: 'text',
     priority: 7,
     format: (value) => {
-      if (value === 'new') return 'newCondition';
-      if (value === 'like_new') return 'likeNew';
-      if (value === 'used') return 'used';
-      if (value === 'refurbished') return 'refurbished';
+      if (value === 'new') return 'common.newCondition';
+      if (value === 'like_new') return 'common.likeNew';
+      if (value === 'used') return 'common.used';
+      if (value === 'refurbished') return 'common.refurbished';
       return String(value);
     },
   },
@@ -551,6 +600,10 @@ export const LISTING_FIELDS: ListingField[] = [
     section: 'specifications',
     type: 'text',
     priority: 10,
+    format: (value) => {
+      const key = FASHION_SUBCATEGORY_KEYS[String(value)];
+      return key || String(value);
+    },
   },
   {
     key: 'brand',
@@ -567,6 +620,14 @@ export const LISTING_FIELDS: ListingField[] = [
     section: 'specifications',
     type: 'text',
     priority: 8,
+    format: (value) => {
+      const str = String(value);
+      const knownSizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'Custom', 'Small', 'Medium', 'Large'];
+      if (knownSizes.includes(str)) {
+        return formatFashionOption(str);
+      }
+      return str;
+    },
   },
   {
     key: 'color',
@@ -575,6 +636,16 @@ export const LISTING_FIELDS: ListingField[] = [
     section: 'specifications',
     type: 'text',
     priority: 7,
+    format: (value) => {
+      if (Array.isArray(value)) {
+        return value.map((v: unknown) => formatFashionOption(String(v))).join('|||');
+      }
+      const str = String(value);
+      if (str.includes(',')) {
+        return str.split(',').map((v) => formatFashionOption(v.trim())).join('|||');
+      }
+      return formatFashionOption(str);
+    },
   },
   {
     key: 'material',
@@ -583,6 +654,7 @@ export const LISTING_FIELDS: ListingField[] = [
     section: 'specifications',
     type: 'text',
     priority: 6,
+    format: (value) => formatFashionOption(String(value)),
   },
   {
     key: 'gender',
@@ -591,6 +663,7 @@ export const LISTING_FIELDS: ListingField[] = [
     section: 'specifications',
     type: 'text',
     priority: 5,
+    format: (value) => formatFashionOption(String(value)),
   },
   {
     key: 'clothingType',
@@ -599,6 +672,7 @@ export const LISTING_FIELDS: ListingField[] = [
     section: 'specifications',
     type: 'text',
     priority: 4,
+    format: (value) => formatFashionOption(String(value)),
   },
   {
     key: 'fitType',
@@ -607,6 +681,7 @@ export const LISTING_FIELDS: ListingField[] = [
     section: 'specifications',
     type: 'text',
     priority: 4,
+    format: (value) => formatFashionOption(String(value)),
   },
   {
     key: 'sleeveType',
@@ -615,6 +690,7 @@ export const LISTING_FIELDS: ListingField[] = [
     section: 'specifications',
     type: 'text',
     priority: 4,
+    format: (value) => formatFashionOption(String(value)),
   },
   {
     key: 'pattern',
@@ -623,6 +699,7 @@ export const LISTING_FIELDS: ListingField[] = [
     section: 'specifications',
     type: 'text',
     priority: 4,
+    format: (value) => formatFashionOption(String(value)),
   },
   {
     key: 'season',
@@ -631,6 +708,7 @@ export const LISTING_FIELDS: ListingField[] = [
     section: 'specifications',
     type: 'text',
     priority: 4,
+    format: (value) => formatFashionOption(String(value)),
   },
   {
     key: 'occasion',
@@ -639,6 +717,7 @@ export const LISTING_FIELDS: ListingField[] = [
     section: 'specifications',
     type: 'text',
     priority: 4,
+    format: (value) => formatFashionOption(String(value)),
   },
   {
     key: 'authenticity',
@@ -647,6 +726,7 @@ export const LISTING_FIELDS: ListingField[] = [
     section: 'specifications',
     type: 'text',
     priority: 3,
+    format: (value) => formatFashionOption(String(value)),
   },
   {
     key: 'model',
@@ -663,6 +743,7 @@ export const LISTING_FIELDS: ListingField[] = [
     section: 'specifications',
     type: 'text',
     priority: 3,
+    format: (value) => formatFashionOption(String(value)),
   },
   {
     key: 'bagType',
@@ -671,6 +752,7 @@ export const LISTING_FIELDS: ListingField[] = [
     section: 'specifications',
     type: 'text',
     priority: 3,
+    format: (value) => formatFashionOption(String(value)),
   },
   {
     key: 'closureType',
@@ -679,6 +761,7 @@ export const LISTING_FIELDS: ListingField[] = [
     section: 'specifications',
     type: 'text',
     priority: 3,
+    format: (value) => formatFashionOption(String(value)),
   },
   {
     key: 'strapType',
@@ -687,6 +770,7 @@ export const LISTING_FIELDS: ListingField[] = [
     section: 'specifications',
     type: 'text',
     priority: 3,
+    format: (value) => formatFashionOption(String(value)),
   },
   {
     key: 'type',
@@ -695,6 +779,7 @@ export const LISTING_FIELDS: ListingField[] = [
     section: 'specifications',
     type: 'text',
     priority: 3,
+    format: (value) => formatFashionOption(String(value)),
   },
   {
     key: 'displayType',
@@ -703,6 +788,7 @@ export const LISTING_FIELDS: ListingField[] = [
     section: 'specifications',
     type: 'text',
     priority: 3,
+    format: (value) => formatFashionOption(String(value)),
   },
   {
     key: 'strapMaterial',
@@ -711,6 +797,7 @@ export const LISTING_FIELDS: ListingField[] = [
     section: 'specifications',
     type: 'text',
     priority: 3,
+    format: (value) => formatFashionOption(String(value)),
   },
   {
     key: 'dialShape',
@@ -719,6 +806,7 @@ export const LISTING_FIELDS: ListingField[] = [
     section: 'specifications',
     type: 'text',
     priority: 3,
+    format: (value) => formatFashionOption(String(value)),
   },
   {
     key: 'movement',
@@ -727,6 +815,7 @@ export const LISTING_FIELDS: ListingField[] = [
     section: 'specifications',
     type: 'text',
     priority: 3,
+    format: (value) => formatFashionOption(String(value)),
   },
   {
     key: 'stoneType',
@@ -735,6 +824,7 @@ export const LISTING_FIELDS: ListingField[] = [
     section: 'specifications',
     type: 'text',
     priority: 3,
+    format: (value) => formatFashionOption(String(value)),
   },
   {
     key: 'certification',
@@ -752,6 +842,7 @@ export const LISTING_FIELDS: ListingField[] = [
     section: 'condition',
     type: 'text',
     priority: 5,
+    format: (value) => formatFashionOption(String(value)),
   },
   {
     key: 'warranty',
@@ -801,6 +892,7 @@ export const LISTING_FIELDS: ListingField[] = [
     section: 'details',
     type: 'text',
     priority: 2,
+    format: (value) => formatFashionOption(String(value)),
   },
   {
     key: 'style',
@@ -809,6 +901,7 @@ export const LISTING_FIELDS: ListingField[] = [
     section: 'details',
     type: 'text',
     priority: 2,
+    format: (value) => formatFashionOption(String(value)),
   },
   {
     key: 'usageType',
@@ -817,6 +910,7 @@ export const LISTING_FIELDS: ListingField[] = [
     section: 'details',
     type: 'text',
     priority: 2,
+    format: (value) => formatFashionOption(String(value)),
   },
   {
     key: 'warrantyText',
@@ -846,38 +940,127 @@ export const LISTING_FIELDS: ListingField[] = [
   // ========================================
   // SPARE PARTS (Category 5)
   // ========================================
-  { key: 'sellerType', labelKey: 'postAd.spareParts.fields.seller_type', category: SPARE_PARTS_CATEGORY, section: 'highlights', type: 'text', priority: 5 },
+  // Helper for spare parts option normalization
+  // Keys in metadata are snake_case matching the wizard field names
+  { key: 'subcategory', labelKey: 'postAd.spareParts.fields.subcategory', category: SPARE_PARTS_CATEGORY, section: 'highlights', type: 'text', priority: 10,
+    format: (value) => {
+      if (!value) return '';
+      return `postAd.spareParts.subcategories.${value}`;
+    },
+  },
+  { key: 'condition', labelKey: 'postAd.spareParts.fields.condition', category: SPARE_PARTS_CATEGORY, section: 'highlights', type: 'text', priority: 9,
+    format: (value) => {
+      if (!value) return '';
+      const normalized = String(value).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+      return `postAd.spareParts.optionLabels.${normalized}`;
+    },
+  },
+  { key: 'seller_type', labelKey: 'postAd.spareParts.fields.seller_type', category: SPARE_PARTS_CATEGORY, section: 'highlights', type: 'text', priority: 5,
+    format: (value) => {
+      if (!value) return '';
+      if (value === 'Individual') return 'postAd.spareParts.sellerTypeIndividual';
+      if (value === 'Dealer') return 'postAd.spareParts.sellerTypeDealer';
+      return String(value);
+    },
+  },
+  { key: 'brand', labelKey: 'postAd.spareParts.fields.brand', category: SPARE_PARTS_CATEGORY, section: 'highlights', type: 'text', priority: 7 },
   { key: 'make', labelKey: 'postAd.spareParts.fields.make', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 8 },
   { key: 'model', labelKey: 'postAd.spareParts.fields.model', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 7 },
-  { key: 'yearFrom', labelKey: 'postAd.spareParts.fields.year_from', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'number', priority: 5 },
-  { key: 'yearTo', labelKey: 'postAd.spareParts.fields.year_to', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'number', priority: 5 },
-  { key: 'engineType', labelKey: 'postAd.spareParts.fields.engine_type', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 6 },
-  { key: 'transmission', labelKey: 'postAd.spareParts.fields.transmission', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 5 },
-  { key: 'deviceType', labelKey: 'postAd.spareParts.fields.device_type', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 6 },
-  { key: 'compatibleBrand', labelKey: 'postAd.spareParts.fields.compatible_brand', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 6 },
-  { key: 'compatibleModel', labelKey: 'postAd.spareParts.fields.compatible_model', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 5 },
-  { key: 'versionSeries', labelKey: 'postAd.spareParts.fields.version_series', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 4 },
-  { key: 'partCompatibilityNotes', labelKey: 'postAd.spareParts.fields.part_compatibility_notes', category: SPARE_PARTS_CATEGORY, section: 'details', type: 'text', priority: 3 },
-  { key: 'technicalCompatibilityNotes', labelKey: 'postAd.spareParts.fields.technical_compatibility_notes', category: SPARE_PARTS_CATEGORY, section: 'details', type: 'text', priority: 3 },
-  { key: 'partName', labelKey: 'postAd.spareParts.specFields.part_name', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 10 },
-  { key: 'partType', labelKey: 'postAd.spareParts.specFields.part_type', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 9 },
-  { key: 'partNumber', labelKey: 'postAd.spareParts.specFields.part_number', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 7 },
-  { key: 'oemAftermarket', labelKey: 'postAd.spareParts.specFields.oem_aftermarket', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 8 },
-  { key: 'dimensionLength', labelKey: 'postAd.spareParts.specFields.dimension_length', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 3 },
-  { key: 'dimensionWidth', labelKey: 'postAd.spareParts.specFields.dimension_width', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 3 },
-  { key: 'dimensionHeight', labelKey: 'postAd.spareParts.specFields.dimension_height', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 3 },
-  { key: 'warrantyDuration', labelKey: 'postAd.spareParts.specFields.warranty_duration', category: SPARE_PARTS_CATEGORY, section: 'details', type: 'text', priority: 4 },
-  { key: 'installationType', labelKey: 'postAd.spareParts.specFields.installation_type', category: SPARE_PARTS_CATEGORY, section: 'details', type: 'text', priority: 4 },
-  { key: 'includedComponents', labelKey: 'postAd.spareParts.specFields.included_components', category: SPARE_PARTS_CATEGORY, section: 'details', type: 'array', priority: 4 },
-  { key: 'powerRating', labelKey: 'postAd.spareParts.specFields.power_rating', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 4 },
-  { key: 'connectorType', labelKey: 'postAd.spareParts.specFields.connector_type', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 4 },
-  { key: 'compatibilityType', labelKey: 'postAd.spareParts.specFields.compatibility_type', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 4 },
-  { key: 'safetyCertification', labelKey: 'postAd.spareParts.specFields.safety_certification', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 5 },
-  { key: 'machineType', labelKey: 'postAd.spareParts.specFields.machine_type', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 5 },
-  { key: 'loadCapacity', labelKey: 'postAd.spareParts.specFields.load_capacity', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 4 },
-  { key: 'operatingPressure', labelKey: 'postAd.spareParts.specFields.operating_pressure', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 3 },
-  { key: 'temperatureRange', labelKey: 'postAd.spareParts.specFields.temperature_range', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 3 },
-  { key: 'industrialGrade', labelKey: 'postAd.spareParts.specFields.industrial_grade', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 4 },
+  { key: 'year_from', labelKey: 'postAd.spareParts.fields.year_from', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'number', priority: 5 },
+  { key: 'year_to', labelKey: 'postAd.spareParts.fields.year_to', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'number', priority: 5 },
+  { key: 'engine_type', labelKey: 'postAd.spareParts.fields.engine_type', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 6,
+    format: (value) => {
+      if (!value) return '';
+      const normalized = String(value).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+      return `postAd.spareParts.optionLabels.${normalized}`;
+    },
+  },
+  { key: 'transmission', labelKey: 'postAd.spareParts.fields.transmission', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 5,
+    format: (value) => {
+      if (!value) return '';
+      const normalized = String(value).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+      return `postAd.spareParts.optionLabels.${normalized}`;
+    },
+  },
+  { key: 'device_type', labelKey: 'postAd.spareParts.fields.device_type', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 6,
+    format: (value) => {
+      if (!value) return '';
+      const normalized = String(value).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+      return `postAd.spareParts.optionLabels.${normalized}`;
+    },
+  },
+  { key: 'compatible_brand', labelKey: 'postAd.spareParts.fields.compatible_brand', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 6 },
+  { key: 'compatible_model', labelKey: 'postAd.spareParts.fields.compatible_model', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 5 },
+  { key: 'version_series', labelKey: 'postAd.spareParts.fields.version_series', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 4 },
+  { key: 'part_compatibility_notes', labelKey: 'postAd.spareParts.fields.part_compatibility_notes', category: SPARE_PARTS_CATEGORY, section: 'details', type: 'text', priority: 3 },
+  { key: 'technical_compatibility_notes', labelKey: 'postAd.spareParts.fields.technical_compatibility_notes', category: SPARE_PARTS_CATEGORY, section: 'details', type: 'text', priority: 3 },
+  { key: 'part_name', labelKey: 'postAd.spareParts.specFields.part_name', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 10 },
+  { key: 'part_type', labelKey: 'postAd.spareParts.specFields.part_type', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 9,
+    format: (value) => {
+      if (!value) return '';
+      const normalized = String(value).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+      return `postAd.spareParts.optionLabels.${normalized}`;
+    },
+  },
+  { key: 'part_number', labelKey: 'postAd.spareParts.specFields.part_number', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 7 },
+  { key: 'oem_aftermarket', labelKey: 'postAd.spareParts.specFields.oem_aftermarket', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 8,
+    format: (value) => {
+      if (!value) return '';
+      const normalized = String(value).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+      return `postAd.spareParts.optionLabels.${normalized}`;
+    },
+  },
+  { key: 'material', labelKey: 'postAd.spareParts.specFields.material', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 5 },
+  { key: 'color', labelKey: 'postAd.spareParts.specFields.color', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 4 },
+  { key: 'weight', labelKey: 'postAd.spareParts.specFields.weight', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 3 },
+  { key: 'dimension_length', labelKey: 'postAd.spareParts.specFields.dimension_length', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 3 },
+  { key: 'dimension_width', labelKey: 'postAd.spareParts.specFields.dimension_width', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 3 },
+  { key: 'dimension_height', labelKey: 'postAd.spareParts.specFields.dimension_height', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 3 },
+  { key: 'warranty', labelKey: 'postAd.spareParts.specFields.warranty', category: SPARE_PARTS_CATEGORY, section: 'highlights', type: 'boolean', priority: 6 },
+  { key: 'warranty_duration', labelKey: 'postAd.spareParts.specFields.warranty_duration', category: SPARE_PARTS_CATEGORY, section: 'details', type: 'text', priority: 4 },
+  { key: 'availability', labelKey: 'postAd.spareParts.specFields.availability', category: SPARE_PARTS_CATEGORY, section: 'highlights', type: 'text', priority: 6,
+    format: (value) => {
+      if (!value) return '';
+      const normalized = String(value).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+      return `postAd.spareParts.optionLabels.${normalized}`;
+    },
+  },
+  { key: 'placement', labelKey: 'postAd.spareParts.specFields.placement', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 5,
+    format: (value) => {
+      if (!value) return '';
+      const normalized = String(value).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+      return `postAd.spareParts.optionLabels.${normalized}`;
+    },
+  },
+  { key: 'mileage', labelKey: 'postAd.spareParts.specFields.mileage', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'number', priority: 4 },
+  { key: 'installation_type', labelKey: 'postAd.spareParts.specFields.installation_type', category: SPARE_PARTS_CATEGORY, section: 'details', type: 'text', priority: 4,
+    format: (value) => {
+      if (!value) return '';
+      const normalized = String(value).toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+      return `postAd.spareParts.optionLabels.${normalized}`;
+    },
+  },
+  { key: 'included_components', labelKey: 'postAd.spareParts.specFields.included_components', category: SPARE_PARTS_CATEGORY, section: 'details', type: 'array', priority: 4,
+    format: (value) => {
+      if (!value) return '';
+      const normalize = (v: string) => v.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+      if (Array.isArray(value)) {
+        return value.map((v) => `postAd.spareParts.optionLabels.${normalize(String(v))}`).join('|||');
+      }
+      return `postAd.spareParts.optionLabels.${normalize(String(value))}`;
+    },
+  },
+  { key: 'certification', labelKey: 'postAd.spareParts.specFields.certification', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 4 },
+  { key: 'voltage', labelKey: 'postAd.spareParts.specFields.voltage', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 4 },
+  { key: 'power_rating', labelKey: 'postAd.spareParts.specFields.power_rating', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 4 },
+  { key: 'connector_type', labelKey: 'postAd.spareParts.specFields.connector_type', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 4 },
+  { key: 'compatibility_type', labelKey: 'postAd.spareParts.specFields.compatibility_type', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 4 },
+  { key: 'safety_certification', labelKey: 'postAd.spareParts.specFields.safety_certification', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 5 },
+  { key: 'machine_type', labelKey: 'postAd.spareParts.specFields.machine_type', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 5 },
+  { key: 'load_capacity', labelKey: 'postAd.spareParts.specFields.load_capacity', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 4 },
+  { key: 'operating_pressure', labelKey: 'postAd.spareParts.specFields.operating_pressure', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 3 },
+  { key: 'temperature_range', labelKey: 'postAd.spareParts.specFields.temperature_range', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'text', priority: 3 },
+  { key: 'industrial_grade', labelKey: 'postAd.spareParts.specFields.industrial_grade', category: SPARE_PARTS_CATEGORY, section: 'specifications', type: 'boolean', priority: 4 },
 
   // ========================================
   // HOME & FURNITURE (Category 6)
@@ -937,7 +1120,33 @@ export const LISTING_FIELDS: ListingField[] = [
   { key: 'responsibilities', labelKey: 'postAd.jobs.responsibilities', category: JOBS_CATEGORY, section: 'details', type: 'array', priority: 4 },
   { key: 'requirements', labelKey: 'postAd.jobs.requirements', category: JOBS_CATEGORY, section: 'details', type: 'array', priority: 4 },
   { key: 'preferredQualifications', labelKey: 'postAd.jobs.preferredQualifications', category: JOBS_CATEGORY, section: 'details', type: 'array', priority: 3 },
-  { key: 'benefits', labelKey: 'postAd.jobs.benefitsSection', category: JOBS_CATEGORY, section: 'details', type: 'object', priority: 4 },
+  {
+    key: 'benefits',
+    labelKey: 'postAd.jobs.benefitsSection',
+    category: JOBS_CATEGORY,
+    section: 'details',
+    type: 'object',
+    priority: 4,
+    format: (value) => {
+      if (!value || typeof value !== 'object') return '';
+      const keyMap: Record<string, string> = {
+        healthInsurance: 'postAd.jobs.benefits.healthInsurance',
+        paidTimeOff: 'postAd.jobs.benefits.paidTimeOff',
+        retirementPlan: 'postAd.jobs.benefits.retirementPlan',
+        flexibleSchedule: 'postAd.jobs.benefits.flexibleSchedule',
+        remoteWork: 'postAd.jobs.benefits.remoteWork',
+        bonuses: 'postAd.jobs.benefits.bonuses',
+        trainingDevelopment: 'postAd.jobs.benefits.trainingDevelopment',
+        mealAllowance: 'postAd.jobs.benefits.mealAllowance',
+        transportationAllowance: 'postAd.jobs.benefits.transportationAllowance',
+      };
+      const obj = value as Record<string, unknown>;
+      return Object.entries(obj)
+        .filter(([, v]) => v === true)
+        .map(([k]) => keyMap[k] || k)
+        .join('|||');
+    },
+  },
 
   // ========================================
   // SERVICES (Category 9)

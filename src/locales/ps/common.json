@@ -614,6 +614,10 @@
     "yearBuilt": "د جوړېدو کال",
     "fullAddress": "بشپړ پته",
     "parkingSpaces": "د پارک ځایونه",
+    "livingRooms": "د نشست کوټې",
+    "kitchenType": "د آشپزخانې ډول",
+    "monthlyRent": "میاشتنی کرایه",
+    "yearlyRent": "کلنی کرایه",
     "landType": "د ځمکې ډول",
     "safetyTipContent": "د موټر تر لیدلو مخکې پیسې مه استوئ. په عامه ځای کې ملاقات وکړئ او اسناد تایید کړئ.",
     "priceChangeArrow": "→",
@@ -646,7 +650,18 @@
     "warranty": "ضمانت",
     "ageGroup": "د عمر ګروپ",
     "shipping": "لېږد",
-    "delivery": "تحویل"
+    "delivery": "تحویل",
+    "warrantyPeriod": "د ضمانت موده",
+    "ram": "رام",
+    "storage": "ذخیره",
+    "screenSize": "د سکرین اندازه",
+    "processor": "پروسيسر",
+    "batteryHealth": "د بیټرۍ روغتیا",
+    "os": "عملیاتي سیسټم",
+    "resolution": "ریزولوشن",
+    "camera": "کمیره",
+    "accessories": "لوازم",
+    "billAvailable": "بل موجود"
   },
   "form": {
     "title": "سرنوم",
@@ -2727,7 +2742,8 @@
         "bolts": "بولټونه",
         "nuts": "نټونه",
         "wiring": "وایرینګ",
-        "bracket": "براکټ"
+        "bracket": "براکټ",
+        "instruction_manual": "د لارښود کتابچه"
       },
       "fields": {
         "title": "سرلیک",

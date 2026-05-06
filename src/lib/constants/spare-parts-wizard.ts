@@ -97,7 +97,7 @@ const VEHICLE_SPEC_FIELDS: SpareSpecField[] = [
     key: 'included_components',
     label: 'Included Components',
     type: 'multiselect',
-    options: ['Bolts', 'Nuts', 'Wiring', 'Manual', 'Bracket', 'Other'],
+    options: ['Bolts', 'Nuts', 'Wiring', 'Instruction Manual', 'Bracket', 'Other'],
   },
   { key: 'certification', label: 'Certification', type: 'text' },
 ];

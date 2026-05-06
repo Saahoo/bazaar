@@ -33,8 +33,8 @@ interface StepSpareCompatibilityProps {
   onChange: (updates: Partial<SpareCompatibilityData>) => void;
 }
 
-const ENGINE_OPTIONS = ['Petrol', 'Diesel', 'Hybrid', 'Electric'];
-const TRANSMISSION_OPTIONS = ['Manual', 'Automatic'];
+const ENGINE_OPTIONS = ['Petrol', 'Diesel', 'Hybrid', 'Electric', 'Other'];
+const TRANSMISSION_OPTIONS = ['Manual', 'Automatic', 'Other'];
 const DEVICE_TYPE_OPTIONS = ['Phone', 'Laptop', 'Machine', 'Tablet', 'Other'];
 
 export const StepSpareCompatibility: React.FC<StepSpareCompatibilityProps> = ({ locale, subcategory, data, onChange }) => {
@@ -77,7 +77,7 @@ export const StepSpareCompatibility: React.FC<StepSpareCompatibilityProps> = ({ 
             value={data.make}
             onChange={(value) => onChange({ make: value, model: '' })}
             placeholder={t('selectMake')}
-            options={Object.keys(SPARE_MAKE_MODELS)}
+            options={[...Object.keys(SPARE_MAKE_MODELS), 'Other']}
           />
 
           <SelectField
@@ -87,7 +87,7 @@ export const StepSpareCompatibility: React.FC<StepSpareCompatibilityProps> = ({ 
             value={data.model}
             onChange={(value) => onChange({ model: value })}
             placeholder={data.make ? t('selectModel') : t('selectMakeFirst')}
-            options={modelOptions}
+            options={[...modelOptions, 'Other']}
           />
 
           <InputField

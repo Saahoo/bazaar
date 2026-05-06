@@ -2,6 +2,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import { X, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Maximize2, Minimize2 } from 'lucide-react';
 import { Locale, isRTL } from '@/lib/i18n/config';
@@ -27,7 +28,13 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [mounted, setMounted] = useState(false);
   const isRtl = isRTL(locale);
+
+  // Ensure portal target exists (SSR safety)
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Reset state when opening with new initial index
   useEffect(() => {
@@ -225,12 +232,22 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
     return undefined;
   }, [isDragging, handleTouchMove, handleTouchEnd]);
 
-  if (!isOpen) return null;
+  // Lock body scroll when lightbox is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+  if (!isOpen || !mounted) return null;
+
+  const lightbox = (
+    <div className="fixed inset-0 z-50 overflow-hidden">
       {/* Semi-transparent dark overlay */}
-      <div 
+      <div
         className="absolute inset-0 bg-black/90 backdrop-blur-sm"
         onClick={onClose}
       />
@@ -249,14 +266,14 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
         <>
           <button
             onClick={prevImage}
-            className={`absolute top-1/2 transform -translate-y-1/2 z-10 p-3 bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors ${isRtl ? 'right-4' : 'left-4'}`}
+            className={`absolute top-1/2 -translate-y-1/2 z-10 p-3 bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors ${isRtl ? 'right-4' : 'left-4'}`}
             aria-label="Previous image"
           >
             <ChevronLeft className="w-6 h-6" />
           </button>
           <button
             onClick={nextImage}
-            className={`absolute top-1/2 transform -translate-y-1/2 z-10 p-3 bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors ${isRtl ? 'left-4' : 'right-4'}`}
+            className={`absolute top-1/2 -translate-y-1/2 z-10 p-3 bg-black/50 hover:bg-black/70 text-white rounded-full transition-colors ${isRtl ? 'left-4' : 'right-4'}`}
             aria-label="Next image"
           >
             <ChevronRight className="w-6 h-6" />
@@ -269,8 +286,31 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
         {currentIndex + 1} / {images.length}
       </div>
 
+      {/* Main image container — viewport-constrained, perfectly centered */}
+      <div className="relative w-full h-full flex items-center justify-center p-4 pt-16 pb-24">
+        <div
+          className="relative max-w-full max-h-full cursor-move flex items-center justify-center"
+          style={{
+            transform: `scale(${scale}) translate(${position.x}px, ${position.y}px)`,
+            transition: isDragging ? 'none' : 'transform 0.2s ease',
+          }}
+          onMouseDown={handleMouseDown}
+          onTouchStart={handleTouchStart}
+        >
+          <Image
+            src={images[currentIndex]}
+            alt={`Image ${currentIndex + 1}`}
+            width={1200}
+            height={800}
+            className="max-w-full max-h-[70vh] w-auto h-auto object-contain"
+            priority
+            draggable={false}
+          />
+        </div>
+      </div>
+
       {/* Zoom controls */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 flex items-center space-x-2 bg-black/50 backdrop-blur-sm rounded-full p-2">
+      <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-10 flex items-center space-x-2 bg-black/50 backdrop-blur-sm rounded-full p-2">
         <button
           onClick={zoomOut}
           className="p-2 hover:bg-white/10 rounded-full text-white transition-colors"
@@ -307,32 +347,9 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
         </button>
       </div>
 
-      {/* Main image container */}
-      <div className="relative w-full h-full flex items-center justify-center p-4">
-        <div
-          className="relative max-w-full max-h-full cursor-move"
-          style={{
-            transform: `scale(${scale}) translate(${position.x}px, ${position.y}px)`,
-            transition: isDragging ? 'none' : 'transform 0.2s ease',
-          }}
-          onMouseDown={handleMouseDown}
-          onTouchStart={handleTouchStart}
-        >
-          <Image
-            src={images[currentIndex]}
-            alt={`Image ${currentIndex + 1}`}
-            width={1200}
-            height={800}
-            className="max-w-full max-h-[80vh] object-contain"
-            priority
-            draggable={false}
-          />
-        </div>
-      </div>
-
       {/* Thumbnail strip */}
       {images.length > 1 && (
-        <div className="absolute bottom-20 left-0 right-0 overflow-x-auto py-2">
+        <div className="absolute bottom-2 left-0 right-0 overflow-x-auto py-2">
           <div className="flex justify-center space-x-2 px-4">
             {images.map((img, idx) => (
               <button
@@ -361,4 +378,6 @@ export const PhotoLightbox: React.FC<PhotoLightboxProps> = ({
       )}
     </div>
   );
+
+  return createPortal(lightbox, document.body);
 };

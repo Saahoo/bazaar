@@ -616,6 +616,10 @@
     "yearBuilt": "Year Built",
     "fullAddress": "Full Address",
     "parkingSpaces": "Parking Spaces",
+    "livingRooms": "Living Rooms",
+    "kitchenType": "Kitchen Type",
+    "monthlyRent": "Monthly Rent",
+    "yearlyRent": "Yearly Rent",
     "landType": "Land Type",
     "safetyTipContent": "Don't send money before seeing the vehicle. Meet in a public place and verify documents.",
     "priceChangeArrow": "→",
@@ -648,7 +652,18 @@
     "warranty": "Warranty",
     "ageGroup": "Age Group",
     "shipping": "Shipping",
-    "delivery": "Delivery"
+    "delivery": "Delivery",
+    "warrantyPeriod": "Warranty Period",
+    "ram": "RAM",
+    "storage": "Storage",
+    "screenSize": "Screen Size",
+    "processor": "Processor",
+    "batteryHealth": "Battery Health",
+    "os": "Operating System",
+    "resolution": "Resolution",
+    "camera": "Camera",
+    "accessories": "Accessories",
+    "billAvailable": "Bill Available"
   },
   "form": {
     "title": "Title",
@@ -2757,7 +2772,7 @@
         "bolts": "Bolts",
         "nuts": "Nuts",
         "wiring": "Wiring",
-        "manual_1": "Manual",
+        "instruction_manual": "Instruction Manual",
         "bracket": "Bracket"
       },
       "fields": {

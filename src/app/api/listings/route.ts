@@ -1,10 +1,24 @@
 import { NextResponse } from 'next/server';
-import { createClient as createSupabase } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase/server';
 import { validateMetadata } from '@/lib/validators/listing';
 import { normalizeKeysToCamel } from '@/lib/utils/normalizeKeys';
 
 export async function POST(req: Request) {
   try {
+    // 1. Create authenticated Supabase client using the user's session cookies
+    const supabase = await createClient();
+
+    // 2. Verify the user is authenticated
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Authentication required', details: 'You must be logged in to create a listing' },
+        { status: 401 }
+      );
+    }
+
+    // 3. Parse request body
     const body = await req.json();
 
     const {
@@ -22,7 +36,18 @@ export async function POST(req: Request) {
       photos = [],
     } = body;
 
-    if (!user_id || !category_id) {
+    // 4. Use the authenticated user's ID instead of trusting the client-sent value
+    // This prevents users from creating listings under another user's identity
+    const authenticatedUserId = user.id;
+
+    if (user_id && user_id !== authenticatedUserId) {
+      return NextResponse.json(
+        { error: 'User ID mismatch', details: 'The provided user_id does not match the authenticated user' },
+        { status: 403 }
+      );
+    }
+
+    if (!category_id) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
@@ -43,34 +68,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Invalid metadata', details: validation.errors }, { status: 400 });
     }
 
-    // Check if environment variables are set
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    
-    console.log('API Debug - supabaseUrl:', supabaseUrl ? 'Set' : 'Not set');
-    console.log('API Debug - serviceRoleKey:', serviceRoleKey ? `Set (length: ${serviceRoleKey.length})` : 'Not set');
-    
-    if (!supabaseUrl || !serviceRoleKey || serviceRoleKey === 'your-service-role-key') {
-      console.error('Supabase environment variables not properly configured');
-      console.error('supabaseUrl:', supabaseUrl);
-      console.error('serviceRoleKey:', serviceRoleKey);
-      return NextResponse.json({
-        error: 'Server configuration error: Supabase service role key not set',
-        details: 'Please set SUPABASE_SERVICE_ROLE_KEY in your environment variables',
-        debug: {
-          supabaseUrlSet: !!supabaseUrl,
-          serviceRoleKeySet: !!serviceRoleKey,
-          isPlaceholder: serviceRoleKey === 'your-service-role-key'
-        }
-      }, { status: 500 });
-    }
-
-    const supabase = createSupabase(supabaseUrl, serviceRoleKey);
-
+    // 5. Insert listing using the authenticated client (respects RLS policies)
     const { data: listing, error: insertError } = await supabase
       .from('listings')
       .insert({
-        user_id,
+        user_id: authenticatedUserId,
         category_id,
         title,
         description,
@@ -91,13 +93,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: insertError.message }, { status: 500 });
     }
 
+    // 6. Insert photos if provided
     if (listing && photos.length > 0) {
       const photoRows = photos.map((p: unknown, i: number) => {
         if (typeof p === 'string') {
-          return { listing_id: listing.id, photo_url: p, display_order: i, uploaded_by: user_id };
+          return { listing_id: listing.id, photo_url: p, display_order: i, uploaded_by: authenticatedUserId };
         }
         const obj = p as Record<string, unknown>;
-        return { listing_id: listing.id, photo_url: (obj.url as string) || (obj.photo_url as string) || '', display_order: i, uploaded_by: user_id };
+        return { listing_id: listing.id, photo_url: (obj.url as string) || (obj.photo_url as string) || '', display_order: i, uploaded_by: authenticatedUserId };
       });
 
       const { error: photosError } = await supabase.from('photos').insert(photoRows);

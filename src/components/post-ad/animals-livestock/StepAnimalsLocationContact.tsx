@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { MapPin, Phone, Mail, User, MessageSquare } from 'lucide-react';
 import { isRTL, Locale } from '@/lib/i18n/config';
 import { useCities, getManagedCityName } from '@/lib/hooks/useCities';
+import { LegalReadNotice } from '@/components/common/LegalReadNotice';
 
 export interface AnimalsLocationContactData {
   // Location fields
@@ -20,6 +21,7 @@ export interface AnimalsLocationContactData {
   email: string;
   preferredContact: 'phone' | 'email' | 'both';
   hidePhone: boolean;
+  termsAccepted: boolean;
 }
 
 interface StepAnimalsLocationContactProps {
@@ -136,6 +138,7 @@ export const StepAnimalsLocationContact: React.FC<StepAnimalsLocationContactProp
   const tForm = useTranslations('form');
   const rtl = isRTL(locale);
   const { cities } = useCities();
+  const [hasReadLegal, setHasReadLegal] = useState(data.termsAccepted);
 
   const inputClass =
     `w-full px-4 py-2.5 border border-slate-300 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-500 ${rtl ? 'text-right' : 'text-left'}`;
@@ -371,6 +374,29 @@ export const StepAnimalsLocationContact: React.FC<StepAnimalsLocationContactProp
           <p className={`mt-2 text-sm text-slate-500 ${rtl ? 'text-right' : 'text-left'}`}>
             {t('preferredContactHint')}
           </p>
+        </div>
+      </div>
+
+      {/* Terms and Conditions */}
+      <div className="space-y-4 pt-4 border-t border-slate-200">
+        <LegalReadNotice
+          locale={locale}
+          initialRead={hasReadLegal}
+          onReadChange={setHasReadLegal}
+        />
+
+        <div className={`flex items-start gap-3 ${rtl ? 'flex-row-reverse' : ''}`}>
+          <input
+            type="checkbox"
+            id="animals-terms"
+            className="mt-0.5 w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
+            disabled={!hasReadLegal}
+            checked={data.termsAccepted}
+            onChange={(e) => onChange({ termsAccepted: e.target.checked })}
+          />
+          <label htmlFor="animals-terms" className={`text-sm text-slate-600 cursor-pointer ${rtl ? 'text-right' : 'text-left'}`}>
+            {t('terms')} <span className="text-red-500">*</span>
+          </label>
         </div>
       </div>
     </div>
