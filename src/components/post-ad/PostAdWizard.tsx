@@ -71,6 +71,7 @@ import { StepJobBasicInfo } from './jobs/StepJobBasicInfo';
 import { StepJobDescription } from './jobs/StepJobDescription';
 import { StepJobCompensation } from './jobs/StepJobCompensation';
 import { StepJobContact } from './jobs/StepJobContact';
+import { StepJobMedia, JobMediaData } from './jobs/StepJobMedia';
 import { StepJobReview } from './jobs/StepJobReview';
 // Sports & Hobby steps
 import { StepSportsBasicInfo } from './sports-hobby/StepSportsBasicInfo';
@@ -383,11 +384,13 @@ export interface JobsFormData {
   applicationUrl: string;
   hiringManagerName: string;
   
+  // Step 4: Media
+  media: JobMediaData;
+  
   // Common/Contact fields
   contactPhone: string;
   contactEmail: string;
   termsAccepted: boolean;
-  photos: { photos: string[] };
 }
 
 export interface SportsHobbyFormData {
@@ -1137,7 +1140,7 @@ const INITIAL_JOBS_DATA: JobsFormData = {
   contactPhone: '',
   contactEmail: '',
   termsAccepted: false,
-  photos: { photos: [] },
+  media: { photos: [] },
 };
 
 const INITIAL_SH_DATA: SportsHobbyFormData = {
@@ -1192,7 +1195,7 @@ const HF_STEPS = ['stepCategory', 'hfStepBasic', 'hfStepGeneral', 'hfStepSpecs',
 // Services steps
 const SERVICES_STEPS = ['stepCategory', 'srvStepBasic', 'srvStepLocation', 'srvStepPricing', 'srvStepDetails', 'srvStepMedia', 'srvStepContact', 'srvStepReview'] as const;
 // Jobs steps
-const JOBS_STEPS = ['stepCategory', 'jobStepBasic', 'jobStepDescription', 'jobStepCompensation', 'jobStepContact', 'jobStepReview'] as const;
+const JOBS_STEPS = ['stepCategory', 'jobStepBasic', 'jobStepDescription', 'jobStepCompensation', 'jobStepMedia', 'jobStepContact', 'jobStepReview'] as const;
 // Sports & Hobby steps
 const SPORTS_HOBBY_STEPS = ['stepCategory', 'shStepBasic', 'shStepSpecs', 'shStepMedia', 'shStepContact', 'shStepReview'] as const;
 // Animals & Livestock steps
@@ -1410,6 +1413,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
   const tBI = useTranslations('postAd.businessIndustry');
   const tSG = useTranslations('postAd.shoppingGroceries');
   const tCM = useTranslations('postAd.constructionMaterials');
+  const tJob = useTranslations('postAd.jobs');
   const tCommon = useTranslations('common');
   const tAuth = useTranslations('auth');
   const rtl = isRTL(locale);
@@ -2123,6 +2127,13 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
       case 'srvStepMedia': return tSRV('stepMedia');
       case 'srvStepContact': return tSRV('stepContact');
       case 'srvStepReview': return tSRV('stepReview');
+      // Jobs steps
+      case 'jobStepBasic': return tJob('stepBasic');
+      case 'jobStepDescription': return tJob('stepDescription');
+      case 'jobStepCompensation': return tJob('stepCompensation');
+      case 'jobStepMedia': return tJob('stepMedia');
+      case 'jobStepContact': return tJob('stepContact');
+      case 'jobStepReview': return tJob('stepReview');
       case 'shStepBasic': return tSH('stepBasic');
       case 'shStepSpecs': return tSH('stepSpecs');
       case 'shStepMedia': return tSH('stepMedia');
@@ -2418,6 +2429,8 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         const applicationValid = jobsData.applicationMethod !== '' &&
           (jobsData.applicationMethod === 'email' ? jobsData.applicationEmail.trim() !== '' : jobsData.applicationUrl.trim() !== '');
         return salaryValid && applicationValid;
+      case 'jobStepMedia':
+        return true; // Photos are optional
       case 'jobStepContact':
         return jobsData.contactPhone.trim() !== '' && jobsData.contactEmail.trim() !== '' && jobsData.termsAccepted;
       case 'jobStepReview':
@@ -3406,6 +3419,43 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         city = cmData.city || city;
         _phone = cmData.phone || _phone;
         photosList = cmData.media.photos;
+      } else if (isJobs) {
+        metadata = {
+          jobTitle: jobsData.jobTitle,
+          employmentType: jobsData.employmentType,
+          isRemote: jobsData.isRemote,
+          country: jobsData.country,
+          city: jobsData.city,
+          workCanBeDoneRemotely: jobsData.workCanBeDoneRemotely,
+          jobDescription: jobsData.jobDescription,
+          responsibilities: jobsData.responsibilities,
+          requirements: jobsData.requirements,
+          preferredQualifications: jobsData.preferredQualifications,
+          experienceLevel: jobsData.experienceLevel,
+          currency: jobsData.currency,
+          minSalary: jobsData.minSalary,
+          maxSalary: jobsData.maxSalary,
+          salaryNegotiable: jobsData.salaryNegotiable,
+          salaryNotDisclosed: jobsData.salaryNotDisclosed,
+          benefits: jobsData.benefits,
+          otherBenefits: jobsData.otherBenefits,
+          applicationDeadline: jobsData.applicationDeadline,
+          applicationMethod: jobsData.applicationMethod,
+          applicationEmail: jobsData.applicationEmail,
+          applicationUrl: jobsData.applicationUrl,
+          hiringManagerName: jobsData.hiringManagerName,
+          contactPhone: jobsData.contactPhone,
+          contactEmail: jobsData.contactEmail,
+          wizard_forms: wizardValues,
+        };
+        title = jobsData.jobTitle || title;
+        description = jobsData.jobDescription || description;
+        price = 0;
+        currency = jobsData.currency || currency;
+        city = jobsData.city || city;
+        _phone = jobsData.contactPhone || _phone;
+        condition = 'good';
+        photosList = jobsData.media.photos;
       } else {
         metadata = {
           ...metadata,
@@ -3512,6 +3562,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
     setHbData(INITIAL_HB_DATA);
     setHfData(INITIAL_HF_DATA);
     setSrvData(INITIAL_SERVICES_DATA);
+    setJobsData(INITIAL_JOBS_DATA);
     setShData(INITIAL_SH_DATA);
     setFagData(INITIAL_FAG_DATA);
     setBeData(INITIAL_BE_DATA);
@@ -3588,6 +3639,12 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
 
   const handleClearConstructionMaterialsForm = () => {
     setCmData(INITIAL_CM_DATA);
+    setCurrentStep(1);
+    setSubmitError(null);
+  };
+
+  const handleClearJobsForm = () => {
+    setJobsData(INITIAL_JOBS_DATA);
     setCurrentStep(1);
     setSubmitError(null);
   };
@@ -4665,6 +4722,14 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
             onChange={(updates) => setJobsData((prev) => ({ ...prev, ...updates }))}
           />
         );
+      case 'jobStepMedia':
+        return (
+          <StepJobMedia
+            locale={locale}
+            data={jobsData.media}
+            onChange={(updates) => setJobsData((prev) => ({ ...prev, media: { ...prev.media, ...updates } }))}
+          />
+        );
       case 'jobStepContact':
         return (
           <StepJobContact
@@ -4708,6 +4773,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
               contactPhone: jobsData.contactPhone,
               contactEmail: jobsData.contactEmail,
               termsAccepted: jobsData.termsAccepted,
+              photos: jobsData.media.photos,
             }}
             onEditSection={(section) => {
               // Map section to step index
@@ -4715,6 +4781,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
               if (section === 'basic') stepIndex = steps.indexOf('jobStepBasic');
               else if (section === 'description') stepIndex = steps.indexOf('jobStepDescription');
               else if (section === 'compensation') stepIndex = steps.indexOf('jobStepCompensation');
+              else if (section === 'media') stepIndex = steps.indexOf('jobStepMedia');
               else if (section === 'contact') stepIndex = steps.indexOf('jobStepContact');
               setCurrentStep(stepIndex);
             }}
@@ -5712,6 +5779,15 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
           {isConstructionMaterials && (
             <button
               onClick={handleClearConstructionMaterialsForm}
+              className={`px-4 py-2.5 rounded-lg font-medium transition border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 ${rtl ? 'text-right' : 'text-left'}`}
+            >
+              Clear form
+            </button>
+          )}
+
+          {isJobs && (
+            <button
+              onClick={handleClearJobsForm}
               className={`px-4 py-2.5 rounded-lg font-medium transition border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 ${rtl ? 'text-right' : 'text-left'}`}
             >
               Clear form

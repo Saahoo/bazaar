@@ -2,10 +2,12 @@
 
 import React from 'react';
 import { useTranslations } from 'next-intl';
+import Image from 'next/image';
 import { Locale, isRTL } from '@/lib/i18n/config';
 import { EmploymentType, ExperienceLevel, ApplicationMethod } from '@/lib/constants/jobs-wizard';
 import { formatDate, formatSalaryRange } from '@/lib/utils/formatting';
-import { Check, Edit2 } from 'lucide-react';
+import { UploadedPhoto } from '@/components/post-ad/ImageUploader';
+import { Check, Edit2, ImageIcon } from 'lucide-react';
 
 interface StepJobReviewProps {
   locale: Locale;
@@ -36,8 +38,9 @@ interface StepJobReviewProps {
     contactPhone: string;
     contactEmail: string;
     termsAccepted: boolean;
+    photos: UploadedPhoto[];
   };
-  onEditSection: (section: 'basic' | 'description' | 'compensation' | 'contact') => void;
+  onEditSection: (section: 'basic' | 'description' | 'compensation' | 'media' | 'contact') => void;
 }
 
 export const StepJobReview: React.FC<StepJobReviewProps> = ({ locale, data, onEditSection }) => {
@@ -303,6 +306,52 @@ export const StepJobReview: React.FC<StepJobReviewProps> = ({ locale, data, onEd
                 </div>
               )}
             </div>
+          </div>
+        </div>
+
+        {/* Media / Photos Section */}
+        <div className="rounded-lg border border-slate-200 bg-white p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="rounded-full bg-purple-100 p-2">
+                <ImageIcon className="h-5 w-5 text-purple-600" />
+              </div>
+              <h4 className="text-lg font-semibold text-slate-900">
+                {t('mediaUpload')}
+              </h4>
+            </div>
+            <button
+              type="button"
+              onClick={() => onEditSection('media')}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            >
+              <Edit2 className="h-4 w-4" />
+              {t('edit')}
+            </button>
+          </div>
+          
+          <div className="mt-6">
+            {data.photos && data.photos.length > 0 ? (
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+                {data.photos.map((photo, index) => (
+                  <div key={photo.id || index} className="relative aspect-square overflow-hidden rounded-lg border border-slate-200">
+                    <Image
+                      src={photo.url}
+                      alt={`${t('jobTitle')} - ${index + 1}`}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, 25vw"
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-slate-500 italic">
+                {locale === 'en' ? 'No photos uploaded' :
+                 locale === 'ps' ? 'هیڅ عکس نه دی پورته شوی' :
+                 'عکسی آپلود نشده است'}
+              </p>
+            )}
           </div>
         </div>
 

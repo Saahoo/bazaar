@@ -3,8 +3,8 @@
 import React from 'react';
 import { useTranslations } from 'next-intl';
 import { Locale, isRTL } from '@/lib/i18n/config';
-import { POPULAR_CITIES } from '@/lib/constants/cities';
-import { InputField, SelectField, ToggleField, MultiSelectField } from './ServicesFieldControls';
+import { useCities, getManagedCityName } from '@/lib/hooks/useCities';
+import { InputField, ToggleField, MultiSelectField } from './ServicesFieldControls';
 
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -37,8 +37,9 @@ interface StepServicesLocationProps {
 export const StepServicesLocation: React.FC<StepServicesLocationProps> = ({ locale, data, onChange }) => {
   const t = useTranslations('postAd.services');
   const rtl = isRTL(locale);
+  const { cities } = useCities();
 
-  const cityOptions = POPULAR_CITIES.map((city) => ({ value: city.name_en, label: locale === 'fa' ? city.name_fa : locale === 'ps' ? city.name_ps : city.name_en }));
+  const cityOptions = cities.map((city) => ({ value: city.name_en, label: getManagedCityName(city, locale) }));
 
   return (
     <div className="space-y-6">
@@ -48,15 +49,26 @@ export const StepServicesLocation: React.FC<StepServicesLocationProps> = ({ loca
       </div>
 
       <div className="grid grid-cols-1 gap-4">
-        <SelectField
-          label={t('city')}
-          required
-          rtl={rtl}
-          value={data.city}
-          onChange={(value) => onChange({ city: value })}
-          placeholder={t('selectCity')}
-          options={cityOptions}
-        />
+        <div>
+          <label className={`mb-1.5 block text-sm font-semibold text-slate-700 ${rtl ? 'text-right' : 'text-left'}`}>
+            {t('city')} <span className="text-red-500">*</span>
+          </label>
+          <select
+            className={`w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm shadow-sm transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 ${rtl ? 'text-right' : 'text-left'}`}
+            dir={rtl ? 'rtl' : 'ltr'}
+            value={data.city}
+            onChange={(e) => onChange({ city: e.target.value })}
+            aria-label={t('city')}
+            title={t('city')}
+          >
+            <option value="">{t('selectCity')}</option>
+            {cities.map((city) => (
+              <option key={city.name_en} value={city.name_en}>
+                {getManagedCityName(city, locale)}
+              </option>
+            ))}
+          </select>
+        </div>
 
         <InputField
           label={t('area')}

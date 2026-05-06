@@ -43,7 +43,7 @@ export const SERVICES_SUBCATEGORIES: ServicesSubcategoryOption[] = [
 ];
 
 const HOME_SERVICES_FIELDS: ServicesSpecField[] = [
-  { key: 'service_type', labelKey: 'services.fields.serviceType', type: 'select', required: true, options: [
+  { key: 'service_detail', labelKey: 'services.fields.serviceDetail', type: 'select', required: true, options: [
     { value: 'Plumbing', labelKey: 'services.options.plumbing' },
     { value: 'Electrical', labelKey: 'services.options.electrical' },
     { value: 'Carpentry', labelKey: 'services.options.carpentry' },
@@ -62,7 +62,7 @@ const HOME_SERVICES_FIELDS: ServicesSpecField[] = [
 ];
 
 const REPAIR_MAINTENANCE_FIELDS: ServicesSpecField[] = [
-  { key: 'service_type', labelKey: 'services.fields.serviceType', type: 'select', required: true, options: [
+  { key: 'service_detail', labelKey: 'services.fields.serviceDetail', type: 'select', required: true, options: [
     { value: 'Electronics', labelKey: 'services.options.electronics' },
     { value: 'Appliances', labelKey: 'services.options.appliances' },
     { value: 'HVAC', labelKey: 'services.options.hvac' },
@@ -77,7 +77,7 @@ const REPAIR_MAINTENANCE_FIELDS: ServicesSpecField[] = [
 ];
 
 const AUTOMOTIVE_SERVICES_FIELDS: ServicesSpecField[] = [
-  { key: 'service_type', labelKey: 'services.fields.serviceType', type: 'select', required: true, options: [
+  { key: 'service_detail', labelKey: 'services.fields.serviceDetail', type: 'select', required: true, options: [
     { value: 'Maintenance', labelKey: 'services.options.maintenance' },
     { value: 'Repair', labelKey: 'services.options.repair' },
     { value: 'Detailing', labelKey: 'services.options.detailing' },
@@ -92,7 +92,7 @@ const AUTOMOTIVE_SERVICES_FIELDS: ServicesSpecField[] = [
 ];
 
 const BEAUTY_WELLNESS_FIELDS: ServicesSpecField[] = [
-  { key: 'service_type', labelKey: 'services.fields.serviceType', type: 'select', required: true, options: [
+  { key: 'service_detail', labelKey: 'services.fields.serviceDetail', type: 'select', required: true, options: [
     { value: 'Haircut', labelKey: 'services.options.haircut' },
     { value: 'Makeup', labelKey: 'services.options.makeup' },
     { value: 'Facial', labelKey: 'services.options.facial' },
@@ -136,7 +136,7 @@ const EDUCATION_TUTORING_FIELDS: ServicesSpecField[] = [
 ];
 
 const IT_DIGITAL_SERVICES_FIELDS: ServicesSpecField[] = [
-  { key: 'service_type', labelKey: 'services.fields.serviceType', type: 'select', required: true, options: [
+  { key: 'service_detail', labelKey: 'services.fields.serviceDetail', type: 'select', required: true, options: [
     { value: 'Web Development', labelKey: 'services.options.webDevelopment' },
     { value: 'Mobile Development', labelKey: 'services.options.mobileDevelopment' },
     { value: 'SEO', labelKey: 'services.options.seo' },
@@ -158,7 +158,7 @@ const IT_DIGITAL_SERVICES_FIELDS: ServicesSpecField[] = [
 ];
 
 const EVENTS_ENTERTAINMENT_FIELDS: ServicesSpecField[] = [
-  { key: 'service_type', labelKey: 'services.fields.serviceType', type: 'select', required: true, options: [
+  { key: 'service_detail', labelKey: 'services.fields.serviceDetail', type: 'select', required: true, options: [
     { value: 'DJ', labelKey: 'services.options.dj' },
     { value: 'Photographer', labelKey: 'services.options.photographer' },
     { value: 'Event Organizer', labelKey: 'services.options.eventOrganizer' },
@@ -178,7 +178,7 @@ const EVENTS_ENTERTAINMENT_FIELDS: ServicesSpecField[] = [
 ];
 
 const BUSINESS_SERVICES_FIELDS: ServicesSpecField[] = [
-  { key: 'service_type', labelKey: 'services.fields.serviceType', type: 'select', required: true, options: [
+  { key: 'service_detail', labelKey: 'services.fields.serviceDetail', type: 'select', required: true, options: [
     { value: 'Consulting', labelKey: 'services.options.consulting' },
     { value: 'Legal', labelKey: 'services.options.legal' },
     { value: 'Accounting', labelKey: 'services.options.accounting' },
@@ -196,7 +196,7 @@ const BUSINESS_SERVICES_FIELDS: ServicesSpecField[] = [
 ];
 
 const HEALTH_MEDICAL_FIELDS: ServicesSpecField[] = [
-  { key: 'service_type', labelKey: 'services.fields.serviceType', type: 'select', required: true, options: [
+  { key: 'service_detail', labelKey: 'services.fields.serviceDetail', type: 'select', required: true, options: [
     { value: 'Doctor', labelKey: 'services.options.doctor' },
     { value: 'Nurse', labelKey: 'services.options.nurse' },
     { value: 'Therapist', labelKey: 'services.options.therapist' },

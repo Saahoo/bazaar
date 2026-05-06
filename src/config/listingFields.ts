@@ -1106,8 +1106,12 @@ export const LISTING_FIELDS: ListingField[] = [
   // ========================================
   { key: 'jobTitle', labelKey: 'postAd.jobs.jobTitle', category: JOBS_CATEGORY, section: 'highlights', type: 'text', priority: 10 },
   { key: 'employmentType', labelKey: 'postAd.jobs.employmentType', category: JOBS_CATEGORY, section: 'specifications', type: 'text', priority: 8 },
-  { key: 'remotePosition', labelKey: 'postAd.jobs.remotePosition', category: JOBS_CATEGORY, section: 'highlights', type: 'text', priority: 6 },
+  { key: 'isRemote', labelKey: 'postAd.jobs.remotePosition', category: JOBS_CATEGORY, section: 'highlights', type: 'text', priority: 6 },
+  { key: 'workCanBeDoneRemotely', labelKey: 'postAd.jobs.workCanBeDoneRemotely', category: JOBS_CATEGORY, section: 'highlights', type: 'text', priority: 5 },
+  { key: 'country', labelKey: 'postAd.jobs.country', category: JOBS_CATEGORY, section: 'specifications', type: 'text', priority: 5 },
+  { key: 'city', labelKey: 'postAd.jobs.city', category: JOBS_CATEGORY, section: 'specifications', type: 'text', priority: 5 },
   { key: 'experienceLevel', labelKey: 'postAd.jobs.experienceLevel', category: JOBS_CATEGORY, section: 'specifications', type: 'text', priority: 7 },
+  { key: 'currency', labelKey: 'postAd.jobs.currency', category: JOBS_CATEGORY, section: 'specifications', type: 'text', priority: 5 },
   { key: 'minSalary', labelKey: 'postAd.jobs.minSalary', category: JOBS_CATEGORY, section: 'specifications', type: 'currency', priority: 6 },
   { key: 'maxSalary', labelKey: 'postAd.jobs.maxSalary', category: JOBS_CATEGORY, section: 'specifications', type: 'currency', priority: 6 },
   { key: 'salaryNegotiable', labelKey: 'postAd.jobs.salaryNegotiable', category: JOBS_CATEGORY, section: 'details', type: 'text', priority: 3 },
@@ -1120,6 +1124,9 @@ export const LISTING_FIELDS: ListingField[] = [
   { key: 'responsibilities', labelKey: 'postAd.jobs.responsibilities', category: JOBS_CATEGORY, section: 'details', type: 'array', priority: 4 },
   { key: 'requirements', labelKey: 'postAd.jobs.requirements', category: JOBS_CATEGORY, section: 'details', type: 'array', priority: 4 },
   { key: 'preferredQualifications', labelKey: 'postAd.jobs.preferredQualifications', category: JOBS_CATEGORY, section: 'details', type: 'array', priority: 3 },
+  { key: 'otherBenefits', labelKey: 'postAd.jobs.otherBenefits', category: JOBS_CATEGORY, section: 'details', type: 'text', priority: 3 },
+  { key: 'contactPhone', labelKey: 'postAd.jobs.contactPhone', category: JOBS_CATEGORY, section: 'details', type: 'text', priority: 4 },
+  { key: 'contactEmail', labelKey: 'postAd.jobs.contactEmail', category: JOBS_CATEGORY, section: 'details', type: 'text', priority: 4 },
   {
     key: 'benefits',
     labelKey: 'postAd.jobs.benefitsSection',
@@ -1151,42 +1158,226 @@ export const LISTING_FIELDS: ListingField[] = [
   // ========================================
   // SERVICES (Category 9)
   // ========================================
-  { key: 'serviceType', labelKey: 'postAd.services.fields.serviceType', category: SERVICES_CATEGORY, section: 'highlights', type: 'text', priority: 8 },
-  { key: 'experienceYears', labelKey: 'postAd.services.fields.experienceYears', category: SERVICES_CATEGORY, section: 'specifications', type: 'number', priority: 6 },
-  { key: 'certification', labelKey: 'postAd.services.fields.certification', category: SERVICES_CATEGORY, section: 'specifications', type: 'text', priority: 5 },
-  { key: 'toolsProvided', labelKey: 'postAd.services.fields.toolsProvided', category: SERVICES_CATEGORY, section: 'details', type: 'text', priority: 3 },
-  { key: 'sparePartsIncluded', labelKey: 'postAd.services.fields.sparePartsIncluded', category: SERVICES_CATEGORY, section: 'details', type: 'text', priority: 3 },
-  { key: 'warranty', labelKey: 'postAd.services.fields.warranty', category: SERVICES_CATEGORY, section: 'details', type: 'text', priority: 4 },
-  { key: 'warrantyDuration', labelKey: 'postAd.services.fields.warrantyDuration', category: SERVICES_CATEGORY, section: 'details', type: 'text', priority: 3 },
-  { key: 'serviceDuration', labelKey: 'postAd.services.fields.serviceDuration', category: SERVICES_CATEGORY, section: 'specifications', type: 'text', priority: 5 },
-  { key: 'materialsIncluded', labelKey: 'postAd.services.fields.materialsIncluded', category: SERVICES_CATEGORY, section: 'details', type: 'text', priority: 3 },
-  { key: 'specializedIn', labelKey: 'postAd.services.fields.specializedIn', category: SERVICES_CATEGORY, section: 'specifications', type: 'text', priority: 5 },
-  { key: 'genderServed', labelKey: 'postAd.services.fields.genderServed', category: SERVICES_CATEGORY, section: 'specifications', type: 'text', priority: 4 },
-  { key: 'certifiedProfessional', labelKey: 'postAd.services.fields.certifiedProfessional', category: SERVICES_CATEGORY, section: 'highlights', type: 'text', priority: 5 },
-  { key: 'productsUsed', labelKey: 'postAd.services.fields.productsUsed', category: SERVICES_CATEGORY, section: 'details', type: 'text', priority: 3 },
-  { key: 'sessionDuration', labelKey: 'postAd.services.fields.sessionDuration', category: SERVICES_CATEGORY, section: 'specifications', type: 'text', priority: 4 },
-  { key: 'homeServiceAvailable', labelKey: 'postAd.services.fields.homeServiceAvailable', category: SERVICES_CATEGORY, section: 'highlights', type: 'text', priority: 5 },
-  { key: 'subjectCourse', labelKey: 'postAd.services.fields.subjectCourse', category: SERVICES_CATEGORY, section: 'specifications', type: 'text', priority: 6 },
-  { key: 'level', labelKey: 'postAd.services.fields.level', category: SERVICES_CATEGORY, section: 'specifications', type: 'text', priority: 5 },
-  { key: 'mode', labelKey: 'postAd.services.fields.mode', category: SERVICES_CATEGORY, section: 'specifications', type: 'text', priority: 4 },
-  { key: 'groupOrIndividual', labelKey: 'postAd.services.fields.groupOrIndividual', category: SERVICES_CATEGORY, section: 'specifications', type: 'text', priority: 4 },
-  { key: 'durationPerSession', labelKey: 'postAd.services.fields.durationPerSession', category: SERVICES_CATEGORY, section: 'specifications', type: 'text', priority: 3 },
-  { key: 'skills', labelKey: 'postAd.services.fields.skills', category: SERVICES_CATEGORY, section: 'details', type: 'array', priority: 4 },
-  { key: 'toolsTechnologies', labelKey: 'postAd.services.fields.toolsTechnologies', category: SERVICES_CATEGORY, section: 'details', type: 'array', priority: 3 },
-  { key: 'deliveryTime', labelKey: 'postAd.services.fields.deliveryTime', category: SERVICES_CATEGORY, section: 'specifications', type: 'text', priority: 4 },
-  { key: 'revisionsIncluded', labelKey: 'postAd.services.fields.revisionsIncluded', category: SERVICES_CATEGORY, section: 'details', type: 'text', priority: 3 },
-  { key: 'portfolioLink', labelKey: 'postAd.services.fields.portfolioLink', category: SERVICES_CATEGORY, section: 'details', type: 'text', priority: 3 },
-  { key: 'eventTypes', labelKey: 'postAd.services.fields.eventTypes', category: SERVICES_CATEGORY, section: 'specifications', type: 'array', priority: 4 },
-  { key: 'teamSize', labelKey: 'postAd.services.fields.teamSize', category: SERVICES_CATEGORY, section: 'specifications', type: 'text', priority: 4 },
-  { key: 'equipmentProvided', labelKey: 'postAd.services.fields.equipmentProvided', category: SERVICES_CATEGORY, section: 'details', type: 'text', priority: 3 },
-  { key: 'travelAvailable', labelKey: 'postAd.services.fields.travelAvailable', category: SERVICES_CATEGORY, section: 'highlights', type: 'text', priority: 4 },
-  { key: 'duration', labelKey: 'postAd.services.fields.duration', category: SERVICES_CATEGORY, section: 'specifications', type: 'text', priority: 4 },
-  { key: 'industry', labelKey: 'postAd.services.fields.industry', category: SERVICES_CATEGORY, section: 'specifications', type: 'text', priority: 5 },
-  { key: 'consultationMode', labelKey: 'postAd.services.fields.consultationMode', category: SERVICES_CATEGORY, section: 'specifications', type: 'text', priority: 4 },
-  { key: 'specialization', labelKey: 'postAd.services.fields.specialization', category: SERVICES_CATEGORY, section: 'specifications', type: 'text', priority: 5 },
-  { key: 'licenseVerified', labelKey: 'postAd.services.fields.licenseVerified', category: SERVICES_CATEGORY, section: 'highlights', type: 'text', priority: 5 },
-  { key: 'clinicOrHome', labelKey: 'postAd.services.fields.clinicOrHome', category: SERVICES_CATEGORY, section: 'specifications', type: 'text', priority: 4 },
-  { key: 'emergencyAvailable', labelKey: 'postAd.services.fields.emergencyAvailable', category: SERVICES_CATEGORY, section: 'highlights', type: 'text', priority: 4 },
+  { key: 'subcategory', labelKey: 'postAd.services.subcategory', category: SERVICES_CATEGORY, section: 'highlights', type: 'text', priority: 9,
+    format: (value) => {
+      const map: Record<string, string> = {
+        'home-services': 'postAd.services.subcategories.homeServices',
+        'repair-maintenance': 'postAd.services.subcategories.repairMaintenance',
+        'automotive-services': 'postAd.services.subcategories.automotiveServices',
+        'beauty-wellness': 'postAd.services.subcategories.beautyWellness',
+        'education-tutoring': 'postAd.services.subcategories.educationTutoring',
+        'it-digital-services': 'postAd.services.subcategories.itDigitalServices',
+        'events-entertainment': 'postAd.services.subcategories.eventsEntertainment',
+        'business-services': 'postAd.services.subcategories.businessServices',
+        'health-medical': 'postAd.services.subcategories.healthMedical',
+        'other-services': 'postAd.services.subcategories.otherServices',
+      };
+      return map[value as string] || (value as string);
+    },
+  },
+  { key: 'service_type', labelKey: 'postAd.services.fields.serviceType', category: SERVICES_CATEGORY, section: 'highlights', type: 'text', priority: 8,
+    format: (value) => {
+      const map: Record<string, string> = {
+        'on-site': 'postAd.services.serviceTypeOptions.onSite',
+        'at-shop': 'postAd.services.serviceTypeOptions.atShop',
+        'online-remote': 'postAd.services.serviceTypeOptions.onlineRemote',
+      };
+      return map[value as string] || (value as string);
+    },
+  },
+  { key: 'pricing_type', labelKey: 'postAd.services.fields.pricingType', category: SERVICES_CATEGORY, section: 'highlights', type: 'text', priority: 7,
+    format: (value) => {
+      const map: Record<string, string> = {
+        'fixed-price': 'postAd.services.pricingTypeOptions.fixedPrice',
+        'hourly-rate': 'postAd.services.pricingTypeOptions.hourlyRate',
+        'daily-rate': 'postAd.services.pricingTypeOptions.dailyRate',
+        'custom-quote': 'postAd.services.pricingTypeOptions.customQuote',
+      };
+      return map[value as string] || (value as string);
+    },
+  },
+  { key: 'negotiable', labelKey: 'postAd.services.fields.negotiable', category: SERVICES_CATEGORY, section: 'highlights', type: 'boolean', priority: 6 },
+  { key: 'call_out_fee', labelKey: 'postAd.services.fields.callOutFee', category: SERVICES_CATEGORY, section: 'highlights', type: 'boolean', priority: 5 },
+  { key: 'call_out_fee_amount', labelKey: 'postAd.services.fields.callOutFeeAmount', category: SERVICES_CATEGORY, section: 'details', type: 'number', priority: 3 },
+  { key: 'service_radius_km', labelKey: 'postAd.services.fields.serviceRadiusKm', category: SERVICES_CATEGORY, section: 'specs', type: 'number', priority: 6 },
+  { key: 'multiple_cities', labelKey: 'postAd.services.fields.multipleCities', category: SERVICES_CATEGORY, section: 'specs', type: 'array', priority: 5 },
+  { key: 'days_available', labelKey: 'postAd.services.fields.daysAvailable', category: SERVICES_CATEGORY, section: 'specs', type: 'array', priority: 5,
+    format: (value) => {
+      if (!Array.isArray(value)) return String(value);
+      const dayMap: Record<string, string> = {
+        'monday': 'postAd.services.days.monday',
+        'tuesday': 'postAd.services.days.tuesday',
+        'wednesday': 'postAd.services.days.wednesday',
+        'thursday': 'postAd.services.days.thursday',
+        'friday': 'postAd.services.days.friday',
+        'saturday': 'postAd.services.days.saturday',
+        'sunday': 'postAd.services.days.sunday',
+      };
+      return value.map((d: string) => dayMap[d] || d).join('|||');
+    },
+  },
+  { key: 'working_hours_from', labelKey: 'postAd.services.fields.workingHoursFrom', category: SERVICES_CATEGORY, section: 'specs', type: 'text', priority: 4 },
+  { key: 'working_hours_to', labelKey: 'postAd.services.fields.workingHoursTo', category: SERVICES_CATEGORY, section: 'specs', type: 'text', priority: 4 },
+  { key: 'emergency_service', labelKey: 'postAd.services.fields.emergencyService', category: SERVICES_CATEGORY, section: 'highlights', type: 'boolean', priority: 5 },
+  { key: 'advance_booking_required', labelKey: 'postAd.services.fields.advanceBookingRequired', category: SERVICES_CATEGORY, section: 'details', type: 'boolean', priority: 3 },
+  { key: 'area', labelKey: 'postAd.services.fields.area', category: SERVICES_CATEGORY, section: 'details', type: 'text', priority: 4 },
+  { key: 'experience_years', labelKey: 'postAd.services.fields.experienceYears', category: SERVICES_CATEGORY, section: 'specs', type: 'number', priority: 6 },
+  { key: 'certification', labelKey: 'postAd.services.fields.certification', category: SERVICES_CATEGORY, section: 'specs', type: 'boolean', priority: 5 },
+  { key: 'tools_provided', labelKey: 'postAd.services.fields.toolsProvided', category: SERVICES_CATEGORY, section: 'details', type: 'boolean', priority: 3 },
+  { key: 'spare_parts_included', labelKey: 'postAd.services.fields.sparePartsIncluded', category: SERVICES_CATEGORY, section: 'details', type: 'boolean', priority: 3 },
+  { key: 'warranty', labelKey: 'postAd.services.fields.warranty', category: SERVICES_CATEGORY, section: 'details', type: 'boolean', priority: 4 },
+  { key: 'warranty_duration', labelKey: 'postAd.services.fields.warrantyDuration', category: SERVICES_CATEGORY, section: 'details', type: 'text', priority: 3 },
+  { key: 'service_duration', labelKey: 'postAd.services.fields.serviceDuration', category: SERVICES_CATEGORY, section: 'specs', type: 'text', priority: 5 },
+  { key: 'materials_included', labelKey: 'postAd.services.fields.materialsIncluded', category: SERVICES_CATEGORY, section: 'details', type: 'boolean', priority: 3 },
+  { key: 'specialized_in', labelKey: 'postAd.services.fields.specializedIn', category: SERVICES_CATEGORY, section: 'specs', type: 'text', priority: 5 },
+  { key: 'gender_served', labelKey: 'postAd.services.fields.genderServed', category: SERVICES_CATEGORY, section: 'specs', type: 'text', priority: 4,
+    format: (value) => {
+      const map: Record<string, string> = {
+        'Male': 'postAd.services.options.male',
+        'Female': 'postAd.services.options.female',
+        'Both': 'postAd.services.options.both',
+      };
+      return map[value as string] || (value as string);
+    },
+  },
+  { key: 'certified_professional', labelKey: 'postAd.services.fields.certifiedProfessional', category: SERVICES_CATEGORY, section: 'highlights', type: 'boolean', priority: 5 },
+  { key: 'products_used', labelKey: 'postAd.services.fields.productsUsed', category: SERVICES_CATEGORY, section: 'details', type: 'text', priority: 3 },
+  { key: 'session_duration', labelKey: 'postAd.services.fields.sessionDuration', category: SERVICES_CATEGORY, section: 'specs', type: 'text', priority: 4 },
+  { key: 'home_service_available', labelKey: 'postAd.services.fields.homeServiceAvailable', category: SERVICES_CATEGORY, section: 'highlights', type: 'boolean', priority: 5 },
+  { key: 'subject_course', labelKey: 'postAd.services.fields.subjectCourse', category: SERVICES_CATEGORY, section: 'specs', type: 'text', priority: 6 },
+  { key: 'level', labelKey: 'postAd.services.fields.level', category: SERVICES_CATEGORY, section: 'specs', type: 'text', priority: 5,
+    format: (value) => {
+      const map: Record<string, string> = {
+        'Beginner': 'postAd.services.options.beginner',
+        'Intermediate': 'postAd.services.options.intermediate',
+        'Advanced': 'postAd.services.options.advanced',
+      };
+      return map[value as string] || (value as string);
+    },
+  },
+  { key: 'mode', labelKey: 'postAd.services.fields.mode', category: SERVICES_CATEGORY, section: 'specs', type: 'text', priority: 4,
+    format: (value) => {
+      const map: Record<string, string> = {
+        'Online': 'postAd.services.options.online',
+        'In-person': 'postAd.services.options.inPerson',
+        'Both': 'postAd.services.options.both',
+      };
+      return map[value as string] || (value as string);
+    },
+  },
+  { key: 'group_or_individual', labelKey: 'postAd.services.fields.groupOrIndividual', category: SERVICES_CATEGORY, section: 'specs', type: 'text', priority: 4,
+    format: (value) => {
+      const map: Record<string, string> = {
+        'Group': 'postAd.services.options.group',
+        'Individual': 'postAd.services.options.individual',
+        'Both': 'postAd.services.options.both',
+      };
+      return map[value as string] || (value as string);
+    },
+  },
+  { key: 'duration_per_session', labelKey: 'postAd.services.fields.durationPerSession', category: SERVICES_CATEGORY, section: 'specs', type: 'text', priority: 3 },
+  { key: 'skills', labelKey: 'postAd.services.fields.skills', category: SERVICES_CATEGORY, section: 'details', type: 'array', priority: 4,
+    format: (value) => {
+      if (!Array.isArray(value)) return String(value);
+      const skillMap: Record<string, string> = {
+        'Business Strategy': 'postAd.services.options.businessStrategy',
+        'Marketing': 'postAd.services.options.marketing',
+        'Content Writing': 'postAd.services.options.contentWriting',
+        'Graphics Design': 'postAd.services.options.graphicsDesign',
+      };
+      return value.map((s: string) => skillMap[s] || s).join('|||');
+    },
+  },
+  { key: 'tools_technologies', labelKey: 'postAd.services.fields.toolsTechnologies', category: SERVICES_CATEGORY, section: 'details', type: 'text', priority: 3 },
+  { key: 'delivery_time', labelKey: 'postAd.services.fields.deliveryTime', category: SERVICES_CATEGORY, section: 'specs', type: 'text', priority: 4 },
+  { key: 'revisions_included', labelKey: 'postAd.services.fields.revisionsIncluded', category: SERVICES_CATEGORY, section: 'details', type: 'number', priority: 3 },
+  { key: 'portfolio_link', labelKey: 'postAd.services.fields.portfolioLink', category: SERVICES_CATEGORY, section: 'details', type: 'text', priority: 3 },
+  { key: 'event_types', labelKey: 'postAd.services.fields.eventTypes', category: SERVICES_CATEGORY, section: 'specs', type: 'array', priority: 4,
+    format: (value) => {
+      if (!Array.isArray(value)) return String(value);
+      const eventMap: Record<string, string> = {
+        'Wedding': 'postAd.services.options.wedding',
+        'Party': 'postAd.services.options.party',
+        'Corporate': 'postAd.services.options.corporate',
+        'Birthday': 'postAd.services.options.birthday',
+      };
+      return value.map((e: string) => eventMap[e] || e).join('|||');
+    },
+  },
+  { key: 'team_size', labelKey: 'postAd.services.fields.teamSize', category: SERVICES_CATEGORY, section: 'specs', type: 'number', priority: 4 },
+  { key: 'equipment_provided', labelKey: 'postAd.services.fields.equipmentProvided', category: SERVICES_CATEGORY, section: 'details', type: 'boolean', priority: 3 },
+  { key: 'travel_available', labelKey: 'postAd.services.fields.travelAvailable', category: SERVICES_CATEGORY, section: 'highlights', type: 'boolean', priority: 4 },
+  { key: 'duration', labelKey: 'postAd.services.fields.duration', category: SERVICES_CATEGORY, section: 'specs', type: 'text', priority: 4 },
+  { key: 'industry', labelKey: 'postAd.services.fields.industry', category: SERVICES_CATEGORY, section: 'specs', type: 'text', priority: 5 },
+  { key: 'consultation_mode', labelKey: 'postAd.services.fields.consultationMode', category: SERVICES_CATEGORY, section: 'specs', type: 'text', priority: 4,
+    format: (value) => {
+      const map: Record<string, string> = {
+        'Online': 'postAd.services.options.online',
+        'In-person': 'postAd.services.options.inPerson',
+        'Both': 'postAd.services.options.both',
+      };
+      return map[value as string] || (value as string);
+    },
+  },
+  { key: 'specialization', labelKey: 'postAd.services.fields.specialization', category: SERVICES_CATEGORY, section: 'specs', type: 'text', priority: 5 },
+  { key: 'license_verified', labelKey: 'postAd.services.fields.licenseVerified', category: SERVICES_CATEGORY, section: 'highlights', type: 'boolean', priority: 5 },
+  { key: 'clinic_or_home', labelKey: 'postAd.services.fields.clinicOrHome', category: SERVICES_CATEGORY, section: 'specs', type: 'text', priority: 4,
+    format: (value) => {
+      const map: Record<string, string> = {
+        'Clinic': 'postAd.services.options.clinic',
+        'Home Visit': 'postAd.services.options.homeVisit',
+        'Both': 'postAd.services.options.both',
+      };
+      return map[value as string] || (value as string);
+    },
+  },
+  { key: 'emergency_available', labelKey: 'postAd.services.fields.emergencyAvailable', category: SERVICES_CATEGORY, section: 'highlights', type: 'boolean', priority: 4 },
+  { key: 'service_detail', labelKey: 'postAd.services.fields.serviceDetail', category: SERVICES_CATEGORY, section: 'highlights', type: 'text', priority: 7,
+    format: (value) => {
+      const map: Record<string, string> = {
+        'Plumbing': 'postAd.services.options.plumbing',
+        'Electrical': 'postAd.services.options.electrical',
+        'Carpentry': 'postAd.services.options.carpentry',
+        'General Repairs': 'postAd.services.options.generalRepairs',
+        'Painting': 'postAd.services.options.painting',
+        'Electronics': 'postAd.services.options.electronics',
+        'Appliances': 'postAd.services.options.appliances',
+        'HVAC': 'postAd.services.options.hvac',
+        'General': 'postAd.services.options.general',
+        'Maintenance': 'postAd.services.options.maintenance',
+        'Repair': 'postAd.services.options.repair',
+        'Detailing': 'postAd.services.options.detailing',
+        'Inspection': 'postAd.services.options.inspection',
+        'Custom Work': 'postAd.services.options.customWork',
+        'Haircut': 'postAd.services.options.haircut',
+        'Makeup': 'postAd.services.options.makeup',
+        'Facial': 'postAd.services.options.facial',
+        'Massage': 'postAd.services.options.massage',
+        'Waxing': 'postAd.services.options.waxing',
+        'Nail Care': 'postAd.services.options.nailCare',
+        'Web Development': 'postAd.services.options.webDevelopment',
+        'Mobile Development': 'postAd.services.options.mobileDevelopment',
+        'SEO': 'postAd.services.options.seo',
+        'Design': 'postAd.services.options.design',
+        'Consulting': 'postAd.services.options.consulting',
+        'DJ': 'postAd.services.options.dj',
+        'Photographer': 'postAd.services.options.photographer',
+        'Event Organizer': 'postAd.services.options.eventOrganizer',
+        'Videographer': 'postAd.services.options.videographer',
+        'Legal': 'postAd.services.options.legal',
+        'Accounting': 'postAd.services.options.accounting',
+        'HR Services': 'postAd.services.options.hrServices',
+        'Doctor': 'postAd.services.options.doctor',
+        'Nurse': 'postAd.services.options.nurse',
+        'Therapist': 'postAd.services.options.therapist',
+        'Dentist': 'postAd.services.options.dentist',
+        'Other': 'common.other',
+      };
+      return map[value as string] || (value as string);
+    },
+  },
+  { key: 'custom_service_type', labelKey: 'postAd.services.fields.customServiceType', category: SERVICES_CATEGORY, section: 'highlights', type: 'text', priority: 7 },
+  { key: 'description_detail', labelKey: 'postAd.services.fields.descriptionDetail', category: SERVICES_CATEGORY, section: 'details', type: 'text', priority: 3 },
 
   // ========================================
   // ANIMALS (Category 10)
