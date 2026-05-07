@@ -1611,6 +1611,38 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
                   </div>
                 </div>
 
+                <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-3 space-y-2">
+                  <h3 className="text-sm font-semibold text-slate-900">Hero Carousel</h3>
+                  <p className="text-[11px] text-slate-500">When enabled, a sliding carousel of the top 5 most-visited ads appears above the hero banner. Enter listing IDs (comma-separated) to manually curate the selection; leave empty for automatic top-5.</p>
+                  <label className="flex items-center gap-2 text-sm text-slate-700">
+                    <input
+                      type="checkbox"
+                      checked={homepageConfig.header.carousel?.enabled ?? true}
+                      onChange={(e) => setHomepageConfig((prev) => ({ ...prev, header: { ...prev.header, carousel: { ...prev.header.carousel, enabled: e.target.checked } } }))}
+                    />
+                    Enable hero carousel
+                  </label>
+                  <input
+                    value={(homepageConfig.header.carousel?.listingIds ?? []).join(', ')}
+                    onChange={(e) => {
+                      const ids = e.target.value.split(',').map((s) => s.trim()).filter(Boolean);
+                      setHomepageConfig((prev) => ({ ...prev, header: { ...prev.header, carousel: { ...prev.header.carousel, listingIds: ids } } }));
+                    }}
+                    placeholder="Listing IDs (comma-separated, e.g. uuid1, uuid2)"
+                    className="px-3 py-2 border border-slate-300 rounded-lg w-full"
+                  />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <input
+                      type="number"
+                      value={homepageConfig.header.carousel?.interval ?? 5000}
+                      onChange={(e) => setHomepageConfig((prev) => ({ ...prev, header: { ...prev.header, carousel: { ...prev.header.carousel, interval: Number(e.target.value) || 5000 } } }))}
+                      placeholder="Auto-slide interval (ms)"
+                      className="px-3 py-2 border border-slate-300 rounded-lg"
+                    />
+                    <p className="text-[11px] text-slate-500 flex items-center">Milliseconds between slides (0 = no auto-slide)</p>
+                  </div>
+                </div>
+
                 <div className="border border-slate-200 rounded-lg p-3 space-y-3">
                   <h3 className="text-sm font-semibold text-slate-900">Homepage Blocks</h3>
                   {([

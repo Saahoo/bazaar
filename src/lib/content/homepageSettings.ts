@@ -20,6 +20,14 @@ export interface HeaderAdConfig {
   responsive: boolean;
 }
 
+export interface HeroCarouselConfig {
+  enabled: boolean;
+  /** Admin-curated listing IDs – when non-empty, these override the auto top-5 */
+  listingIds: string[];
+  /** Auto-slide interval in milliseconds (0 = no auto-slide) */
+  interval: number;
+}
+
 export interface HeaderBlockConfig {
   title: LocalizedText;
   subtitle: LocalizedText;
@@ -30,6 +38,7 @@ export interface HeaderBlockConfig {
   secondaryCtaUrl: string;
   animation: HeaderAnimationConfig;
   ad: HeaderAdConfig;
+  carousel: HeroCarouselConfig;
 }
 
 export interface HomeBlockConfig {
@@ -89,6 +98,11 @@ export const DEFAULT_HOMEPAGE_CONFIG: HomepageContentConfig = {
       format: 'auto',
       responsive: true,
     },
+    carousel: {
+      enabled: true,
+      listingIds: [],
+      interval: 5000,
+    },
   },
   blocks: {
     categorySidebar: {
@@ -143,6 +157,11 @@ const mergeLocalized = (input: unknown, fallback: LocalizedText): LocalizedText 
   };
 };
 
+const normalizeStringArray = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return [];
+  return value.map((v) => String(v)).filter(Boolean);
+};
+
 export const normalizeHomepageConfig = (value: unknown): HomepageContentConfig => {
   const raw = (value && typeof value === 'object' ? value : {}) as Record<string, unknown>;
   const header = (raw.header && typeof raw.header === 'object' ? raw.header : {}) as Record<string, unknown>;
@@ -156,6 +175,7 @@ export const normalizeHomepageConfig = (value: unknown): HomepageContentConfig =
 
   const animation = (header.animation && typeof header.animation === 'object' ? header.animation : {}) as Record<string, unknown>;
   const ad = (header.ad && typeof header.ad === 'object' ? header.ad : {}) as Record<string, unknown>;
+  const carousel = (header.carousel && typeof header.carousel === 'object' ? header.carousel : {}) as Record<string, unknown>;
 
   const style = String(animation.style || DEFAULT_HOMEPAGE_CONFIG.header.animation.style);
   const validStyle = ['none', 'pulse-circles', 'floating-cards', 'gradient-orbs'].includes(style)
@@ -187,6 +207,11 @@ export const normalizeHomepageConfig = (value: unknown): HomepageContentConfig =
         slot: typeof ad.slot === 'string' ? ad.slot : DEFAULT_HOMEPAGE_CONFIG.header.ad.slot,
         format: validFormat,
         responsive: ad.responsive === undefined ? DEFAULT_HOMEPAGE_CONFIG.header.ad.responsive : Boolean(ad.responsive),
+      },
+      carousel: {
+        enabled: carousel.enabled === undefined ? DEFAULT_HOMEPAGE_CONFIG.header.carousel.enabled : Boolean(carousel.enabled),
+        listingIds: normalizeStringArray(carousel.listingIds),
+        interval: Number(carousel.interval) >= 0 ? Number(carousel.interval) : DEFAULT_HOMEPAGE_CONFIG.header.carousel.interval,
       },
     },
     blocks: {

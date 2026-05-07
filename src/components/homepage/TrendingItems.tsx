@@ -1,98 +1,149 @@
 'use client';
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
-import { Flame, Eye } from 'lucide-react';
+import { Flame, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { Locale, isRTL } from '@/lib/i18n/config';
 import { useListings } from '@/lib/hooks/useListings';
 import { ListingCardSkeleton } from '@/components/common/Skeleton';
+import { cn } from '@/lib/utils/cn';
 
 interface TrendingItemsProps {
   locale: Locale;
   titleOverride?: string;
 }
 
+const POST_COUNT = 6;
+
 export const TrendingItems: React.FC<TrendingItemsProps> = ({ locale, titleOverride }) => {
   const t = useTranslations('homepage');
   const isRtl = isRTL(locale);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-  const { listings, loading } = useListings({ sortBy: 'mostViewed', limit: 14 });
+  const { listings, loading } = useListings({ sortBy: 'mostViewed', limit: POST_COUNT });
+
+  const displayListings = listings.slice(0, POST_COUNT);
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (!scrollRef.current) return;
+    const scrollAmount = scrollRef.current.clientWidth * 0.7;
+    scrollRef.current.scrollBy({
+      left: direction === 'left' ? -scrollAmount : scrollAmount,
+      behavior: 'smooth',
+    });
+  };
 
   return (
-    <section className="bg-white border border-slate-200 rounded-lg p-4 md:p-5">
-      <div className={`flex items-center justify-between mb-4 ${isRtl ? 'flex-row-reverse' : ''}`}>
-        <div className={`flex items-center gap-2 ${isRtl ? 'flex-row-reverse' : ''}`}>
-          <div className="w-7 h-7 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
-            <Flame className="w-4 h-4 text-orange-500" />
+    <section className="rounded-[1.5rem] border border-white/60 bg-white/80 p-5 shadow-lg backdrop-blur-md md:p-6">
+      <div className={cn('flex items-center justify-between mb-5', isRtl && 'flex-row-reverse')}>
+        <div className={cn('flex items-center gap-2.5', isRtl && 'flex-row-reverse')}>
+          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-orange-50 to-orange-100 shadow-sm">
+            <Flame className="h-4 w-4 text-orange-500" />
           </div>
-          <h2 className="text-base md:text-lg font-semibold text-slate-900">{titleOverride || t('trending')}</h2>
+          <h2 className="text-base md:text-lg font-black tracking-tight text-slate-900">
+            {titleOverride || t('trending')}
+          </h2>
         </div>
-        <Link
-          href={`/${locale}/search`}
-          className="text-xs text-primary-600 hover:text-primary-700 font-medium flex-shrink-0"
-        >
-          {t('seeAll')}
-        </Link>
+        <div className={cn('flex items-center gap-2', isRtl && 'flex-row-reverse')}>
+          {/* Carousel navigation arrows */}
+          <button
+            onClick={() => scroll(isRtl ? 'right' : 'left')}
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition-all hover:bg-slate-50 hover:text-slate-700 hover:shadow-md"
+            aria-label="Scroll left"
+          >
+            <ChevronLeft className={cn('h-4 w-4', isRtl && 'rotate-180')} />
+          </button>
+          <button
+            onClick={() => scroll(isRtl ? 'left' : 'right')}
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition-all hover:bg-slate-50 hover:text-slate-700 hover:shadow-md"
+            aria-label="Scroll right"
+          >
+            <ChevronRight className={cn('h-4 w-4', isRtl && 'rotate-180')} />
+          </button>
+          <Link
+            href={`/${locale}/search`}
+            className="inline-flex items-center gap-1.5 rounded-xl bg-orange-50 px-3.5 py-2 text-xs font-bold text-orange-600 transition-all duration-200 hover:bg-orange-100 hover:shadow-sm md:text-sm"
+          >
+            {t('seeAll')}
+            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
+        </div>
       </div>
 
       {loading ? (
-        <div className="grid grid-flow-col auto-cols-[9rem] gap-3 overflow-hidden py-2">
-          {Array.from({ length: 5 }).map((_, index) => (
-            <ListingCardSkeleton key={index} compact />
+        <div className="flex gap-3 overflow-hidden">
+          {Array.from({ length: POST_COUNT }).map((_, index) => (
+            <div key={index} className="flex-shrink-0 w-44">
+              <ListingCardSkeleton compact />
+            </div>
           ))}
         </div>
-      ) : listings.length === 0 ? (
+      ) : displayListings.length === 0 ? (
         <p className="text-slate-400 text-sm text-center py-8">{titleOverride || t('trending')}</p>
       ) : (
-        <div className={`flex gap-3 overflow-x-auto pb-2 snap-x snap-mandatory [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${isRtl ? 'flex-row-reverse' : ''}`}>
-          {listings.map((listing, index) => (
-            <motion.div key={listing.id} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: Math.min(index * 0.03, 0.15), duration: 0.2 }}>
-              <Link
+        <div
+          ref={scrollRef}
+          className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-1"
+        >
+          {displayListings.map((listing, index) => (
+            <motion.div
               key={listing.id}
-              href={`/${locale}/listing/${listing.id}`}
-              className="group flex-shrink-0 w-36 snap-start"
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: Math.min(index * 0.06, 0.3), duration: 0.25 }}
+              className="flex-shrink-0 w-44 snap-start"
             >
-              <div className="border border-slate-200 rounded-md overflow-hidden bg-white hover:border-orange-300 hover:shadow-md transition">
-                <div className="relative aspect-[4/3] bg-slate-100 overflow-hidden">
-                  {listing.photos?.[0] ? (
-                    <Image
-                      src={listing.photos[0]}
-                      alt={listing.title}
-                      fill
-                      unoptimized
-                      sizes="144px"
-                      className="object-cover group-hover:scale-[1.04] transition-transform duration-300"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-slate-100">
-                      <Flame className="w-6 h-6 text-slate-300" />
-                    </div>
-                  )}
-                  <span className="absolute bottom-1 left-1 flex items-center gap-0.5 bg-black/55 text-white text-[9px] px-1.5 py-0.5 rounded-full">
-                    <Eye className="w-2.5 h-2.5" />
-                    {listing.view_count}
-                  </span>
-                  {listing.urgent && (
-                    <span className="absolute top-1 right-1 bg-red-500 text-white text-[8px] font-bold px-1 py-0.5 rounded">
-                      URGENT
+              <Link
+                href={`/${locale}/listing/${listing.id}`}
+                className="group block"
+              >
+                <div className="overflow-hidden rounded-[1.25rem] border border-slate-200/80 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-orange-200 hover:shadow-xl hover:shadow-orange-100/50">
+                  {/* Fixed aspect ratio image */}
+                  <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
+                    {listing.photos?.[0] ? (
+                      <Image
+                        src={listing.photos[0]}
+                        alt={listing.title}
+                        fill
+                        unoptimized
+                        sizes="176px"
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
+                        <Flame className="h-6 w-6 text-slate-300" />
+                      </div>
+                    )}
+                    {/* View count badge */}
+                    <span className="absolute bottom-1.5 left-1.5 flex items-center gap-0.5 rounded-full bg-black/55 px-1.5 py-0.5 text-[9px] font-semibold text-white backdrop-blur-sm">
+                      <Eye className="h-2.5 w-2.5" />
+                      {listing.view_count}
                     </span>
-                  )}
+                    {/* Urgent badge */}
+                    {listing.urgent && (
+                      <span className="absolute top-1.5 right-1.5 rounded-md bg-red-500 px-1.5 py-0.5 text-[8px] font-bold text-white shadow-sm">
+                        URGENT
+                      </span>
+                    )}
+                  </div>
+                  {/* Card body */}
+                  <div className="p-2.5">
+                    <p className={cn('line-clamp-1 text-[11px] font-medium text-slate-700', isRtl ? 'text-right' : 'text-left')}>
+                      {listing.title}
+                    </p>
+                    <p className={cn('mt-1 text-[11px] font-bold text-primary-700', isRtl ? 'text-right' : 'text-left')}>
+                      {Number(listing.price).toLocaleString()} {listing.currency}
+                    </p>
+                    <p className={cn('mt-0.5 truncate text-[10px] text-slate-400', isRtl ? 'text-right' : 'text-left')}>
+                      {listing.city}
+                    </p>
+                  </div>
                 </div>
-                <div className="p-2">
-                  <p className={`text-[11px] text-slate-700 line-clamp-1 ${isRtl ? 'text-right' : 'text-left'}`}>
-                    {listing.title}
-                  </p>
-                  <p className={`text-[11px] font-semibold text-primary-700 mt-0.5 ${isRtl ? 'text-right' : 'text-left'}`}>
-                    {Number(listing.price).toLocaleString()} {listing.currency}
-                  </p>
-                  <p className={`text-[10px] text-slate-400 mt-0.5 truncate ${isRtl ? 'text-right' : 'text-left'}`}>
-                    {listing.city}
-                  </p>
-                </div>
-              </div>
               </Link>
             </motion.div>
           ))}

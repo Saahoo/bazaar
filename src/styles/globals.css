@@ -631,3 +631,12 @@ html[data-theme='dark'] ::-webkit-scrollbar-thumb:hover {
     --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
   }
 }
+
+/* Hide scrollbar utility for horizontal sliding carousels */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
