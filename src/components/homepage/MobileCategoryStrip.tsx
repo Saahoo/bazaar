@@ -4,69 +4,15 @@
 import React from 'react';
 import Link from 'next/link';
 import { Locale } from '@/lib/i18n/config';
-import { MAIN_CATEGORIES, getCategoryName } from '@/lib/constants/categories';
-import { createClient } from '@/lib/supabase/client';
+import { useCategories } from '@/lib/hooks/useCategories';
 import { AnimatedCategoryIcon } from '@/lib/utils/category-icons';
 
 interface MobileCategoryStripProps {
   locale: Locale;
 }
 
-interface DbCategory {
-  id: number;
-  name_en: string;
-  name_ps: string;
-  name_fa: string;
-  slug: string | null;
-  icon_name: string | null;
-  parent_id: number | null;
-  sort_order: number | null;
-}
-
 export const MobileCategoryStrip: React.FC<MobileCategoryStripProps> = ({ locale }) => {
-  const [dbCategories, setDbCategories] = React.useState<DbCategory[]>([]);
-
-  React.useEffect(() => {
-    const fetchCategories = async () => {
-      const supabase = createClient();
-      const { data } = await supabase
-        .from('categories')
-        .select('id, name_en, name_ps, name_fa, slug, icon_name, parent_id, sort_order')
-        .is('parent_id', null)
-        .order('sort_order', { ascending: true });
-
-      if (!data) return;
-      setDbCategories(
-        ((data as DbCategory[]) || []).filter((c) => c.slug !== 'mobile-phones' && c.slug !== 'phones')
-      );
-    };
-
-    fetchCategories();
-  }, []);
-
-  const getLocalizedDbCategoryName = (category: DbCategory): string => {
-    switch (locale) {
-      case 'ps':
-        return category.name_ps;
-      case 'fa':
-        return category.name_fa;
-      case 'en':
-      default:
-        return category.name_en;
-    }
-  };
-
-  const effectiveCategories = dbCategories.length > 0
-    ? dbCategories.map((c) => ({
-        id: c.id,
-        label: getLocalizedDbCategoryName(c),
-        icon: c.icon_name || 'home',
-      }))
-    : MAIN_CATEGORIES.map((c) => ({
-        id: c.id,
-        label: getCategoryName(c.id, locale),
-        icon: c.icon,
-      }));
+  const { categories } = useCategories(locale);
 
   return (
     <div className="lg:hidden">
@@ -78,7 +24,7 @@ export const MobileCategoryStrip: React.FC<MobileCategoryStripProps> = ({ locale
           msOverflowStyle: 'none',
         }}
       >
-        {effectiveCategories.map((category) => (
+        {categories.map((category) => (
           <Link
             key={category.id}
             href={`/${locale}/search?category=${category.id}`}

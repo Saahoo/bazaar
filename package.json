@@ -14,7 +14,8 @@
     "db:push": "supabase db push",
     "db:pull": "supabase db pull",
     "db:reset": "supabase db reset",
-    "generate": "next build && npm run export-types"
+    "generate": "next build && npm run export-types",
+    "analyze": "cross-env ANALYZE=true next build"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.0",
@@ -29,9 +30,9 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
     "date-fns": "^2.30.0",
-    "framer-motion": "^10.16.0",
+    "framer-motion": "^11.15.0",
     "leaflet": "^1.9.0",
-    "lucide-react": "^0.294.0",
+    "lucide-react": "^0.460.0",
     "next": "^15.0.0",
     "next-auth": "^4.24.0",
     "next-intl": "^3.0.0",
@@ -39,7 +40,6 @@
     "react-dom": "^19.0.0",
     "react-hook-form": "^7.48.0",
     "react-leaflet": "^4.2.0",
-    "react-swiper": "^0.1.0",
     "recharts": "^2.10.0",
     "swiper": "^11.0.0",
     "tailwind-merge": "^2.2.0",
@@ -49,6 +49,7 @@
     "zustand": "^4.4.0"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^16.2.5",
     "@types/leaflet": "^1.9.0",
     "@types/node": "^20.0.0",
     "@types/react": "^18.2.0",
@@ -56,6 +57,7 @@
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
     "autoprefixer": "^10.4.0",
+    "cross-env": "^10.1.0",
     "eslint": "^8.52.0",
     "eslint-config-next": "^15.0.0",
     "postcss": "^8.4.0",

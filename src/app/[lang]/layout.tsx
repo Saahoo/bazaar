@@ -1,6 +1,6 @@
 // src/app/[lang]/layout.tsx
 import type { Metadata, Viewport } from 'next';
-import { ReactNode } from 'react';
+import { ReactNode, Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import { IntlProvider } from '@/components/providers/IntlProvider';
 import { getDir, isRTL, LOCALES, Locale } from '@/lib/i18n/config';
@@ -9,6 +9,7 @@ import { AuthProvider } from '@/lib/context/AuthContext';
 import { ThemeProvider } from '@/lib/context/ThemeContext';
 import { ToastProvider } from '@/components/common/ToastProvider';
 import { PageTransition } from '@/components/common/PageTransition';
+import { inter, notoSansArabic } from '@/lib/fonts';
 import '@/styles/globals.css';
 import '@/styles/rtl.css';
 
@@ -23,7 +24,8 @@ export const viewport: Viewport = {
   themeColor: '#0066FF',
 };
 
-export const dynamic = 'force-dynamic';
+// Use ISR instead of force-dynamic for better caching
+export const revalidate = 300; // Revalidate every 5 minutes
 
 export async function generateMetadata({ params }: LocaleLayoutProps): Promise<Metadata> {
   const { lang: locale } = await params;
@@ -75,13 +77,19 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
   const messages = await getMessages(validLocale);
 
   return (
-    <html lang={locale} dir={dir} className={isRtl ? 'rtl' : 'ltr'} suppressHydrationWarning>
+    <html lang={locale} dir={dir} className={`${isRtl ? 'rtl' : 'ltr'} ${inter.variable} ${notoSansArabic.variable}`} suppressHydrationWarning>
+      <head>
+        {/* Blocking script to set theme before first paint — prevents flash of wrong theme */}
+        <script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('bazaar-theme');if(!t){t=window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'}if(t==='dark'){document.documentElement.classList.add('dark')}document.documentElement.dataset.theme=t}catch(e){}})()` }} />
+      </head>
       <body className="text-slate-900 antialiased">
         <IntlProvider locale={locale} messages={messages}>
           <ThemeProvider>
             <ToastProvider>
               <AuthProvider>
-                <PageTransition>{children}</PageTransition>
+                <Suspense>
+                  <PageTransition>{children}</PageTransition>
+                </Suspense>
               </AuthProvider>
             </ToastProvider>
           </ThemeProvider>

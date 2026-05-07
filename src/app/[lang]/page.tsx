@@ -1,11 +1,12 @@
 // src/app/[lang]/page.tsx
+import { Suspense } from 'react';
 import { HeroSection } from '@/components/homepage/HeroSection';
 import { CategorySidebar } from '@/components/homepage/CategorySidebar';
 import { FeaturedListings } from '@/components/homepage/FeaturedListings';
+import { MobileCategoryStrip } from '@/components/homepage/MobileCategoryStrip';
 import { TrendingItems } from '@/components/homepage/TrendingItems';
 import { MostWatched } from '@/components/homepage/MostWatched';
 import { PopularInYourArea } from '@/components/homepage/PopularInYourArea';
-import { MobileCategoryStrip } from '@/components/homepage/MobileCategoryStrip';
 import { Header } from '@/components/layout/Header';
 import { Locale } from '@/lib/i18n/config';
 import { getMessages } from '@/lib/i18n/request';
@@ -14,6 +15,26 @@ import { DEFAULT_HOMEPAGE_CONFIG, normalizeHomepageConfig, pickLocalized } from 
 
 interface PageProps {
   params: Promise<{ lang: string }>;
+}
+
+// Lightweight fallback for Suspense boundaries
+function SectionSkeleton() {
+  return (
+    <div className="rounded-[1.5rem] border border-white/60 bg-white/80 p-5 shadow-lg backdrop-blur-md md:p-6">
+      <div className="animate-pulse space-y-4">
+        <div className="h-6 w-48 rounded-lg bg-slate-200/60" />
+        <div className="flex gap-4 overflow-hidden">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="flex-shrink-0 w-48 space-y-3">
+              <div className="h-32 rounded-xl bg-slate-200/60" />
+              <div className="h-4 w-3/4 rounded bg-slate-200/40" />
+              <div className="h-3 w-1/2 rounded bg-slate-200/30" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default async function HomePage({ params }: PageProps) {
@@ -87,33 +108,39 @@ export default async function HomePage({ params }: PageProps) {
             )}
           </div>
 
-          {/* Trending Items */}
+          {/* Trending Items - Suspense boundary for streaming */}
           {homepageConfig.blocks.trending.enabled && (
             <div className="mt-8">
-              <TrendingItems
-                locale={locale as Locale}
-                titleOverride={pickLocalized(homepageConfig.blocks.trending.title, locale as Locale)}
-              />
+              <Suspense fallback={<SectionSkeleton />}>
+                <TrendingItems
+                  locale={locale as Locale}
+                  titleOverride={pickLocalized(homepageConfig.blocks.trending.title, locale as Locale)}
+                />
+              </Suspense>
             </div>
           )}
 
-          {/* Most Watched */}
+          {/* Most Watched - Suspense boundary for streaming */}
           {homepageConfig.blocks.mostWatched.enabled && (
             <div className="mt-8">
-              <MostWatched
-                locale={locale as Locale}
-                titleOverride={pickLocalized(homepageConfig.blocks.mostWatched.title, locale as Locale)}
-              />
+              <Suspense fallback={<SectionSkeleton />}>
+                <MostWatched
+                  locale={locale as Locale}
+                  titleOverride={pickLocalized(homepageConfig.blocks.mostWatched.title, locale as Locale)}
+                />
+              </Suspense>
             </div>
           )}
 
-          {/* Popular in Your Area */}
+          {/* Popular in Your Area - Suspense boundary for streaming */}
           {homepageConfig.blocks.popularArea.enabled && (
             <div className="mt-8">
-              <PopularInYourArea
-                locale={locale as Locale}
-                titleOverride={pickLocalized(homepageConfig.blocks.popularArea.title, locale as Locale)}
-              />
+              <Suspense fallback={<SectionSkeleton />}>
+                <PopularInYourArea
+                  locale={locale as Locale}
+                  titleOverride={pickLocalized(homepageConfig.blocks.popularArea.title, locale as Locale)}
+                />
+              </Suspense>
             </div>
           )}
         </div>

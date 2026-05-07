@@ -1,12 +1,11 @@
 // src/components/search/ListingCard.tsx
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, MapPin, Clock, ImageIcon, MessageCircle, Share2, Heart, Flag, Phone, UserPlus } from 'lucide-react';
 import { Locale, isRTL } from '@/lib/i18n/config';
 import { formatCurrency } from '@/lib/constants/currencies';
@@ -80,10 +79,11 @@ const conditionKeyMap: Record<string, string> = {
   fair: 'fair',
 };
 
-export const ListingCard: React.FC<ListingCardProps> = ({ listing, locale }) => {
+const ListingCardInner: React.FC<ListingCardProps> = ({ listing, locale }) => {
   const tCommon = useTranslations('common');
   const router = useRouter();
-  const supabase = createClient();
+  // Memoize supabase client to avoid creating a new instance every render
+  const supabase = useMemo(() => createClient(), []);
   const { user } = useAuth();
   const isRtl = isRTL(locale);
   const title = listing.title;
@@ -216,12 +216,10 @@ export const ListingCard: React.FC<ListingCardProps> = ({ listing, locale }) => 
   };
 
   return (
-    <motion.div
-      onHoverStart={() => setIsHovered(true)}
-      onHoverEnd={() => setIsHovered(false)}
-      whileHover={{ y: -6 }}
-      transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-      className="group overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-white shadow-sm transition-shadow duration-500 hover:shadow-xl hover:shadow-slate-200/50"
+    <div
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className="group overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-white shadow-sm transition-shadow duration-500 hover:shadow-xl hover:shadow-slate-200/50 hover-lift"
     >
       <Link href={`/${locale}/listing/${listing.id}`} className="block">
         {/* Image Section */}
@@ -234,7 +232,6 @@ export const ListingCard: React.FC<ListingCardProps> = ({ listing, locale }) => 
               src={photos[0]}
               alt={title}
               fill
-              unoptimized
               sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw"
               className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
               onLoad={() => setImageLoaded(true)}
@@ -257,18 +254,18 @@ export const ListingCard: React.FC<ListingCardProps> = ({ listing, locale }) => 
             {conditionLabel}
           </span>
 
-          {/* Favorite button overlay */}
-          <motion.button
+          {/* Favorite button overlay - CSS transitions instead of motion */}
+          <button
             type="button"
+            aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
               handleFavorite();
             }}
             disabled={favoriteLoading}
-            whileTap={{ scale: 0.85 }}
             className={cn(
-              'absolute top-3 flex h-9 w-9 items-center justify-center rounded-xl backdrop-blur-md transition-all duration-300',
+              'absolute top-3 flex h-9 w-9 items-center justify-center rounded-xl backdrop-blur-md transition-all duration-300 tap-scale',
               isRtl ? 'left-3' : 'right-3',
               isFavorite
                 ? 'bg-red-500/90 text-white shadow-lg shadow-red-500/30'
@@ -277,7 +274,7 @@ export const ListingCard: React.FC<ListingCardProps> = ({ listing, locale }) => 
             )}
           >
             <Heart className={cn('h-4 w-4', isFavorite && 'fill-current')} />
-          </motion.button>
+          </button>
 
           {/* View count */}
           <div className={cn('absolute bottom-3 flex items-center gap-1.5 rounded-lg bg-black/40 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur-md', isRtl ? 'right-3 flex-row-reverse' : 'left-3')}>
@@ -285,20 +282,15 @@ export const ListingCard: React.FC<ListingCardProps> = ({ listing, locale }) => 
             {listing.view_count}
           </div>
 
-          {/* Urgent badge */}
-          <AnimatePresence>
-            {listing.urgent && (
-              <motion.div
-                initial={{ scale: 0, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0, opacity: 0 }}
-                className={cn('absolute bottom-3 flex items-center gap-1 rounded-lg bg-red-600 px-2.5 py-1 text-[11px] font-bold text-white shadow-lg', isRtl ? 'left-3' : 'right-3')}
-              >
-                <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
-                URGENT
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {/* Urgent badge - CSS animation instead of AnimatePresence */}
+          {listing.urgent && (
+            <div
+              className={cn('absolute bottom-3 flex items-center gap-1 rounded-lg bg-red-600 px-2.5 py-1 text-[11px] font-bold text-white shadow-lg animate-scale-in', isRtl ? 'left-3' : 'right-3')}
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
+              URGENT
+            </div>
+          )}
         </div>
 
         {/* Content Section */}
@@ -339,74 +331,70 @@ export const ListingCard: React.FC<ListingCardProps> = ({ listing, locale }) => 
         </div>
       </Link>
 
-      {/* Action Buttons */}
+      {/* Action Buttons - regular buttons with tap-scale CSS instead of motion.button */}
       <div className={`grid grid-cols-3 gap-1.5 border-t border-slate-100 p-3 sm:grid-cols-6 ${isRtl ? 'text-right' : ''}`}>
-        <motion.button
+        <button
           type="button"
           onClick={handleChat}
           disabled={chatLoading || user?.id === listing.user_id}
-          whileTap={{ scale: 0.92 }}
-          className="flex items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-xs font-semibold text-slate-600 transition-all duration-200 hover:bg-primary-50 hover:text-primary-600 disabled:opacity-40"
+          className="flex items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-xs font-semibold text-slate-600 transition-all duration-200 hover:bg-primary-50 hover:text-primary-600 disabled:opacity-40 tap-scale"
         >
           <MessageCircle className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">{tCommon('chat')}</span>
-        </motion.button>
+        </button>
 
-        <motion.button
+        <button
           type="button"
           onClick={handleShare}
-          whileTap={{ scale: 0.92 }}
-          className="flex items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-xs font-semibold text-slate-600 transition-all duration-200 hover:bg-blue-50 hover:text-blue-600"
+          className="flex items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-xs font-semibold text-slate-600 transition-all duration-200 hover:bg-blue-50 hover:text-blue-600 tap-scale"
         >
           <Share2 className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">{tCommon('share')}</span>
-        </motion.button>
+        </button>
 
-        <motion.button
+        <button
           type="button"
           onClick={handleFavorite}
           disabled={favoriteLoading}
-          whileTap={{ scale: 0.92 }}
           className={cn(
-            'flex items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-xs font-semibold transition-all duration-200 disabled:opacity-40',
+            'flex items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-xs font-semibold transition-all duration-200 disabled:opacity-40 tap-scale',
             isFavorite ? 'text-red-500 hover:bg-red-50' : 'text-slate-600 hover:bg-red-50 hover:text-red-500'
           )}
         >
           <Heart className={cn('w-3.5 h-3.5', isFavorite && 'fill-current')} />
           <span className="hidden sm:inline">{tCommon('favorite')}</span>
-        </motion.button>
+        </button>
 
-        <motion.button
+        <button
           type="button"
           onClick={handleReport}
-          whileTap={{ scale: 0.92 }}
-          className="flex items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-xs font-semibold text-slate-600 transition-all duration-200 hover:bg-amber-50 hover:text-amber-600"
+          className="flex items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-xs font-semibold text-slate-600 transition-all duration-200 hover:bg-amber-50 hover:text-amber-600 tap-scale"
         >
           <Flag className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">{tCommon('report')}</span>
-        </motion.button>
+        </button>
 
-        <motion.button
+        <button
           type="button"
           onClick={handleCall}
-          whileTap={{ scale: 0.92 }}
-          className="flex items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-xs font-semibold text-slate-600 transition-all duration-200 hover:bg-emerald-50 hover:text-emerald-600"
+          className="flex items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-xs font-semibold text-slate-600 transition-all duration-200 hover:bg-emerald-50 hover:text-emerald-600 tap-scale"
         >
           <Phone className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">{tCommon('call')}</span>
-        </motion.button>
+        </button>
 
-        <motion.button
+        <button
           type="button"
           onClick={handleAddUser}
           disabled={chatLoading || user?.id === listing.user_id}
-          whileTap={{ scale: 0.92 }}
-          className="flex items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-xs font-semibold text-slate-600 transition-all duration-200 hover:bg-violet-50 hover:text-violet-600 disabled:opacity-40"
+          className="flex items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-xs font-semibold text-slate-600 transition-all duration-200 hover:bg-violet-50 hover:text-violet-600 disabled:opacity-40 tap-scale"
         >
           <UserPlus className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">{locale === 'en' ? 'Add' : locale === 'ps' ? 'زیات' : 'افزودن'}</span>
-        </motion.button>
+        </button>
       </div>
-    </motion.div>
+    </div>
   );
 };
+
+export const ListingCard = React.memo(ListingCardInner);

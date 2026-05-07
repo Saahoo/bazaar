@@ -1,7 +1,7 @@
 // src/components/homepage/HeroSection.tsx
 'use client';
 
-import React, { useCallback, useEffect, useState, useRef } from 'react';
+import React, { useCallback, useEffect, useState, useRef, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -61,13 +61,15 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ locale, config }) => {
   const [direction, setDirection] = useState(1);
   const [paused, setPaused] = useState(false);
   const touchStartX = useRef<number | null>(null);
-  const supabase = createClient();
 
-  const stats = [
+  // Memoize supabase client to avoid creating a new instance every render
+  const supabase = useMemo(() => createClient(), []);
+
+  const stats = useMemo(() => [
     { label: locale === 'en' ? 'Fast search' : locale === 'ps' ? 'چټک لټون' : 'جست‌وجوی سریع', icon: Zap },
     { label: locale === 'en' ? 'Trusted sellers' : locale === 'ps' ? 'باوري پلورونکي' : 'فروشندگان معتبر', icon: Shield },
     { label: locale === 'en' ? 'Mobile-first UX' : locale === 'ps' ? 'د موبایل لپاره برابر' : 'تجربه مناسب موبایل', icon: TrendingUp },
-  ];
+  ], [locale]);
 
   /* ── Fetch top 5 listings (admin-curated or top by views) ── */
   const fetchHeroListings = useCallback(async () => {
@@ -137,12 +139,11 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ locale, config }) => {
     } finally {
       setHeroLoading(false);
     }
-  }, [config.carousel.listingIds.join(','), supabase]);
+  }, [config.carousel.listingIds, supabase]);
 
   useEffect(() => {
     fetchHeroListings();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [config.carousel.listingIds.join(',')]);
+  }, [fetchHeroListings]);
 
   /* ── Auto-advance carousel ── */
   const intervalMs = config.carousel.interval > 0 ? config.carousel.interval : 5000;
@@ -221,7 +222,6 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ locale, config }) => {
                             src={currentListing.photos[0]}
                             alt={currentListing.title}
                             fill
-                            unoptimized
                             sizes="100vw"
                             className="object-cover"
                             priority={current === 0}
@@ -283,30 +283,15 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ locale, config }) => {
             </div>
           )}
 
-          {/* Mobile text area */}
+          {/* Mobile text area - CSS animations instead of framer-motion */}
           <div className={cn('relative z-10 px-4 py-5', isRtl && 'text-right')}>
-            <motion.p
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-              className="text-lg font-extralight tracking-tight text-slate-700"
-            >
+            <p className="animate-slide-up text-lg font-extralight tracking-tight text-slate-700">
               {pickLocalized(config.title, locale)}
-            </motion.p>
-            <motion.p
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
-              className="text-2xl font-black tracking-tight"
-            >
+            </p>
+            <p className="animate-slide-up-delay-1 mt-1 text-2xl font-black tracking-tight">
               <span className="gradient-text">{pickLocalized(config.subtitle, locale)}</span>
-            </motion.p>
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.4, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-              className="mt-3"
-            >
+            </p>
+            <div className="animate-scale-in-delay-1 mt-3">
               <Link
                 href={`/${locale}${config.primaryCtaUrl.startsWith('/') ? config.primaryCtaUrl : `/${config.primaryCtaUrl}`}`}
                 className={cn(
@@ -317,7 +302,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ locale, config }) => {
                 <Search className="h-4 w-4" />
                 {pickLocalized(config.primaryCta, locale)}
               </Link>
-            </motion.div>
+            </div>
           </div>
         </div>
 
@@ -360,7 +345,6 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ locale, config }) => {
                           src={currentListing.photos[0]}
                           alt={currentListing.title}
                           fill
-                          unoptimized
                           sizes="65vw"
                           className="object-cover"
                           priority={current === 0}
@@ -378,34 +362,26 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ locale, config }) => {
                   </motion.div>
                 </AnimatePresence>
 
-                {/* Slide info overlay */}
+                {/* Slide info overlay - CSS animation */}
                 <div className={cn('absolute bottom-0 left-0 right-0 p-5 md:p-6 lg:p-8 z-10', isRtl && 'text-right')}>
-                  <AnimatePresence mode="wait">
-                    <motion.div
-                      key={currentListing.id + '-info'}
-                      initial={{ opacity: 0, y: 16 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -8 }}
-                      transition={{ duration: 0.3, delay: 0.1 }}
-                    >
-                      <h3 className="text-white text-base md:text-lg lg:text-xl font-bold line-clamp-1 drop-shadow-lg">
-                        {currentListing.title}
-                      </h3>
-                      <div className={cn('mt-1.5 flex items-center gap-3 text-white/80 text-xs md:text-sm', isRtl && 'flex-row-reverse justify-end')}>
-                        <span className="font-bold text-white text-lg md:text-xl lg:text-2xl drop-shadow">
-                          {Number(currentListing.price).toLocaleString()} {currentListing.currency}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <MapPin className="w-3 h-3" />
-                          {currentListing.city}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Eye className="w-3 h-3" />
-                          {currentListing.view_count}
-                        </span>
-                      </div>
-                    </motion.div>
-                  </AnimatePresence>
+                  <div key={currentListing.id + '-info'} className="info-fade-in">
+                    <h3 className="text-white text-base md:text-lg lg:text-xl font-bold line-clamp-1 drop-shadow-lg">
+                      {currentListing.title}
+                    </h3>
+                    <div className={cn('mt-1.5 flex items-center gap-3 text-white/80 text-xs md:text-sm', isRtl && 'flex-row-reverse justify-end')}>
+                      <span className="font-bold text-white text-lg md:text-xl lg:text-2xl drop-shadow">
+                        {Number(currentListing.price).toLocaleString()} {currentListing.currency}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <MapPin className="w-3 h-3" />
+                        {currentListing.city}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Eye className="w-3 h-3" />
+                        {currentListing.view_count}
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Navigation arrows */}
@@ -498,7 +474,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ locale, config }) => {
             </svg>
           </div>
 
-          {/* ── Text section (35%) ── */}
+          {/* ── Text section (35%) - CSS animations instead of framer-motion ── */}
           <div className={cn(
             'relative flex flex-col justify-center px-6 py-8 md:px-8 md:py-12 lg:px-10 lg:py-16 bg-white/95 backdrop-blur-md',
             isRtl && 'text-right'
@@ -508,58 +484,35 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ locale, config }) => {
             <div className="floating-orb floating-orb-2 opacity-15" />
 
             {/* Badge */}
-            <motion.div
-              initial={{ opacity: 0, y: 20, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            <div
               className={cn(
-                'inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/80 px-4 py-1.5 text-xs font-semibold text-slate-600 shadow-sm backdrop-blur-md self-start',
+                'animate-scale-in inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/80 px-4 py-1.5 text-xs font-semibold text-slate-600 shadow-sm backdrop-blur-md self-start',
                 isRtl && 'flex-row-reverse self-end'
               )}
             >
               <Sparkles className="h-3.5 w-3.5 text-accent-500 animate-pulse" />
               <span>{locale === 'en' ? 'Premium marketplace' : locale === 'ps' ? 'پریمیوم بازار' : 'بازار حرفه‌ای'}</span>
-            </motion.div>
+            </div>
 
             {/* Title */}
-            <motion.p
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-              className="mt-5 text-2xl font-extralight tracking-tight text-slate-700 md:text-3xl lg:text-4xl"
-            >
+            <p className="animate-slide-up-delay-2 mt-5 text-2xl font-extralight tracking-tight text-slate-700 md:text-3xl lg:text-4xl">
               {pickLocalized(config.title, locale)}
-            </motion.p>
-            <motion.p
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-              className="mt-1 text-3xl font-black tracking-tight md:text-4xl lg:text-5xl"
-            >
+            </p>
+            <p className="animate-slide-up-delay-3 mt-1 text-3xl font-black tracking-tight md:text-4xl lg:text-5xl">
               <span className="gradient-text">{pickLocalized(config.subtitle, locale)}</span>
-            </motion.p>
+            </p>
 
             {/* Description */}
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-              className="mt-4 max-w-md text-sm leading-7 text-slate-500 md:text-base md:leading-8"
-            >
+            <p className="animate-slide-up-delay-4 mt-4 max-w-md text-sm leading-7 text-slate-500 md:text-base md:leading-8">
               {locale === 'en'
                 ? 'Discover listings, sellers, and categories in a faster, cleaner marketplace built to feel smooth on every screen.'
                 : locale === 'ps'
                   ? 'په هر سکرین کې په اسانه، چټک او پاکه بڼه اعلانونه، پلورونکي او کټګورۍ ومومئ.'
                   : 'آگهی‌ها، فروشندگان و دسته‌بندی‌ها را در بازاری سریع‌تر و روان‌تر روی هر صفحه پیدا کنید.'}
-            </motion.p>
+            </p>
 
             {/* CTA Buttons */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.25, ease: [0.22, 1, 0.36, 1] }}
-              className={cn('mt-6 flex flex-col gap-3 sm:flex-row', isRtl && 'sm:flex-row-reverse')}
-            >
+            <div className={cn('animate-slide-up-delay-5 mt-6 flex flex-col gap-3 sm:flex-row', isRtl && 'sm:flex-row-reverse')}>
               <Link
                 href={`/${locale}${config.primaryCtaUrl.startsWith('/') ? config.primaryCtaUrl : `/${config.primaryCtaUrl}`}`}
                 className={cn(
@@ -580,15 +533,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ locale, config }) => {
                 {pickLocalized(config.secondaryCta, locale)}
                 <ArrowRight className={cn('h-4 w-4 transition-transform duration-300 group-hover:translate-x-1', isRtl && 'rotate-180 group-hover:-translate-x-1')} />
               </Link>
-            </motion.div>
+            </div>
 
             {/* Stats */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
-              className={cn('mt-6 grid gap-2 grid-cols-3', isRtl && '[direction:rtl]')}
-            >
+            <div className={cn('animate-slide-up-delay-6 mt-6 grid gap-2 grid-cols-3', isRtl && '[direction:rtl]')}>
               {stats.map((stat) => {
                 const Icon = stat.icon;
                 return (
@@ -605,7 +553,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ locale, config }) => {
                   </div>
                 );
               })}
-            </motion.div>
+            </div>
           </div>
         </div>
 

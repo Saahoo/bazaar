@@ -1,7 +1,7 @@
 // src/components/homepage/HeroCarousel.tsx
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -48,10 +48,14 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({ locale, config }) =>
   const [current, setCurrent] = useState(0);
   const [direction, setDirection] = useState(1);
   const [paused, setPaused] = useState(false);
-  const supabase = createClient();
+
+  // Memoize supabase client to avoid creating a new instance every render
+  const supabase = useMemo(() => createClient(), []);
 
   // Fetch listings: admin-curated IDs or top 5 by view_count
   useEffect(() => {
+    let cancelled = false;
+
     const fetchListings = async () => {
       setLoading(true);
       try {
@@ -85,7 +89,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({ locale, config }) =>
             })
             .sort((a, b) => (orderMap.get(a.id) ?? 999) - (orderMap.get(b.id) ?? 999));
 
-          setListings(transformed.slice(0, 5));
+          if (!cancelled) setListings(transformed.slice(0, 5));
         } else {
           // Auto: top 5 most visited
           const { data, error } = await supabase
@@ -113,18 +117,18 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({ locale, config }) =>
             };
           });
 
-          setListings(transformed);
+          if (!cancelled) setListings(transformed);
         }
       } catch (err) {
         console.error('HeroCarousel fetch error:', err);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
 
     fetchListings();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [config.listingIds.join(',')]);
+    return () => { cancelled = true; };
+  }, [config.listingIds, supabase]);
 
   // Auto-slide
   const intervalMs = config.interval > 0 ? config.interval : 5000;
@@ -189,7 +193,6 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({ locale, config }) =>
                 src={currentListing.photos[0]}
                 alt={currentListing.title}
                 fill
-                unoptimized
                 sizes="(max-width: 768px) 100vw, 80vw"
                 className="object-cover"
                 priority={current === 0}
@@ -202,13 +205,9 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({ locale, config }) =>
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
             <div className="absolute inset-0 bg-gradient-to-r from-black/30 to-transparent" />
 
-            {/* Content */}
+            {/* Content - CSS animation instead of motion.div */}
             <div className={cn('absolute bottom-0 left-0 right-0 p-4 md:p-6 lg:p-8', isRtl && 'text-right')}>
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.15 }}
-              >
+              <div key={currentListing.id + '-info'} className="info-fade-in">
                 <h3 className="text-white text-sm md:text-lg lg:text-xl font-bold line-clamp-1 drop-shadow-lg">
                   {currentListing.title}
                 </h3>
@@ -225,7 +224,7 @@ export const HeroCarousel: React.FC<HeroCarouselProps> = ({ locale, config }) =>
                     {currentListing.view_count}
                   </span>
                 </div>
-              </motion.div>
+              </div>
             </div>
           </Link>
         </motion.div>

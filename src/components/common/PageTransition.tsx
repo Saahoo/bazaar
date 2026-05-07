@@ -1,24 +1,34 @@
 'use client';
 
 import React from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { usePathname } from 'next/navigation';
 
+/**
+ * Page enter animation.
+ *
+ * AnimatePresence with mode="wait" was removed because it intercepts
+ * React's unmount cycle using internal reconciler APIs that changed in
+ * React 19. When combined with Suspense boundaries (dynamic imports,
+ * data fetching), this caused "Cannot read properties of undefined
+ * (reading 'call')" at runtime.
+ *
+ * We keep the mount animation (initial → animate) which is safe, and
+ * drop the exit animation to avoid the AnimatePresence + Suspense
+ * conflict.
+ */
 export function PageTransition({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   return (
-    <AnimatePresence mode="wait" initial={false}>
-      <motion.div
-        key={pathname}
-        initial={{ opacity: 0, y: 12, filter: 'blur(4px)' }}
-        animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-        exit={{ opacity: 0, y: -8, filter: 'blur(2px)' }}
-        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-        className="flex min-h-screen flex-col"
-      >
-        {children}
-      </motion.div>
-    </AnimatePresence>
+    <motion.div
+      key={pathname}
+      initial={false}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+      className="flex min-h-screen flex-col"
+    >
+      {children}
+    </motion.div>
   );
 }

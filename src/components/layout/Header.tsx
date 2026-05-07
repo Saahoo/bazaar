@@ -107,7 +107,7 @@ export const Header: React.FC<HeaderProps> = ({ locale }) => {
     <>
       {/* Main Header */}
       <motion.header
-        initial={{ y: -100, opacity: 0 }}
+        initial={false}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
         className={cn(
@@ -305,7 +305,7 @@ export const Header: React.FC<HeaderProps> = ({ locale }) => {
           {/* Search Bar Section - compact on mobile */}
           <motion.form
             onSubmit={handleSearchSubmit}
-            initial={{ opacity: 0, y: 10 }}
+            initial={false}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
             className="px-3 pb-2 md:px-4 md:pb-3"

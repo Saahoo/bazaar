@@ -3,7 +3,7 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Noto+Sans+Arabic:wght@400;500;600;700;800;900&family=Noto+Sans+Pashto:wght@400;500;600;700;800;900&display=swap');
+/* Font loading now handled by next/font in src/lib/fonts.ts — CSS variables --font-inter and --font-noto-arabic are set on <html> */
 
 /* ============================================
    DESIGN SYSTEM — CSS Custom Properties
@@ -113,7 +113,7 @@ html[dir='rtl'] {
 }
 
 body {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif;
   background-color: var(--bg);
   background-image: var(--gradient-mesh);
   color: var(--foreground);
@@ -128,7 +128,7 @@ html[data-theme='dark'] body {
 
 html[lang='ps'] body,
 html[lang='fa'] body {
-  font-family: 'Noto Sans Arabic', 'Noto Sans Pashto', 'Inter', sans-serif;
+  font-family: var(--font-noto-arabic), 'Noto Sans Arabic', 'Inter', sans-serif;
 }
 
 /* Headings */
@@ -639,4 +639,110 @@ html[data-theme='dark'] ::-webkit-scrollbar-thumb:hover {
 }
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+/* ============================================
+   PERFORMANCE ANIMATION UTILITIES
+   GPU-accelerated, no-JS alternatives to framer-motion
+   ============================================ */
+.animate-fade-in {
+  animation: fade-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-slide-up-delay-1 {
+  animation: slide-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.05s both;
+}
+
+.animate-slide-up-delay-2 {
+  animation: slide-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+}
+
+.animate-slide-up-delay-3 {
+  animation: slide-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.15s both;
+}
+
+.animate-slide-up-delay-4 {
+  animation: slide-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both;
+}
+
+.animate-slide-up-delay-5 {
+  animation: slide-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.25s both;
+}
+
+.animate-slide-up-delay-6 {
+  animation: slide-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.3s both;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-scale-in-delay-1 {
+  animation: scale-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+}
+
+/* Staggered children animation for grids */
+.stagger-children > * {
+  opacity: 0;
+  animation: slide-up 0.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 40ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 80ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 120ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 160ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 200ms; }
+.stagger-children > *:nth-child(7) { animation-delay: 240ms; }
+.stagger-children > *:nth-child(8) { animation-delay: 280ms; }
+.stagger-children > *:nth-child(9) { animation-delay: 300ms; }
+.stagger-children > *:nth-child(n+10) { animation-delay: 300ms; }
+
+/* Card hover lift - replaces framer-motion whileHover */
+.hover-lift {
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease;
+  will-change: transform;
+}
+.hover-lift:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.15);
+}
+
+/* Button tap - replaces framer-motion whileTap */
+.tap-scale {
+  transition: transform 0.15s ease;
+}
+.tap-scale:active {
+  transform: scale(0.92);
+}
+
+/* Carousel slide transitions - CSS alternative to AnimatePresence */
+.carousel-slide-enter {
+  animation: carousel-enter 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.carousel-slide-exit {
+  animation: carousel-exit 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes carousel-enter {
+  from { opacity: 0; transform: translateX(100%); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes carousel-exit {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(-100%); }
+}
+
+/* Info overlay fade-in for carousel */
+.info-fade-in {
+  animation: info-fade-in 0.3s cubic-bezier(0.22, 1, 0.36, 1) 0.1s both;
+}
+
+@keyframes info-fade-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
 }

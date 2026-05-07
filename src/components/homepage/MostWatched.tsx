@@ -1,8 +1,8 @@
+// src/components/homepage/MostWatched.tsx
 'use client';
 
-import React, { useRef } from 'react';
+import React, { useRef, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
-import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { Heart, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
@@ -25,7 +25,7 @@ export const MostWatched: React.FC<MostWatchedProps> = ({ locale, titleOverride 
 
   const { listings, loading } = useListings({ sortBy: 'mostFavorited', limit: POST_COUNT });
 
-  const displayListings = listings.slice(0, POST_COUNT);
+  const displayListings = useMemo(() => listings.slice(0, POST_COUNT), [listings]);
 
   const scroll = (direction: 'left' | 'right') => {
     if (!scrollRef.current) return;
@@ -48,7 +48,6 @@ export const MostWatched: React.FC<MostWatchedProps> = ({ locale, titleOverride 
           </h2>
         </div>
         <div className={cn('flex items-center gap-2', isRtl && 'flex-row-reverse')}>
-          {/* Carousel navigation arrows */}
           <button
             onClick={() => scroll(isRtl ? 'right' : 'left')}
             className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition-all hover:bg-slate-50 hover:text-slate-700 hover:shadow-md"
@@ -91,18 +90,15 @@ export const MostWatched: React.FC<MostWatchedProps> = ({ locale, titleOverride 
           className="flex gap-3 overflow-x-auto scrollbar-hide snap-x snap-mandatory pb-1"
         >
           {displayListings.map((listing, index) => (
-            <motion.div
+            <div
               key={listing.id}
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: Math.min(index * 0.06, 0.3), duration: 0.25 }}
               className="flex-shrink-0 w-44 snap-start"
             >
               <Link
                 href={`/${locale}/listing/${listing.id}`}
                 className="group block"
               >
-                <div className="overflow-hidden rounded-[1.25rem] border border-slate-200/80 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-rose-200 hover:shadow-xl hover:shadow-rose-100/50">
+                <div className="overflow-hidden rounded-[1.25rem] border border-slate-200/80 bg-white shadow-sm transition-all duration-300 will-change-transform hover:-translate-y-1 hover:border-rose-200 hover:shadow-xl hover:shadow-rose-100/50">
                   {/* Fixed aspect ratio image */}
                   <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
                     {listing.photos?.[0] ? (
@@ -110,9 +106,9 @@ export const MostWatched: React.FC<MostWatchedProps> = ({ locale, titleOverride 
                         src={listing.photos[0]}
                         alt={listing.title}
                         fill
-                        unoptimized
                         sizes="176px"
-                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110 will-change-transform"
+                        priority={index < 3}
                       />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
@@ -150,7 +146,7 @@ export const MostWatched: React.FC<MostWatchedProps> = ({ locale, titleOverride 
                   </div>
                 </div>
               </Link>
-            </motion.div>
+            </div>
           ))}
         </div>
       )}
