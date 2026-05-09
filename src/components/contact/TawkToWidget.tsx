@@ -49,12 +49,44 @@ export function TawkToWidget() {
       document.head.appendChild(script);
     }
 
+    // Add mobile-specific CSS to ensure widget is visible
+    const styleId = 'tawkto-mobile-css';
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement('style');
+      style.id = styleId;
+      style.textContent = `
+        /* Ensure Tawk.to widget is visible on mobile */
+        @media (max-width: 768px) {
+          .tawk-min-container,
+          .tawk-button,
+          .tawk-button-circle,
+          #tawkchat-container,
+          .tawk-chat-container {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            z-index: 99999 !important;
+          }
+          
+          /* Fix positioning for mobile */
+          .tawk-button {
+            bottom: 20px !important;
+            right: 20px !important;
+          }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
     return () => {
       // Cleanup: remove the Tawk.to widget when component unmounts
       const existing = document.getElementById('tawkto-script');
       if (existing) existing.remove();
       const iframe = document.querySelector('iframe[title*="chat"]')?.parentElement;
       if (iframe) iframe.remove();
+      // Remove mobile CSS
+      const mobileStyle = document.getElementById('tawkto-mobile-css');
+      if (mobileStyle) mobileStyle.remove();
     };
   }, [propertyId, widgetId]);
 
