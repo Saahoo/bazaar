@@ -31,7 +31,16 @@ export const Header: React.FC<HeaderProps> = ({ locale }) => {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const deferredQuery = useDeferredValue(query);
+
+  // Defer icon rendering until after hydration to prevent lucide-react
+  // server/client SVG mismatch (e.g. Home → lucide-house vs lucide-home)
+  useEffect(() => { setMounted(true); }, []);
+
+  /** Render a lucide icon only after mount to avoid hydration mismatch */
+  const renderIcon = (Icon: React.ComponentType<{ className?: string }>, className: string) =>
+    mounted ? <Icon className={className} /> : <span className={className} style={{ display: 'inline-block' }} />;
 
   const navigationItems = useMemo(
     () => [
@@ -128,6 +137,7 @@ export const Header: React.FC<HeaderProps> = ({ locale }) => {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className={cn('flex min-w-0 items-center gap-3', isRtl && 'flex-row-reverse')}
+              suppressHydrationWarning
             >
               {/* Mobile Menu Button */}
               <motion.button
@@ -137,8 +147,9 @@ export const Header: React.FC<HeaderProps> = ({ locale }) => {
                 whileTap={{ scale: 0.92 }}
                 className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 text-slate-600 shadow-sm ring-1 ring-slate-200/60 transition-all hover:from-primary-50 hover:to-primary-100 hover:text-primary-600 hover:ring-primary-200/60 lg:hidden"
                 aria-label={locale === 'en' ? 'Open menu' : locale === 'ps' ? 'مېنو خلاص کړئ' : 'باز کردن منو'}
+                suppressHydrationWarning
               >
-                <Menu className="h-5 w-5" />
+                {renderIcon(Menu, 'h-5 w-5')}
               </motion.button>
 
               {/* Logo */}
@@ -165,12 +176,12 @@ export const Header: React.FC<HeaderProps> = ({ locale }) => {
             {/* Center Navigation - Desktop */}
             <nav className={cn('hidden lg:flex items-center gap-1.5', isRtl && 'flex-row-reverse')}>
               {navigationItems.map(({ href, icon: Icon, label }) => (
-                <motion.div key={href} whileHover={{ y: -2 }} whileTap={{ y: 0 }}>
+                <motion.div key={href} whileHover={{ y: -2 }} whileTap={{ y: 0 }} suppressHydrationWarning>
                   <Link
                     href={href}
                     className="group relative inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-sm font-medium text-slate-600 transition-all duration-300 hover:bg-white/80 hover:text-primary-700 hover:shadow-md hover:shadow-primary-100/50"
                   >
-                    <Icon className="h-4 w-4 transition-transform duration-300 group-hover:scale-110" />
+                    {renderIcon(Icon, 'h-4 w-4 transition-transform duration-300 group-hover:scale-110')}
                     <span>{label}</span>
                     {/* Active indicator dot */}
                     <span className="absolute -bottom-0.5 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-primary-500 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
@@ -189,13 +200,13 @@ export const Header: React.FC<HeaderProps> = ({ locale }) => {
               {!loading && user ? (
                 <>
                   {/* Messages Button */}
-                  <motion.div whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }}>
+                  <motion.div whileHover={{ scale: 1.08 }} whileTap={{ scale: 0.92 }} suppressHydrationWarning>
                     <Link
                       href={`/${locale}/messages`}
                       className="relative inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-slate-50 to-slate-100 text-slate-600 shadow-sm ring-1 ring-slate-200/60 transition-all hover:from-primary-50 hover:to-primary-100 hover:text-primary-600 hover:ring-primary-200/60"
                       title={tCommon('message')}
                     >
-                      <MessageCircle className="h-4.5 w-4.5" />
+                      {renderIcon(MessageCircle, 'h-4.5 w-4.5')}
                       <AnimatePresence>
                         {unreadCount > 0 && (
                           <motion.span
@@ -219,17 +230,16 @@ export const Header: React.FC<HeaderProps> = ({ locale }) => {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       className="hidden md:inline-flex items-center gap-2 rounded-2xl border border-slate-200/80 bg-white/80 px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm backdrop-blur-sm transition-all hover:border-primary-200 hover:bg-primary-50/80 hover:text-primary-700 hover:shadow-md hover:shadow-primary-100/30"
+                      suppressHydrationWarning
                     >
                       <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-gradient-to-br from-primary-500 to-accent-500 text-[10px] font-bold text-white">
                         {user.email?.[0]?.toUpperCase() || 'U'}
                       </div>
                       <span>{tCommon('account')}</span>
-                      <ChevronDown
-                        className={cn(
-                          'h-3.5 w-3.5 transition-transform duration-300',
-                          userMenuOpen && 'rotate-180'
-                        )}
-                      />
+                      {renderIcon(ChevronDown, cn(
+                        'h-3.5 w-3.5 transition-transform duration-300',
+                        userMenuOpen && 'rotate-180'
+                      ))}
                     </motion.button>
 
                     <AnimatePresence>
@@ -248,7 +258,7 @@ export const Header: React.FC<HeaderProps> = ({ locale }) => {
                           <div className="border-b border-slate-100 bg-gradient-to-r from-primary-50/50 to-accent-50/50 px-4 py-3">
                             <p className="text-sm font-semibold text-slate-900 truncate">{user.email}</p>
                             <p className="text-xs text-slate-500 mt-0.5">
-                              <Sparkles className="inline h-3 w-3 text-primary-500 mr-1" />
+                              {renderIcon(Sparkles, 'inline h-3 w-3 text-primary-500 mr-1')}
                               {locale === 'en' ? 'Active account' : locale === 'ps' ? 'فعاله حساب' : 'حساب فعال'}
                             </p>
                           </div>
@@ -257,7 +267,7 @@ export const Header: React.FC<HeaderProps> = ({ locale }) => {
                             onClick={() => setUserMenuOpen(false)}
                             className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-slate-700 transition hover:bg-primary-50 hover:text-primary-700"
                           >
-                            <User className="h-4 w-4" />
+                            {renderIcon(User, 'h-4 w-4')}
                             {tCommon('account')}
                           </Link>
                           <button
@@ -268,7 +278,7 @@ export const Header: React.FC<HeaderProps> = ({ locale }) => {
                             }}
                             className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-red-600 transition hover:bg-red-50"
                           >
-                            <LogOut className="h-4 w-4" />
+                            {renderIcon(LogOut, 'h-4 w-4')}
                             {tCommon('logout')}
                           </button>
                         </motion.div>
@@ -282,8 +292,9 @@ export const Header: React.FC<HeaderProps> = ({ locale }) => {
                       whileTap={{ scale: 0.92 }}
                       className="md:hidden inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-red-50 to-red-100 text-red-600 shadow-sm ring-1 ring-red-200/60 transition-all hover:from-red-100 hover:to-red-200"
                       title={tCommon('logout')}
+                      suppressHydrationWarning
                     >
-                      <LogOut className="h-4.5 w-4.5" />
+                      {renderIcon(LogOut, 'h-4.5 w-4.5')}
                     </motion.button>
                   </div>
                 </>
@@ -294,8 +305,9 @@ export const Header: React.FC<HeaderProps> = ({ locale }) => {
                   onClick={handleLogin}
                   className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-primary-600 to-primary-500 px-4 py-2.5 text-xs sm:text-sm font-semibold text-white shadow-lg shadow-primary-500/30 transition-all hover:shadow-xl hover:shadow-primary-500/40 hover:from-primary-700 hover:to-primary-600"
                   title={tCommon('login')}
+                  suppressHydrationWarning
                 >
-                  <LogIn className="h-4 w-4" />
+                  {renderIcon(LogIn, 'h-4 w-4')}
                   <span className="hidden sm:inline">{tCommon('login')}</span>
                 </motion.button>
               ) : null}
@@ -322,11 +334,11 @@ export const Header: React.FC<HeaderProps> = ({ locale }) => {
                 searchFocused && 'opacity-100'
               )} />
 
-              <Search className={cn(
+              {renderIcon(Search, cn(
                 'pointer-events-none absolute top-1/2 h-4 w-4 md:h-4.5 md:w-4.5 -translate-y-1/2 transition-colors duration-300',
                 isRtl ? 'right-3 md:right-4' : 'left-3 md:left-4',
                 searchFocused ? 'text-primary-500' : 'text-slate-400'
-              )} />
+              ))}
               <motion.input
                 type="text"
                 value={query}
@@ -348,6 +360,7 @@ export const Header: React.FC<HeaderProps> = ({ locale }) => {
                   'absolute top-1/2 inline-flex -translate-y-1/2 items-center justify-center rounded-lg md:rounded-xl bg-gradient-to-r from-primary-600 to-primary-500 px-3 py-1.5 md:px-5 md:py-2 text-xs font-semibold text-white shadow-md shadow-primary-500/25 transition-all hover:from-primary-700 hover:to-primary-600 hover:shadow-lg hover:shadow-primary-500/35',
                   isRtl ? 'left-1.5 md:left-2' : 'right-1.5 md:right-2',
                 )}
+                suppressHydrationWarning
               >
                 {tCommon('search')}
               </motion.button>
@@ -386,7 +399,7 @@ export const Header: React.FC<HeaderProps> = ({ locale }) => {
                   )}
                 >
                   <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-500 transition-all group-hover:bg-primary-100 group-hover:text-primary-600">
-                    <Icon className="h-4.5 w-4.5" />
+                    {renderIcon(Icon, 'h-4.5 w-4.5')}
                   </span>
                   <span>{label}</span>
                 </Link>
@@ -436,7 +449,7 @@ export const Header: React.FC<HeaderProps> = ({ locale }) => {
                 )}
               >
                 <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20">
-                  <MessageCircle className="h-4.5 w-4.5" />
+                  {renderIcon(MessageCircle, 'h-4.5 w-4.5')}
                 </span>
                 <span className="flex-1">{tCommon('message')}</span>
                 {unreadCount > 0 && (
@@ -456,7 +469,7 @@ export const Header: React.FC<HeaderProps> = ({ locale }) => {
                 )}
               >
                 <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-500 transition-all group-hover:bg-primary-100 group-hover:text-primary-600">
-                  <User className="h-4.5 w-4.5" />
+                  {renderIcon(User, 'h-4.5 w-4.5')}
                 </span>
                 {tCommon('account')}
               </Link>
@@ -474,7 +487,7 @@ export const Header: React.FC<HeaderProps> = ({ locale }) => {
                 )}
               >
                 <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-100 text-red-500 transition-all group-hover:bg-red-200">
-                  <LogOut className="h-4.5 w-4.5" />
+                  {renderIcon(LogOut, 'h-4.5 w-4.5')}
                 </span>
                 {tCommon('logout')}
               </button>
@@ -491,7 +504,7 @@ export const Header: React.FC<HeaderProps> = ({ locale }) => {
                 isRtl && 'flex-row-reverse'
               )}
             >
-              <LogIn className="h-5 w-5" />
+              {renderIcon(LogIn, 'h-5 w-5')}
               {tCommon('login')}
             </motion.button>
           ) : (

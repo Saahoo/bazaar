@@ -1,7 +1,7 @@
 // src/components/listing/ActionButtons.tsx
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { Heart, Share2, Flag, MessageCircle, Phone, UserPlus } from 'lucide-react';
@@ -10,6 +10,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/context/AuthContext';
 import { getOrCreateConversation } from '@/lib/chat/actions';
 import { useToast } from '@/components/common/ToastProvider';
+import { ReportModal } from '@/components/common/ReportModal';
 
 interface ActionButtonsProps {
   locale: Locale;
@@ -38,6 +39,7 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
   const [isFavorite, setIsFavorite] = React.useState(false);
   const [favoriteLoading, setFavoriteLoading] = React.useState(false);
   const [chatLoading, setChatLoading] = React.useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
 
   React.useEffect(() => {
     if (!user) {
@@ -133,21 +135,12 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
   };
 
   const handleReport = () => {
-    const url = `${window.location.origin}/${locale}/listing/${listingId}`;
-    const subject = encodeURIComponent(tToast('reportSubject', { id: listingId }));
-    const body = encodeURIComponent(tToast('reportBody', { url }));
-    window.location.href = `mailto:support@bazaar.local?subject=${subject}&body=${body}`;
+    setReportOpen(true);
   };
 
-  const handleCall = () => {
-    if (!phoneVisible || !sellerPhone) {
-      showToast(tCommon('phoneNotAvailable'), 'info');
-      return;
-    }
-    window.location.href = `tel:${sellerPhone}`;
-  };
 
   return (
+    <>
     <div className={`grid grid-cols-2 sm:grid-cols-3 gap-2 ${isRtl ? 'text-right' : ''}`}>
       <button
         type="button"
@@ -182,21 +175,31 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
 
       <button
         type="button"
-        onClick={handleReport}
-        className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-100 transition-colors"
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          handleReport();
+        }}
+        className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-100 transition-colors relative z-10"
       >
         <Flag className="w-4 h-4" />
         <span>{tCommon('report')}</span>
       </button>
 
-      <button
-        type="button"
-        onClick={handleCall}
-        className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-100 transition-colors"
+      <a
+        href={sellerPhone ? `tel:${sellerPhone}` : '#'}
+        onClick={(e) => {
+          if (!phoneVisible || !sellerPhone) {
+            e.preventDefault();
+            showToast(tCommon('phoneNotAvailable'), 'info');
+          }
+        }}
+        className="flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-sm text-slate-600 hover:bg-slate-100 transition-colors no-underline"
       >
         <Phone className="w-4 h-4" />
         <span>{tCommon('call')}</span>
-      </button>
+      </a>
 
       <button
         type="button"
@@ -207,6 +210,15 @@ export const ActionButtons: React.FC<ActionButtonsProps> = ({
         <UserPlus className="w-4 h-4" />
         <span>Add User</span>
       </button>
+
     </div>
+    <ReportModal
+      locale={locale}
+      listingId={listingId}
+      listingTitle={listingTitle}
+      open={reportOpen}
+      onClose={() => setReportOpen(false)}
+    />
+    </>
   );
 };

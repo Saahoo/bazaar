@@ -12,6 +12,7 @@ import { Locale } from '@/lib/i18n/config';
 import { getMessages } from '@/lib/i18n/request';
 import { createClient } from '@/lib/supabase/server';
 import { DEFAULT_HOMEPAGE_CONFIG, normalizeHomepageConfig, pickLocalized } from '@/lib/content/homepageSettings';
+import { Link } from '@/lib/i18n/routing';
 
 interface PageProps {
   params: Promise<{ lang: string }>;
@@ -151,10 +152,31 @@ export default async function HomePage({ params }: PageProps) {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_0%,rgba(192,0,0,0.08),transparent_60%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_100%,rgba(255,124,0,0.06),transparent_60%)]" />
         <div className="container relative mx-auto px-4">
-          <div className="flex flex-col items-center gap-4">
+          <div className="flex flex-col items-center gap-6">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary-600 to-accent-500 text-lg font-black text-white shadow-lg shadow-primary-500/20">
               B
             </div>
+            {/* Footer navigation links */}
+            <nav className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+              <Link href="/about-us" className="text-sm text-slate-400 transition-colors hover:text-white">
+                {t('footer.about')}
+              </Link>
+              <Link href="/safety-tips" className="text-sm text-slate-400 transition-colors hover:text-white">
+                {t('footer.safetyTips')}
+              </Link>
+              <Link href="/help-center" className="text-sm text-slate-400 transition-colors hover:text-white">
+                {t('footer.helpCenter')}
+              </Link>
+              <Link href="/contact-us" className="text-sm text-slate-400 transition-colors hover:text-white">
+                {t('footer.contact')}
+              </Link>
+              <Link href="/search" className="text-sm text-slate-400 transition-colors hover:text-white">
+                {t('footer.terms')}
+              </Link>
+              <Link href="/search" className="text-sm text-slate-400 transition-colors hover:text-white">
+                {t('footer.privacy')}
+              </Link>
+            </nav>
             <p className="text-center text-sm text-slate-400">{t('footer.copyright')}</p>
           </div>
         </div>

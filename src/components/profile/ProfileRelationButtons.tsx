@@ -108,10 +108,6 @@ export const ProfileRelationButtons: React.FC<ProfileRelationButtonsProps> = ({
     }
   };
 
-  const handleCall = () => {
-    if (!targetPhone) return;
-    window.location.href = `tel:${targetPhone}`;
-  };
 
   const buttonClass = compact
     ? `flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition ${rtl ? 'flex-row-reverse' : ''}`
@@ -150,15 +146,18 @@ export const ProfileRelationButtons: React.FC<ProfileRelationButtonsProps> = ({
         <span>{tCommon('chat')}</span>
       </button>
 
-      <button
-        type="button"
-        onClick={handleCall}
-        disabled={!targetPhone}
-        className={`${buttonClass} bg-slate-100 text-slate-700 hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed`}
+      <a
+        href={targetPhone ? `tel:${targetPhone}` : '#'}
+        onClick={(e) => {
+          if (!targetPhone) {
+            e.preventDefault();
+          }
+        }}
+        className={`${buttonClass} bg-slate-100 text-slate-700 hover:bg-slate-200 no-underline ${!targetPhone ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}`}
       >
         <Phone className="w-4 h-4" />
         <span>{tCommon('call')}</span>
-      </button>
+      </a>
     </div>
   );
 };

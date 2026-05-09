@@ -1,7 +1,7 @@
 // src/components/search/ListingCard.tsx
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
@@ -15,6 +15,7 @@ import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/lib/context/AuthContext';
 import { getOrCreateConversation } from '@/lib/chat/actions';
 import { useToast } from '@/components/common/ToastProvider';
+import { ReportModal } from '@/components/common/ReportModal';
 import { cn } from '@/lib/utils/cn';
 
 interface ListingCardProps {
@@ -98,6 +99,7 @@ const ListingCardInner: React.FC<ListingCardProps> = ({ listing, locale }) => {
   const [imageLoaded, setImageLoaded] = React.useState(false);
   const [imageError, setImageError] = React.useState(false);
   const [isHovered, setIsHovered] = React.useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
   const { showToast } = useToast();
 
   React.useEffect(() => {
@@ -197,25 +199,12 @@ const ListingCardInner: React.FC<ListingCardProps> = ({ listing, locale }) => {
   };
 
   const handleReport = () => {
-    const url = `${window.location.origin}/${locale}/listing/${listing.id}`;
-    const subject = encodeURIComponent(`Report listing ${listing.id}`);
-    const body = encodeURIComponent(`Please review this listing:\n${url}`);
-    window.location.href = `mailto:support@bazaar.local?subject=${subject}&body=${body}`;
+    setReportOpen(true);
   };
 
-  const handleCall = () => {
-    const phone = listing.phone_visible ? listing.seller_phone : null;
-    if (!phone) {
-      showToast(
-        locale === 'en' ? 'Phone number is not available.' : locale === 'ps' ? 'د تلیفون شمېره نشته.' : 'شماره تلفن موجود نیست.',
-        'info',
-      );
-      return;
-    }
-    window.location.href = `tel:${phone}`;
-  };
 
   return (
+    <>
     <div
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -337,7 +326,7 @@ const ListingCardInner: React.FC<ListingCardProps> = ({ listing, locale }) => {
           type="button"
           onClick={handleChat}
           disabled={chatLoading || user?.id === listing.user_id}
-          className="flex items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-xs font-semibold text-slate-600 transition-all duration-200 hover:bg-primary-50 hover:text-primary-600 disabled:opacity-40 tap-scale"
+          className="flex items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-xs font-semibold text-slate-600 transition-all duration-200 hover:bg-primary-50 hover:text-primary-600 disabled:opacity-40"
         >
           <MessageCircle className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">{tCommon('chat')}</span>
@@ -346,7 +335,7 @@ const ListingCardInner: React.FC<ListingCardProps> = ({ listing, locale }) => {
         <button
           type="button"
           onClick={handleShare}
-          className="flex items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-xs font-semibold text-slate-600 transition-all duration-200 hover:bg-blue-50 hover:text-blue-600 tap-scale"
+          className="flex items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-xs font-semibold text-slate-600 transition-all duration-200 hover:bg-blue-50 hover:text-blue-600"
         >
           <Share2 className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">{tCommon('share')}</span>
@@ -357,7 +346,7 @@ const ListingCardInner: React.FC<ListingCardProps> = ({ listing, locale }) => {
           onClick={handleFavorite}
           disabled={favoriteLoading}
           className={cn(
-            'flex items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-xs font-semibold transition-all duration-200 disabled:opacity-40 tap-scale',
+            'flex items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-xs font-semibold transition-all duration-200 disabled:opacity-40',
             isFavorite ? 'text-red-500 hover:bg-red-50' : 'text-slate-600 hover:bg-red-50 hover:text-red-500'
           )}
         >
@@ -367,33 +356,52 @@ const ListingCardInner: React.FC<ListingCardProps> = ({ listing, locale }) => {
 
         <button
           type="button"
-          onClick={handleReport}
-          className="flex items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-xs font-semibold text-slate-600 transition-all duration-200 hover:bg-amber-50 hover:text-amber-600 tap-scale"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleReport();
+          }}
+          className="flex items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-xs font-semibold text-slate-600 transition-all duration-200 hover:bg-amber-50 hover:text-amber-600 relative z-10"
         >
           <Flag className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">{tCommon('report')}</span>
         </button>
 
-        <button
-          type="button"
-          onClick={handleCall}
-          className="flex items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-xs font-semibold text-slate-600 transition-all duration-200 hover:bg-emerald-50 hover:text-emerald-600 tap-scale"
+        <a
+          href={listing.seller_phone ? `tel:${listing.seller_phone}` : '#'}
+          onClick={(e) => {
+            if (!listing.phone_visible || !listing.seller_phone) {
+              e.preventDefault();
+              showToast(tCommon('phoneNotAvailable'), 'info');
+            }
+          }}
+          className="flex items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-xs font-semibold text-slate-600 transition-all duration-200 hover:bg-emerald-50 hover:text-emerald-600 no-underline"
         >
           <Phone className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">{tCommon('call')}</span>
-        </button>
+        </a>
 
         <button
           type="button"
           onClick={handleAddUser}
           disabled={chatLoading || user?.id === listing.user_id}
-          className="flex items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-xs font-semibold text-slate-600 transition-all duration-200 hover:bg-violet-50 hover:text-violet-600 disabled:opacity-40 tap-scale"
+          className="flex items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-xs font-semibold text-slate-600 transition-all duration-200 hover:bg-violet-50 hover:text-violet-600 disabled:opacity-40"
         >
           <UserPlus className="w-3.5 h-3.5" />
           <span className="hidden sm:inline">{locale === 'en' ? 'Add' : locale === 'ps' ? 'زیات' : 'افزودن'}</span>
         </button>
       </div>
+
     </div>
+    <ReportModal
+      locale={locale}
+      listingId={listing.id}
+      listingTitle={listing.title}
+      open={reportOpen}
+      onClose={() => setReportOpen(false)}
+    />
+    </>
   );
 };
 

@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Shield, Tags, Flag, Save, Trash2, GripVertical, Building2, ClipboardList, Plus } from 'lucide-react';
+import { Shield, Tags, Flag, Save, Trash2, GripVertical, Building2, ClipboardList, Plus, AlertTriangle, Eye, CheckCircle, XCircle, MessageSquare } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Locale, isRTL } from '@/lib/i18n/config';
 import { createClient } from '@/lib/supabase/client';
@@ -52,6 +52,21 @@ interface CityRow {
   sort_order: number;
 }
 
+interface ReportRow {
+  id: string;
+  listing_id: string;
+  listing_title: string;
+  reported_by: string;
+  reporter_name: string;
+  reason: string;
+  description: string | null;
+  status: string;
+  admin_notes: string | null;
+  resolved_by: string | null;
+  resolved_at: string | null;
+  created_at: string;
+}
+
 type WizardFieldType = 'text' | 'number' | 'textarea' | 'select' | 'checkbox';
 
 interface WizardField {
@@ -93,6 +108,7 @@ const TAB_CITIES = 'cities';
 const TAB_WIZARD = 'wizard';
 const TAB_CONTENT = 'content';
 const TAB_MODERATION = 'moderation';
+const TAB_REPORTS = 'reports';
 
 const EMPTY_WIZARD_CONFIG: WizardFormConfig = {
   sections: [],
@@ -268,15 +284,42 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
         wizardForms: 'د اعلان فورمونه',
         contentSettings: 'د کورپاڼې CMS',
         moderation: 'د اعلان څارنه',
+        reports: 'ګزارشونه',
         totalCategories: 'ټولې کټګورۍ',
         totalCities: 'ټول ښارونه',
         pendingReview: 'د څارنې کتار',
+        pendingReports: 'پاتې گزارشونه',
         wizardEnabled: 'ویزارد فعال',
         wizardStep: 'د فورم پړاو',
         chooseStep: 'پړاو وټاکئ',
         appliesToAll: 'ټولو مناسب پړاوونو ته تطبیق',
         stepHint: 'هره برخه یا لست هغه پړاو ته وتړئ چې په پوسټ اعلان ویزارد کې ښکاره شي.',
         saveHomepage: 'د کورپاڼې تنظیمات خوندي کړئ',
+        allReports: 'ټول',
+        pending: 'پاتې',
+        resolved: 'حل شوی',
+        rejected: 'رد شوی',
+        reporter: 'راپور ورکوونکی',
+        listingTitle: 'د اعلان سرلیک',
+        reason: 'دلیل',
+        description: 'توضیحات',
+        date: 'نیټه',
+        status: 'حالت',
+        adminNotes: 'د اډمین یادښتونه',
+        resolve: 'حل کول',
+        reject: 'رد کول',
+        viewListing: 'د اعلان لیدل',
+        noReports: 'هیڅ گزارش نشته',
+        addNote: 'یادښت زیاتول...',
+        reportReasons: {
+          spam: 'سپیم',
+          fraud_scam: 'دروغ / غلا',
+          duplicate_listing: 'تکراري اعلان',
+          wrong_category: 'غلطه کټګوري',
+          prohibited_item: 'منع شوی توکی',
+          offensive_content: 'توهیني منځپانګه',
+          other: 'نور',
+        },
       };
     }
     if (locale === 'fa') {
@@ -288,15 +331,42 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
         wizardForms: 'فرم‌های آگهی',
         contentSettings: 'CMS صفحه اصلی',
         moderation: 'نظارت آگهی‌ها',
+        reports: 'گزارش‌ها',
         totalCategories: 'کل دسته‌بندی‌ها',
         totalCities: 'کل شهرها',
         pendingReview: 'صف نظارت',
+        pendingReports: 'گزارش‌های در انتظار',
         wizardEnabled: 'ویزارد فعال',
         wizardStep: 'مرحله فرم',
         chooseStep: 'انتخاب مرحله',
         appliesToAll: 'اعمال به همه مراحل سازگار',
         stepHint: 'هر بخش یا لیست را به یک مرحله مشخص وصل کنید تا در همان مرحله ویزارد نشر آگهی نمایش شود.',
         saveHomepage: 'ذخیره تنظیمات صفحه اصلی',
+        allReports: 'همه',
+        pending: 'در انتظار',
+        resolved: 'حل شده',
+        rejected: 'رد شده',
+        reporter: 'گزارش‌دهنده',
+        listingTitle: 'عنوان آگهی',
+        reason: 'دلیل',
+        description: 'توضیحات',
+        date: 'تاریخ',
+        status: 'وضعیت',
+        adminNotes: 'یادداشت ادمین',
+        resolve: 'حل کردن',
+        reject: 'رد کردن',
+        viewListing: 'مشاهده آگهی',
+        noReports: 'گزارشی وجود ندارد',
+        addNote: 'افزودن یادداشت...',
+        reportReasons: {
+          spam: 'هرزنامه',
+          fraud_scam: 'تقلب / کلاهبرداری',
+          duplicate_listing: 'آگهی تکراری',
+          wrong_category: 'دسته‌بندی اشتباه',
+          prohibited_item: 'کالای ممنوعه',
+          offensive_content: 'محتوای توهین‌آمیز',
+          other: 'سایر',
+        },
       };
     }
 
@@ -308,15 +378,42 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
       wizardForms: 'Listing Forms',
       contentSettings: 'Homepage CMS',
       moderation: 'Post Moderation',
+      reports: 'Reports',
       totalCategories: 'Total Categories',
       totalCities: 'Total Cities',
       pendingReview: 'Moderation Queue',
+      pendingReports: 'Pending Reports',
       wizardEnabled: 'Wizard Enabled',
       wizardStep: 'Form Step',
       chooseStep: 'Choose step',
       appliesToAll: 'Apply to all matching steps',
       stepHint: 'Assign each section or list to a specific posting step so it appears in the correct wizard form.',
       saveHomepage: 'Save Homepage Settings',
+      allReports: 'All',
+      pending: 'Pending',
+      resolved: 'Resolved',
+      rejected: 'Rejected',
+      reporter: 'Reporter',
+      listingTitle: 'Listing Title',
+      reason: 'Reason',
+      description: 'Description',
+      date: 'Date',
+      status: 'Status',
+      adminNotes: 'Admin Notes',
+      resolve: 'Resolve',
+      reject: 'Reject',
+      viewListing: 'View Listing',
+      noReports: 'No reports found',
+      addNote: 'Add a note...',
+      reportReasons: {
+        spam: 'Spam',
+        fraud_scam: 'Fraud / Scam',
+        duplicate_listing: 'Duplicate Listing',
+        wrong_category: 'Wrong Category',
+        prohibited_item: 'Prohibited Item',
+        offensive_content: 'Offensive Content',
+        other: 'Other',
+      },
     };
   }, [locale]);
 
@@ -367,6 +464,13 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
   const [homepageConfig, setHomepageConfig] = useState<HomepageContentConfig>(DEFAULT_HOMEPAGE_CONFIG);
   const [loadingHomepageConfig, setLoadingHomepageConfig] = useState(true);
   const [savingHomepageConfig, setSavingHomepageConfig] = useState(false);
+
+  // Reports state
+  const [reports, setReports] = useState<ReportRow[]>([]);
+  const [loadingReports, setLoadingReports] = useState(true);
+  const [reportFilter, setReportFilter] = useState<'all' | 'pending' | 'resolved' | 'rejected'>('all');
+  const [reportNotes, setReportNotes] = useState<Record<string, string>>({});
+  const [updatingReportId, setUpdatingReportId] = useState<string | null>(null);
 
   const updateLocalizedText = useCallback((value: LocalizedText, key: keyof LocalizedText, next: string): LocalizedText => {
     return { ...value, [key]: next };
@@ -499,12 +603,29 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
     setLoadingHomepageConfig(false);
   }, [supabase]);
 
+  const loadReports = useCallback(async () => {
+    setLoadingReports(true);
+    try {
+      const params = new URLSearchParams();
+      if (reportFilter !== 'all') params.set('status', reportFilter);
+      const res = await fetch(`/api/reports?${params.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        setReports(data.reports || []);
+      }
+    } catch {
+      // silently fail
+    }
+    setLoadingReports(false);
+  }, [reportFilter]);
+
   useEffect(() => {
     loadCategories();
     loadListings();
     loadCities();
     loadHomepageSettings();
-  }, [loadCategories, loadListings, loadCities, loadHomepageSettings]);
+    loadReports();
+  }, [loadCategories, loadListings, loadCities, loadHomepageSettings, loadReports]);
 
   const saveHomepageSettings = async () => {
     setSavingHomepageConfig(true);
@@ -977,13 +1098,43 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
     setDragOverChildId(null);
   };
 
-  const wizardEnabledCount = categories.filter((category) => hasWizardContent(readWizardConfig(category))).length;
+  const pendingReportCount = reports.filter((r) => r.status === 'pending').length;
   const adminStats = [
     { label: adminText.totalCategories, value: categories.length, tone: 'from-blue-500 to-cyan-500' },
     { label: adminText.totalCities, value: cities.length, tone: 'from-emerald-500 to-teal-500' },
     { label: adminText.pendingReview, value: listings.length, tone: 'from-amber-500 to-orange-500' },
-    { label: adminText.wizardEnabled, value: wizardEnabledCount, tone: 'from-violet-500 to-indigo-500' },
+    { label: adminText.pendingReports, value: pendingReportCount, tone: 'from-rose-500 to-pink-500' },
   ];
+
+  const updateReportStatus = async (reportId: string, newStatus: 'resolved' | 'rejected') => {
+    setUpdatingReportId(reportId);
+    try {
+      const notes = reportNotes[reportId] || '';
+      const res = await fetch(`/api/reports/${reportId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus, admin_notes: notes }),
+      });
+      if (res.ok) {
+        setReports((prev) =>
+          prev.map((r) => (r.id === reportId ? { ...r, status: newStatus, admin_notes: notes || null } : r))
+        );
+        setReportNotes((prev) => {
+          const next = { ...prev };
+          delete next[reportId];
+          return next;
+        });
+      }
+    } catch {
+      // silently fail
+    }
+    setUpdatingReportId(null);
+  };
+
+  const getReasonLabel = (reasonKey: string): string => {
+    const reasons = adminText.reportReasons as Record<string, string>;
+    return reasons[reasonKey] || reasonKey;
+  };
 
   return (
     <div className="container mx-auto px-4 space-y-5">
@@ -1058,6 +1209,16 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
           <span className={`inline-flex items-center gap-1.5 ${rtl ? 'flex-row-reverse' : ''}`}>
             <Flag className="w-4 h-4" />
             {adminText.moderation}
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab(TAB_REPORTS)}
+          className={`px-3.5 py-2 rounded-lg text-sm font-medium ${activeTab === TAB_REPORTS ? 'bg-primary-600 text-white' : 'bg-white text-slate-700 border border-slate-200'}`}
+        >
+          <span className={`inline-flex items-center gap-1.5 ${rtl ? 'flex-row-reverse' : ''}`}>
+            <AlertTriangle className="w-4 h-4" />
+            {adminText.reports}
           </span>
         </button>
       </div>
@@ -1705,7 +1866,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
             </ul>
           </div>
         </div>
-      ) : (
+      ) : activeTab === TAB_MODERATION ? (
         <div className="bg-white border border-slate-200 rounded-xl p-4">
           <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-3">
             <select
@@ -1752,7 +1913,153 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({ locale }) => {
             </div>
           )}
         </div>
-      )}
+      ) : activeTab === TAB_REPORTS ? (
+        <div className="bg-white border border-slate-200 rounded-xl p-4">
+          {/* Filter buttons */}
+          <div className={`flex items-center gap-2 mb-4 ${rtl ? 'flex-row-reverse' : ''}`}>
+            {(['all', 'pending', 'resolved', 'rejected'] as const).map((filter) => (
+              <button
+                key={filter}
+                type="button"
+                onClick={() => setReportFilter(filter)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  reportFilter === filter
+                    ? 'bg-primary-600 text-white'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                {filter === 'all'
+                  ? adminText.allReports
+                  : filter === 'pending'
+                    ? adminText.pending
+                    : filter === 'resolved'
+                      ? adminText.resolved
+                      : adminText.rejected}
+                {filter === 'pending' && pendingReportCount > 0 && (
+                  <span className="ml-1 inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-white/20 px-1 text-[10px]">
+                    {pendingReportCount}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {loadingReports ? (
+            <p className="text-slate-500 text-sm">
+              {locale === 'en' ? 'Loading reports...' : locale === 'ps' ? 'ګزارشونه لوډیږي...' : 'بارگذاری گزارش‌ها...'}
+            </p>
+          ) : reports.length === 0 ? (
+            <p className="text-slate-500 text-sm">{adminText.noReports}</p>
+          ) : (
+            <div className="space-y-3 max-h-[70vh] overflow-y-auto">
+              {reports.map((report) => (
+                <div
+                  key={report.id}
+                  className={`border rounded-lg p-3 ${
+                    report.status === 'pending'
+                      ? 'border-amber-200 bg-amber-50/50'
+                      : report.status === 'resolved'
+                        ? 'border-emerald-200 bg-emerald-50/50'
+                        : 'border-red-200 bg-red-50/50'
+                  }`}
+                >
+                  <div className={`flex items-start justify-between gap-3 ${rtl ? 'flex-row-reverse' : ''}`}>
+                    <div className={`min-w-0 flex-1 ${rtl ? 'text-right' : 'text-left'}`}>
+                      {/* Listing title */}
+                      <p className="text-sm font-semibold text-slate-900 truncate">
+                        {report.listing_title}
+                      </p>
+                      {/* Reporter & date */}
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        {adminText.reporter}: {report.reporter_name || 'Anonymous'} • {adminText.date}: {new Date(report.created_at).toLocaleDateString(locale === 'en' ? 'en-US' : 'fa-AF')}
+                      </p>
+                      {/* Reason badge */}
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <span className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold ${
+                          report.status === 'pending'
+                            ? 'bg-amber-100 text-amber-700'
+                            : report.status === 'resolved'
+                              ? 'bg-emerald-100 text-emerald-700'
+                              : 'bg-red-100 text-red-700'
+                        }`}>
+                          {report.status === 'pending' && <AlertTriangle className="w-3 h-3" />}
+                          {report.status === 'resolved' && <CheckCircle className="w-3 h-3" />}
+                          {report.status === 'rejected' && <XCircle className="w-3 h-3" />}
+                          {report.status === 'pending'
+                            ? adminText.pending
+                            : report.status === 'resolved'
+                              ? adminText.resolved
+                              : adminText.rejected}
+                        </span>
+                        <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
+                          {getReasonLabel(report.reason)}
+                        </span>
+                      </div>
+                      {/* Description */}
+                      {report.description && (
+                        <p className="text-xs text-slate-600 mt-1.5 line-clamp-3">{report.description}</p>
+                      )}
+                      {/* Admin notes (existing) */}
+                      {report.admin_notes && (
+                        <div className={`mt-2 flex items-start gap-1.5 ${rtl ? 'flex-row-reverse' : ''}`}>
+                          <MessageSquare className="w-3 h-3 text-slate-400 mt-0.5 shrink-0" />
+                          <p className="text-xs text-slate-500 italic">{report.admin_notes}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Actions */}
+                    <div className={`flex flex-col items-stretch gap-1.5 shrink-0 ${rtl ? 'items-end' : 'items-start'}`}>
+                      <Link
+                        href={`/${locale}/listing/${report.listing_id}`}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded bg-slate-100 text-slate-700 hover:bg-slate-200"
+                      >
+                        <Eye className="w-3 h-3" />
+                        {adminText.viewListing}
+                      </Link>
+                      {report.status === 'pending' && (
+                        <>
+                          <button
+                            onClick={() => updateReportStatus(report.id, 'resolved')}
+                            disabled={updatingReportId === report.id}
+                            className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded bg-emerald-50 text-emerald-600 hover:bg-emerald-100 disabled:opacity-50"
+                          >
+                            <CheckCircle className="w-3 h-3" />
+                            {adminText.resolve}
+                          </button>
+                          <button
+                            onClick={() => updateReportStatus(report.id, 'rejected')}
+                            disabled={updatingReportId === report.id}
+                            className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded bg-red-50 text-red-600 hover:bg-red-100 disabled:opacity-50"
+                          >
+                            <XCircle className="w-3 h-3" />
+                            {adminText.reject}
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Add note input for pending reports */}
+                  {report.status === 'pending' && (
+                    <div className={`flex items-center gap-2 mt-2 ${rtl ? 'flex-row-reverse' : ''}`}>
+                      <input
+                        type="text"
+                        value={reportNotes[report.id] || ''}
+                        onChange={(e) =>
+                          setReportNotes((prev) => ({ ...prev, [report.id]: e.target.value }))
+                        }
+                        placeholder={adminText.addNote}
+                        className="flex-1 px-2.5 py-1.5 text-xs border border-slate-200 rounded-lg"
+                      />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : null}
 
       <p className="text-xs text-slate-500 mt-4">
         {locale === 'en'

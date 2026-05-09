@@ -4,7 +4,7 @@
 import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
-import { ChevronLeft, ChevronRight, Eye, MapPin, Tag, Calendar, CheckCircle, AlertCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Eye, MapPin, Tag, Calendar, CheckCircle, AlertCircle, Shield, ArrowRight } from 'lucide-react';
 import { Locale, isRTL } from '@/lib/i18n/config';
 import { ListingCategory, BaseListingDetailsProps as GenericBaseListingDetailsProps } from './types';
 import { ActionButtons } from './ActionButtons';
@@ -226,6 +226,7 @@ export const BaseListingDetails = <T extends ListingCategory>({
   const t = useTranslations();
   const tListing = useTranslations('listing');
   const tCommon = useTranslations('common');
+  const tSafetyTips = useTranslations('safetyTips');
   const isRtl = isRTL(locale);
 
   // Image gallery state
@@ -387,6 +388,29 @@ export const BaseListingDetails = <T extends ListingCategory>({
 
   // Create metadata object for formatting functions
   const metadata = listingData as unknown as Record<string, unknown>;
+
+  // Debug safety tips translations
+  let safetyTipsDebug = {
+    sidebarTitle: '',
+    sidebarTip1: '',
+    sidebarTip2: '',
+    sidebarTip3: '',
+    sidebarReadMore: ''
+  };
+  
+  try {
+    safetyTipsDebug = {
+      sidebarTitle: tSafetyTips('sidebarTitle'),
+      sidebarTip1: tSafetyTips('sidebarTip1'),
+      sidebarTip2: tSafetyTips('sidebarTip2'),
+      sidebarTip3: tSafetyTips('sidebarTip3'),
+      sidebarReadMore: tSafetyTips('sidebarReadMore')
+    };
+    console.log('Safety tips translations:', safetyTipsDebug);
+  } catch (error) {
+    console.error('Error getting safety tips translations:', error);
+    console.log('tSafetyTips function exists:', typeof tSafetyTips === 'function');
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -655,6 +679,63 @@ export const BaseListingDetails = <T extends ListingCategory>({
             phoneVisible={listingData.phone_visible}
             locale={locale}
           />
+
+          {/* Brief Safety Tips */}
+          <div
+            className="rounded-2xl border-4 border-red-500 bg-gradient-to-br from-amber-50 to-orange-50 p-5 dark:from-amber-950/20 dark:to-orange-950/20"
+            data-testid="safety-tips-sidebar"
+            style={{
+              boxShadow: '0 0 20px rgba(255, 0, 0, 0.5)',
+              borderStyle: 'solid'
+            }}
+          >
+            <div className="mb-3 flex items-center gap-2">
+              <Shield className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                {(() => {
+                  try {
+                    return tSafetyTips('sidebarTitle');
+                  } catch (e) {
+                    console.error('Error getting sidebarTitle:', e);
+                    return 'Safety Tips';
+                  }
+                })()}
+              </h3>
+            </div>
+            <ul className="mb-4 space-y-2">
+              {(() => {
+                try {
+                  return [
+                    tSafetyTips('sidebarTip1'),
+                    tSafetyTips('sidebarTip2'),
+                    tSafetyTips('sidebarTip3'),
+                  ].map((tip, i) => (
+                    <li key={i} className="flex items-start gap-2 text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+                      <CheckCircle className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-amber-600 dark:text-amber-400" />
+                      <span>{tip}</span>
+                    </li>
+                  ));
+                } catch (e) {
+                  console.error('Error getting safety tips:', e);
+                  return null;
+                }
+              })()}
+            </ul>
+            <a
+              href={`/${locale}/safety-tips`}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 transition-colors hover:text-amber-900 dark:text-amber-400 dark:hover:text-amber-300"
+            >
+              {(() => {
+                try {
+                  return tSafetyTips('sidebarReadMore');
+                } catch (e) {
+                  console.error('Error getting sidebarReadMore:', e);
+                  return 'Read Safety Tips';
+                }
+              })()}
+              <ArrowRight className={`h-3.5 w-3.5 ${isRtl ? 'rotate-180' : ''}`} />
+            </a>
+          </div>
         </div>
       </div>
     </div>

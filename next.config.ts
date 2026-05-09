@@ -75,6 +75,25 @@ const nextConfig = {
   },
   // Enable compression
   compress: true,
+  webpack: (config: any, { webpack }: { webpack: any }) => {
+    // Fix Windows case-sensitivity issues for locale JSON files
+    // This prevents "multiple modules with names that only differ in casing" warnings
+    if (process.platform === 'win32') {
+      // Only normalize paths for locale JSON files to avoid breaking Next.js internals
+      config.plugins.push(
+        new webpack.NormalModuleReplacementPlugin(
+          /src[\\/]locales[\\/].*\.json$/i,
+          (resource: any) => {
+            if (resource.request && typeof resource.request === 'string') {
+              // Normalize drive letter to lowercase
+              resource.request = resource.request.replace(/^[A-Z]:/, (match: string) => match.toLowerCase());
+            }
+          }
+        )
+      );
+    }
+    return config;
+  },
 };
 
 export default withAnalyzer(withNextIntl(nextConfig));

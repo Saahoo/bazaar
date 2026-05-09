@@ -9,6 +9,7 @@ import { AuthProvider } from '@/lib/context/AuthContext';
 import { ThemeProvider } from '@/lib/context/ThemeContext';
 import { ToastProvider } from '@/components/common/ToastProvider';
 import { PageTransition } from '@/components/common/PageTransition';
+import { TawkToWidget } from '@/components/contact/TawkToWidget';
 import { inter, notoSansArabic } from '@/lib/fonts';
 import '@/styles/globals.css';
 import '@/styles/rtl.css';
@@ -90,10 +91,13 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
                 <Suspense>
                   <PageTransition>{children}</PageTransition>
                 </Suspense>
+                <Suspense>
+                  <TawkToWidget />
+                </Suspense>
               </AuthProvider>
             </ToastProvider>
           </ThemeProvider>
-        </IntlProvider>
+         </IntlProvider>
       </body>
     </html>
   );
