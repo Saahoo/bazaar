@@ -8,6 +8,7 @@ import {
   ANIMALS_SUBCATEGORIES,
   ANIMALS_SPEC_CONFIG,
   AGE_UNIT_OPTIONS,
+  CURRENCY_OPTIONS,
   AnimalsSpecField,
 } from '@/lib/constants/animals-livestock-wizard';
 import { AnimalsLivestockFilterState, EMPTY_ANIMALS_LIVESTOCK_FILTERS } from './FilterSidebar';
@@ -427,7 +428,7 @@ export const AnimalsFilterEnhanced: React.FC<AnimalsFilterEnhancedProps> = ({
 
   // ─── Subcategory spec fields (exclude common fields already rendered above) ─
   const ANIMALS_COMMON_FIELD_KEYS = new Set([
-    'breed', 'quantity', 'age', 'healthStatus', 'gender', 'color', 'weight', 'price', 'priceType',
+    'breed', 'quantity', 'age', 'healthStatus', 'gender', 'color', 'weight', 'price', 'currency', 'priceType',
   ]);
 
   const specFields = useMemo(
@@ -709,7 +710,7 @@ export const AnimalsFilterEnhanced: React.FC<AnimalsFilterEnhancedProps> = ({
         isRtl={rtl}
         accentColor="emerald"
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <NumberField
             label={getAnimalsFieldLabel('price', 'Price')}
             value={filters.price}
@@ -717,6 +718,17 @@ export const AnimalsFilterEnhanced: React.FC<AnimalsFilterEnhancedProps> = ({
             isRtl={rtl}
             placeholder={getAnimalsFieldLabel('price', 'Price')}
             min="0"
+          />
+          <SelectField
+            label={getAnimalsFieldLabel('currency', 'Currency')}
+            value={filters.currency}
+            onChange={(v) => setFilter({ currency: v })}
+            options={CURRENCY_OPTIONS.map(opt => ({
+              value: opt,
+              label: getAnimalsOptionLabel(opt),
+            }))}
+            isRtl={rtl}
+            placeholder={tCommon('all')}
           />
           <SelectField
             label={getAnimalsFieldLabel('priceType', 'Price Type')}

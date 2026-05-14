@@ -6,6 +6,8 @@ import { MapPin, Phone, Mail, User, MessageSquare } from 'lucide-react';
 import { isRTL, Locale } from '@/lib/i18n/config';
 import { useCities, getManagedCityName } from '@/lib/hooks/useCities';
 import { LegalReadNotice } from '@/components/common/LegalReadNotice';
+import { ProfileFieldNotice } from '@/components/post-ad/ProfileFieldNotice';
+import { UserProfileContact } from '@/lib/hooks/useUserProfile';
 
 export interface AnimalsLocationContactData {
   // Location fields
@@ -28,6 +30,7 @@ interface StepAnimalsLocationContactProps {
   locale: Locale;
   data: AnimalsLocationContactData;
   onChange: (data: Partial<AnimalsLocationContactData>) => void;
+  profileContact: UserProfileContact;
 }
 
 // Leaflet map component loaded dynamically to avoid SSR issues
@@ -133,6 +136,7 @@ export const StepAnimalsLocationContact: React.FC<StepAnimalsLocationContactProp
   locale,
   data,
   onChange,
+  profileContact,
 }) => {
   const t = useTranslations('postAd.animals');
   const tForm = useTranslations('form');
@@ -142,6 +146,7 @@ export const StepAnimalsLocationContact: React.FC<StepAnimalsLocationContactProp
 
   const inputClass =
     `w-full px-4 py-2.5 border border-slate-300 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-500 ${rtl ? 'text-right' : 'text-left'}`;
+  const disabledInputClass = 'bg-slate-100 text-slate-500 cursor-not-allowed';
   const labelClass = `block text-sm font-medium text-slate-700 mb-1.5 ${rtl ? 'text-right' : 'text-left'}`;
 
   const [showMap, setShowMap] = useState(!!data.city);
@@ -245,6 +250,7 @@ export const StepAnimalsLocationContact: React.FC<StepAnimalsLocationContactProp
         <h4 className={`text-md font-medium text-slate-800 ${rtl ? 'text-right' : 'text-left'}`}>
           {t('contactInformation')}
         </h4>
+        <ProfileFieldNotice locale={locale} />
 
         {/* Seller Name */}
         <div>
@@ -257,8 +263,10 @@ export const StepAnimalsLocationContact: React.FC<StepAnimalsLocationContactProp
               value={data.sellerName}
               onChange={(e) => onChange({ sellerName: e.target.value })}
               placeholder={t('enterSellerName')}
-              className={inputClass}
+              className={`${inputClass} ${profileContact.displayName ? disabledInputClass : ''}`}
               dir={rtl ? 'rtl' : 'ltr'}
+              disabled={!!profileContact.displayName}
+              readOnly={!!profileContact.displayName}
             />
             <User
               className={`w-4 h-4 text-slate-400 absolute top-1/2 -translate-y-1/2 pointer-events-none ${
@@ -279,8 +287,10 @@ export const StepAnimalsLocationContact: React.FC<StepAnimalsLocationContactProp
               value={data.phone}
               onChange={(e) => onChange({ phone: e.target.value })}
               placeholder={t('enterPhone')}
-              className={inputClass}
+              className={`${inputClass} ${profileContact.phone ? disabledInputClass : ''}`}
               dir="ltr"
+              disabled={!!profileContact.phone}
+              readOnly={!!profileContact.phone}
             />
             <Phone
               className={`w-4 h-4 text-slate-400 absolute top-1/2 -translate-y-1/2 pointer-events-none ${
@@ -313,8 +323,10 @@ export const StepAnimalsLocationContact: React.FC<StepAnimalsLocationContactProp
               value={data.email}
               onChange={(e) => onChange({ email: e.target.value })}
               placeholder={t('enterEmail')}
-              className={inputClass}
+              className={`${inputClass} ${profileContact.email ? disabledInputClass : ''}`}
               dir="ltr"
+              disabled={!!profileContact.email}
+              readOnly={!!profileContact.email}
             />
             <Mail
               className={`w-4 h-4 text-slate-400 absolute top-1/2 -translate-y-1/2 pointer-events-none ${

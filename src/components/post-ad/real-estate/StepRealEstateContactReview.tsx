@@ -6,6 +6,8 @@ import { Phone, MessageCircle, Mail } from 'lucide-react';
 import { Locale, isRTL } from '@/lib/i18n/config';
 import { normalizeDisplayString } from '@/lib/i18n/safeTranslate';
 import { LegalReadNotice } from '@/components/common/LegalReadNotice';
+import { ProfileFieldNotice } from '@/components/post-ad/ProfileFieldNotice';
+import type { UserProfileContact } from '@/lib/hooks/useUserProfile';
 import type { RealEstateLocationData } from './StepRealEstateLocation';
 import type { RealEstatePricingData } from './StepRealEstatePricing';
 import type { RealEstateSpecsData } from './StepRealEstateSpecs';
@@ -28,10 +30,12 @@ interface StepRealEstateContactReviewProps {
   amenities: RealEstateAmenitiesData;
   onChange: (data: Partial<RealEstateContactData>) => void;
   onJumpToStep: (stepIndex: number) => void;
+  profileContact: UserProfileContact;
 }
 
 const summaryItemClass = 'rounded-2xl border border-slate-200 bg-slate-50 p-4';
 const valueClass = 'mt-2 text-sm text-slate-900';
+const disabledInputClass = 'w-full px-4 py-3 border border-slate-300 rounded-xl bg-slate-100 text-slate-500 cursor-not-allowed';
 
 export const StepRealEstateContactReview: React.FC<StepRealEstateContactReviewProps> = ({
   locale,
@@ -42,6 +46,7 @@ export const StepRealEstateContactReview: React.FC<StepRealEstateContactReviewPr
   amenities,
   onChange,
   onJumpToStep,
+  profileContact,
 }) => {
   const rtl = isRTL(locale);
   const t = useTranslations('postAd.realEstate');
@@ -110,6 +115,8 @@ export const StepRealEstateContactReview: React.FC<StepRealEstateContactReviewPr
       </div>
 
       <div className="space-y-6">
+        <ProfileFieldNotice locale={locale} />
+
         <div>
           <label className={`block text-sm font-semibold text-slate-700 mb-2 ${rtl ? 'text-right' : 'text-left'}`}>
             {t('contactName')}
@@ -119,8 +126,10 @@ export const StepRealEstateContactReview: React.FC<StepRealEstateContactReviewPr
             value={contact.contactName}
             onChange={(e) => onChange({ contactName: e.target.value })}
             placeholder={t('enterContactName')}
-            className={`w-full px-4 py-3 border border-slate-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-500 ${rtl ? 'text-right' : 'text-left'}`}
+            className={profileContact.displayName ? `${disabledInputClass} ${rtl ? 'text-right' : 'text-left'}` : `w-full px-4 py-3 border border-slate-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-500 ${rtl ? 'text-right' : 'text-left'}`}
             dir={rtl ? 'rtl' : 'ltr'}
+            disabled={!!profileContact.displayName}
+            readOnly={!!profileContact.displayName}
           />
         </div>
 
@@ -135,8 +144,10 @@ export const StepRealEstateContactReview: React.FC<StepRealEstateContactReviewPr
                 value={contact.phone}
                 onChange={(e) => onChange({ phone: e.target.value })}
                 placeholder={t('enterPhone')}
-                className={`w-full px-4 py-3 border border-slate-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-500`}
+                className={profileContact.phone ? disabledInputClass : `w-full px-4 py-3 border border-slate-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-500`}
                 dir="ltr"
+                disabled={!!profileContact.phone}
+                readOnly={!!profileContact.phone}
               />
               <Phone className="w-4 h-4 text-slate-400 absolute top-1/2 right-3 -translate-y-1/2" />
             </div>
@@ -169,8 +180,10 @@ export const StepRealEstateContactReview: React.FC<StepRealEstateContactReviewPr
               value={contact.email}
               onChange={(e) => onChange({ email: e.target.value })}
               placeholder={t('enterEmail')}
-              className={`w-full px-4 py-3 border border-slate-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-500`}
+              className={profileContact.email ? disabledInputClass : `w-full px-4 py-3 border border-slate-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-500`}
               dir="ltr"
+              disabled={!!profileContact.email}
+              readOnly={!!profileContact.email}
             />
             <Mail className="w-4 h-4 text-slate-400 absolute top-1/2 right-3 -translate-y-1/2" />
           </div>

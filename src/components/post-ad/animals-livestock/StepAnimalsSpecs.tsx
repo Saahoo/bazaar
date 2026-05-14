@@ -3,8 +3,8 @@
 import React from 'react';
 import { useTranslations } from 'next-intl';
 import { Locale, isRTL } from '@/lib/i18n/config';
-import { AnimalsLivestockSubcategory, getAnimalsSpecsConfig, getBreedSuggestions, HEALTH_STATUS_OPTIONS, PRICE_TYPE_OPTIONS, AGE_UNIT_OPTIONS, getAnimalsOptionTranslationKey, getAnimalsFieldTranslationKey } from '@/lib/constants/animals-livestock-wizard';
-import { InputField, SelectField, UnitField, BreedAutosuggest, ToggleField } from './AnimalsFieldControls';
+import { AnimalsLivestockSubcategory, getAnimalsSpecsConfig, getBreedSuggestions, HEALTH_STATUS_OPTIONS, PRICE_TYPE_OPTIONS, CURRENCY_OPTIONS, AGE_UNIT_OPTIONS, getAnimalsOptionTranslationKey, getAnimalsFieldTranslationKey } from '@/lib/constants/animals-livestock-wizard';
+import { InputField, SelectField, UnitField, BreedAutosuggest, ToggleField, CurrencyField } from './AnimalsFieldControls';
 
 
 type AnimalsSpecsData = {
@@ -15,6 +15,7 @@ type AnimalsSpecsData = {
   ageUnit: string;
   healthStatus: string;
   price: string;
+  currency: 'USD' | 'AFN' | '';
   priceType: string;
   specs: Record<string, unknown>;
   [key: string]: string | number | boolean | Record<string, unknown> | undefined;
@@ -220,15 +221,20 @@ export const StepAnimalsSpecs: React.FC<StepAnimalsSpecsProps> = ({ locale, data
             placeholder={t('healthStatusPlaceholder')}
           />
 
-          {/* Price */}
-          <InputField
+          {/* Price with Currency */}
+          <CurrencyField
             label={t('priceLabel')}
             required
             rtl={rtl}
             value={data.price || ''}
+            currencyValue={data.currency || ''}
             onChange={(val) => handleFieldChange('price', val)}
+            onCurrencyChange={(val) => handleFieldChange('currency', val as 'USD' | 'AFN' | '')}
+            currencyOptions={CURRENCY_OPTIONS.map(opt => ({
+              value: opt,
+              label: t(`currencyPricingOptions.${opt}`)
+            }))}
             placeholder={t('pricePlaceholder')}
-            type="number"
           />
 
           {/* Price Type */}
@@ -247,8 +253,8 @@ export const StepAnimalsSpecs: React.FC<StepAnimalsSpecsProps> = ({ locale, data
 
           {/* Render other spec fields based on subcategory */}
           {specConfig
-            .filter(field => 
-              !['breed', 'quantity', 'age', 'healthStatus', 'price', 'priceType'].includes(field.key)
+            .filter(field =>
+              !['breed', 'quantity', 'age', 'healthStatus', 'price', 'currency', 'priceType'].includes(field.key)
             )
             .map(renderField)}
         </div>

@@ -40,8 +40,6 @@ export const generateSeoTitle = (
   const currencySymbols: Record<string, string> = {
     USD: '$',
     AFN: '؋',
-    IRR: '﷼',
-    PKR: '₨',
   };
   
   const formattedPrice = `${currencySymbols[currency] || currency}${price.toLocaleString(locale === 'en' ? 'en-US' : 'fa-AF')}`;

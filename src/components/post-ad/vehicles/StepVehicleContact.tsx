@@ -5,6 +5,8 @@ import { useTranslations } from 'next-intl';
 import { Phone, MessageCircle, Mail } from 'lucide-react';
 import { isRTL, Locale } from '@/lib/i18n/config';
 import { LegalReadNotice } from '@/components/common/LegalReadNotice';
+import { ProfileFieldNotice } from '@/components/post-ad/ProfileFieldNotice';
+import type { UserProfileContact } from '@/lib/hooks/useUserProfile';
 
 export interface VehicleContactData {
   phone: string;
@@ -32,12 +34,14 @@ interface StepVehicleContactProps {
   locale: Locale;
   data: VehicleContactData;
   onChange: (data: Partial<VehicleContactData>) => void;
+  profileContact: UserProfileContact;
 }
 
 export const StepVehicleContact: React.FC<StepVehicleContactProps> = ({
   locale,
   data,
   onChange,
+  profileContact,
 }) => {
   const t = useTranslations('postAd.vehicles');
   const tForm = useTranslations('form');
@@ -47,6 +51,8 @@ export const StepVehicleContact: React.FC<StepVehicleContactProps> = ({
 
   const inputClass =
     `w-full px-4 py-2.5 border border-slate-300 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-primary-200 focus:border-primary-500 ${rtl ? 'text-right' : 'text-left'}`;
+  const disabledInputClass =
+    `w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-slate-100 text-slate-500 cursor-not-allowed ${rtl ? 'text-right' : 'text-left'}`;
   const labelClass = `block text-sm font-medium text-slate-700 mb-1.5 ${rtl ? 'text-right' : 'text-left'}`;
 
   return (
@@ -54,6 +60,8 @@ export const StepVehicleContact: React.FC<StepVehicleContactProps> = ({
       <h3 className={`text-lg font-semibold text-slate-900 ${rtl ? 'text-right' : 'text-left'}`}>
         {t('contactDetails')}
       </h3>
+
+      <ProfileFieldNotice locale={locale} />
 
       {/* Phone */}
       <div>
@@ -66,8 +74,10 @@ export const StepVehicleContact: React.FC<StepVehicleContactProps> = ({
             value={data.phone}
             onChange={(e) => onChange({ phone: e.target.value })}
             placeholder={tPostAd('enterPhone')}
-            className={inputClass}
+            className={profileContact.phone ? disabledInputClass : inputClass}
             dir="ltr"
+            disabled={!!profileContact.phone}
+            readOnly={!!profileContact.phone}
           />
           <Phone
             className={`w-4 h-4 text-slate-400 absolute top-1/2 -translate-y-1/2 pointer-events-none ${
@@ -129,8 +139,10 @@ export const StepVehicleContact: React.FC<StepVehicleContactProps> = ({
             value={data.email}
             onChange={(e) => onChange({ email: e.target.value })}
             placeholder={tPostAd('enterEmail')}
-            className={inputClass}
+            className={profileContact.email ? disabledInputClass : inputClass}
             dir="ltr"
+            disabled={!!profileContact.email}
+            readOnly={!!profileContact.email}
           />
           <Mail
             className={`w-4 h-4 text-slate-400 absolute top-1/2 -translate-y-1/2 pointer-events-none ${

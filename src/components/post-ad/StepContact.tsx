@@ -9,6 +9,8 @@ import { CURRENCIES } from '@/lib/constants/currencies';
 import { useCities, getManagedCityName } from '@/lib/hooks/useCities';
 import type { PostAdFormData } from './PostAdWizard';
 import { LegalReadNotice } from '@/components/common/LegalReadNotice';
+import { ProfileFieldNotice } from './ProfileFieldNotice';
+import type { UserProfileContact } from '@/lib/hooks/useUserProfile';
 
 interface StepContactData {
   city: string;
@@ -23,6 +25,7 @@ interface StepContactProps {
   onChange: (data: Partial<StepContactData>) => void;
   formData: PostAdFormData;
   selectedCategoryName?: string | null;
+  profileContact: UserProfileContact;
 }
 
 export const StepContact: React.FC<StepContactProps> = ({
@@ -31,6 +34,7 @@ export const StepContact: React.FC<StepContactProps> = ({
   onChange,
   formData,
   selectedCategoryName,
+  profileContact,
 }) => {
   const tForm = useTranslations('form');
   const tPostAd = useTranslations('postAd');
@@ -43,11 +47,16 @@ export const StepContact: React.FC<StepContactProps> = ({
 
   const currencyData = CURRENCIES[formData.currency] || CURRENCIES['AFN'];
 
+  const disabledInputClass =
+    `w-full px-4 py-2.5 border border-slate-300 rounded-lg transition bg-slate-100 text-slate-500 cursor-not-allowed ${rtl ? 'text-right' : 'text-left'}`;
+
   return (
     <div className="space-y-6">
       <h3 className={`text-lg font-semibold text-slate-900 ${rtl ? 'text-right' : 'text-left'}`}>
         {tPostAd('stepContact')}
       </h3>
+
+      <ProfileFieldNotice locale={locale} />
 
       {/* City */}
       <div>
@@ -93,8 +102,10 @@ export const StepContact: React.FC<StepContactProps> = ({
             value={data.phone}
             onChange={(e) => onChange({ phone: e.target.value })}
             placeholder={tPostAd('enterPhone')}
-            className={inputClass}
+            className={profileContact.phone ? disabledInputClass : inputClass}
             dir="ltr"
+            disabled={!!profileContact.phone}
+            readOnly={!!profileContact.phone}
           />
           <Phone
             className={`w-4 h-4 text-slate-400 absolute top-1/2 -translate-y-1/2 pointer-events-none ${
@@ -117,8 +128,10 @@ export const StepContact: React.FC<StepContactProps> = ({
             value={data.email}
             onChange={(e) => onChange({ email: e.target.value })}
             placeholder={tPostAd('enterEmail')}
-            className={inputClass}
+            className={profileContact.email ? disabledInputClass : inputClass}
             dir="ltr"
+            disabled={!!profileContact.email}
+            readOnly={!!profileContact.email}
           />
           <Mail
             className={`w-4 h-4 text-slate-400 absolute top-1/2 -translate-y-1/2 pointer-events-none ${

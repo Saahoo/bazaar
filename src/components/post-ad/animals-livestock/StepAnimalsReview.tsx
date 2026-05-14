@@ -19,6 +19,7 @@ interface StepAnimalsReviewProps {
   ageUnit: string;
   healthStatus: string;
   price: number | '';
+  currency: 'USD' | 'AFN' | '';
   priceType: string;
   street: string;
   city: string;
@@ -46,6 +47,7 @@ export const StepAnimalsReview: React.FC<StepAnimalsReviewProps> = ({
   ageUnit,
   healthStatus,
   price,
+  currency,
   priceType,
   street,
   city,
@@ -104,7 +106,7 @@ export const StepAnimalsReview: React.FC<StepAnimalsReviewProps> = ({
         ['quantity', quantity],
         ['age', age ? `${age} ${ageUnit}` : '-'],
         ['healthStatus', stringifyValue(healthStatus)],
-        ['price', price ? `${price} (${priceType})` : '-'],
+        ['price', price ? `${currency ? currency + ' ' : ''}${price} (${priceType})` : '-'],
         ...Object.entries(specs).map(([key, value]) => [key, stringifyValue(value)]),
       ],
     },

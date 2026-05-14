@@ -9,7 +9,7 @@ interface StepSpareGeneralDetailsProps {
   locale: Locale;
   data: {
     price: number | '';
-    currency: 'AFN' | 'USD' | 'PKR' | '';
+    currency: 'USD' | 'AFN' | '';
     condition: 'New' | 'Used' | 'Refurbished' | '';
     brand: string;
     seller_type: 'Individual' | 'Dealer' | '';
@@ -18,7 +18,7 @@ interface StepSpareGeneralDetailsProps {
 }
 
 const CONDITION_OPTIONS = ['New', 'Used', 'Refurbished'];
-const CURRENCY_OPTIONS = ['AFN', 'USD', 'PKR'];
+const CURRENCY_OPTIONS = ['USD', 'AFN'];
 
 export const StepSpareGeneralDetails: React.FC<StepSpareGeneralDetailsProps> = ({ locale, data, onChange }) => {
   const t = useTranslations('postAd.spareParts');
@@ -52,7 +52,7 @@ export const StepSpareGeneralDetails: React.FC<StepSpareGeneralDetailsProps> = (
           required
           rtl={rtl}
           value={data.currency}
-          onChange={(value) => onChange({ currency: (value as 'AFN' | 'USD' | 'PKR') || '' })}
+          onChange={(value) => onChange({ currency: (value as 'USD' | 'AFN') || '' })}
           placeholder={t('selectCurrency')}
           options={CURRENCY_OPTIONS}
         />

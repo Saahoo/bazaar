@@ -54,7 +54,7 @@ This document outlines a holistic localization strategy for the Vehicles categor
    - Support Jalali calendar for Persian locale
    - 12-hour vs 24-hour format based on region
 2. **Currency**: 
-   - Add PKR (Pakistani Rupee) and IRR (Iranian Rial)
+   - Only USD and AFN supported
    - Dynamic currency conversion
    - Local currency formatting (symbol position, decimal separators)
 3. **Units of Measurement**:

@@ -15,6 +15,7 @@ interface InputFieldProps extends BaseFieldProps {
   onChange: (value: string) => void;
   type?: 'text' | 'number';
   placeholder?: string;
+  disabled?: boolean;
 }
 
 interface SelectFieldProps extends BaseFieldProps {
@@ -54,6 +55,7 @@ export const InputField: React.FC<InputFieldProps> = ({
   onChange,
   type = 'text',
   placeholder,
+  disabled,
 }) => (
   <div>
     <label className={labelClass(rtl)}>
@@ -64,7 +66,8 @@ export const InputField: React.FC<InputFieldProps> = ({
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className={inputClass(rtl)}
+      disabled={disabled}
+      className={`${inputClass(rtl)} ${disabled ? 'cursor-not-allowed bg-slate-100 text-slate-500' : ''}`}
       dir={type === 'number' ? 'ltr' : rtl ? 'rtl' : 'ltr'}
     />
   </div>

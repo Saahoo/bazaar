@@ -71,6 +71,9 @@ export const AGE_UNIT_OPTIONS = ['days', 'months', 'years'];
 // Price type options
 export const PRICE_TYPE_OPTIONS = ['Fixed', 'Negotiable', 'Per Head'];
 
+// Currency options
+export const CURRENCY_OPTIONS = ['USD', 'AFN'] as const;
+
 // Common fields for all animal subcategories
 const ANIMALS_COMMON_FIELDS: AnimalsSpecField[] = [
   { key: 'breed', label: 'Animal Breed', type: 'text', required: true, placeholder: 'Enter breed or select from suggestions' },

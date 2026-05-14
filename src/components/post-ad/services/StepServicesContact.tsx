@@ -5,6 +5,8 @@ import { useTranslations } from 'next-intl';
 import { Locale, isRTL } from '@/lib/i18n/config';
 import { useCities, getManagedCityName } from '@/lib/hooks/useCities';
 import { LegalReadNotice } from '@/components/common/LegalReadNotice';
+import { ProfileFieldNotice } from '@/components/post-ad/ProfileFieldNotice';
+import type { UserProfileContact } from '@/lib/hooks/useUserProfile';
 import { InputField } from './ServicesFieldControls';
 
 interface StepServicesContactProps {
@@ -33,6 +35,7 @@ interface StepServicesContactProps {
     social_media_links: string;
     termsAccepted: boolean;
   }>) => void;
+  profileContact: UserProfileContact;
 }
 
 const LocationMap: React.FC<{
@@ -114,7 +117,7 @@ const LocationMap: React.FC<{
   );
 };
 
-export const StepServicesContact: React.FC<StepServicesContactProps> = ({ locale, data, onChange }) => {
+export const StepServicesContact: React.FC<StepServicesContactProps> = ({ locale, data, onChange, profileContact }) => {
   const t = useTranslations('postAd.services');
   const rtl = isRTL(locale);
   const { cities } = useCities();
@@ -127,6 +130,8 @@ export const StepServicesContact: React.FC<StepServicesContactProps> = ({ locale
         <p className="mt-1 text-sm text-slate-600">{t('contactDescription')}</p>
       </div>
 
+      <ProfileFieldNotice locale={locale} />
+
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <InputField
           label={t('contactName')}
@@ -134,6 +139,7 @@ export const StepServicesContact: React.FC<StepServicesContactProps> = ({ locale
           value={data.contact_name}
           onChange={(value) => onChange({ contact_name: value })}
           placeholder={t('contactNamePlaceholder')}
+          disabled={!!profileContact.displayName}
         />
 
         <div>
@@ -164,6 +170,7 @@ export const StepServicesContact: React.FC<StepServicesContactProps> = ({ locale
           value={data.phone}
           onChange={(value) => onChange({ phone: value })}
           placeholder={t('phonePlaceholder')}
+          disabled={!!profileContact.phone}
         />
 
         <InputField
@@ -180,6 +187,7 @@ export const StepServicesContact: React.FC<StepServicesContactProps> = ({ locale
           value={data.email}
           onChange={(value) => onChange({ email: value })}
           placeholder={t('emailPlaceholder')}
+          disabled={!!profileContact.email}
         />
 
         <InputField

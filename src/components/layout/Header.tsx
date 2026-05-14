@@ -125,6 +125,7 @@ export const Header: React.FC<HeaderProps> = ({ locale }) => {
             ? 'bg-white/70 shadow-[0_8px_32px_rgba(15,23,42,0.08)] backdrop-blur-xl border-b border-white/40'
             : 'bg-gradient-to-b from-white/90 via-white/60 to-transparent border-b border-transparent'
         )}
+        suppressHydrationWarning
       >
         {/* Decorative gradient line at top */}
         <div className="h-[2px] w-full bg-gradient-to-r from-primary-500 via-accent-500 to-primary-600 opacity-80" />
@@ -215,6 +216,7 @@ export const Header: React.FC<HeaderProps> = ({ locale }) => {
                             exit={{ scale: 0, opacity: 0 }}
                             transition={{ type: 'spring', stiffness: 500, damping: 25 }}
                             className="absolute -right-1 -top-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-r from-primary-600 to-accent-500 text-[10px] font-bold text-white shadow-lg shadow-primary-500/40"
+                            suppressHydrationWarning
                           >
                             {unreadCount > 9 ? '9+' : unreadCount}
                           </motion.span>
@@ -253,6 +255,7 @@ export const Header: React.FC<HeaderProps> = ({ locale }) => {
                             'absolute z-50 top-full mt-2 w-56 overflow-hidden rounded-2xl border border-slate-200/80 bg-white/90 shadow-xl shadow-slate-900/10 backdrop-blur-xl',
                             isRtl ? 'left-0' : 'right-0'
                           )}
+                          suppressHydrationWarning
                         >
                           {/* User info header */}
                           <div className="border-b border-slate-100 bg-gradient-to-r from-primary-50/50 to-accent-50/50 px-4 py-3">

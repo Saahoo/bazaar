@@ -48,7 +48,7 @@ A fully organized, production-grade Next.js 15 marketplace with:
    - `src/lib/utils/rtl-helpers.ts` - RTL utility functions
    - `src/lib/constants/categories.ts` - 12+ categories (3 languages)
    - `src/lib/constants/cities.ts` - Popular cities (3 languages)
-   - `src/lib/constants/currencies.ts` - AFN, USD, PKR, TRY
+   - `src/lib/constants/currencies.ts` - USD, AFN
 
 5. **Styles**
    - `src/styles/globals.css` - Global styles + animations

@@ -8,6 +8,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Locale, isRTL } from '@/lib/i18n/config';
 import { useCities, getManagedCityName } from '@/lib/hooks/useCities';
 import { LegalReadNotice } from '@/components/common/LegalReadNotice';
+import { ProfileFieldNotice } from '@/components/post-ad/ProfileFieldNotice';
+import type { UserProfileContact } from '@/lib/hooks/useUserProfile';
 
 export interface FashionContactData {
   city: string;
@@ -23,6 +25,7 @@ interface StepFashionContactProps {
   locale: Locale;
   data: FashionContactData;
   onChange: (updates: Partial<FashionContactData>) => void;
+  profileContact: UserProfileContact;
 }
 
 const LocationMap: React.FC<{
@@ -104,7 +107,7 @@ const LocationMap: React.FC<{
   );
 };
 
-export const StepFashionContact: React.FC<StepFashionContactProps> = ({ locale, data, onChange }) => {
+export const StepFashionContact: React.FC<StepFashionContactProps> = ({ locale, data, onChange, profileContact }) => {
   const t = useTranslations('postAd.fashion');
   const rtl = isRTL(locale);
   const { cities } = useCities();
@@ -167,6 +170,7 @@ export const StepFashionContact: React.FC<StepFashionContactProps> = ({ locale, 
         ? 'border-red-400 focus:border-red-500 focus:ring-red-100'
         : 'border-slate-300 focus:border-primary-500 focus:ring-primary-100'
     } ${rtl ? 'text-right' : 'text-left'}`;
+  const disabledInputClass = `w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm bg-slate-100 text-slate-500 cursor-not-allowed ${rtl ? 'text-right' : 'text-left'}`;
 
   return (
     <div className="space-y-6">
@@ -174,6 +178,8 @@ export const StepFashionContact: React.FC<StepFashionContactProps> = ({ locale, 
         <h3 className="text-lg font-bold text-slate-900">{t('contactHeading')}</h3>
         <p className="mt-1 text-sm text-slate-600">{t('contactDescription')}</p>
       </div>
+
+      <ProfileFieldNotice locale={locale} />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
@@ -198,7 +204,7 @@ export const StepFashionContact: React.FC<StepFashionContactProps> = ({ locale, 
           <label className={`mb-1.5 block text-sm font-semibold text-slate-700 ${rtl ? 'text-right' : 'text-left'}`}>
             {t('phone')} <span className="text-red-500">*</span>
           </label>
-          <input type="tel" dir="ltr" className={inputClass(!!errors.phone)} placeholder={t('phonePlaceholder')} {...register('phone')} />
+          <input type="tel" dir="ltr" className={profileContact.phone ? disabledInputClass : inputClass(!!errors.phone)} placeholder={t('phonePlaceholder')} disabled={!!profileContact.phone} readOnly={!!profileContact.phone} {...register('phone')} />
         </div>
 
         <div>
@@ -212,7 +218,7 @@ export const StepFashionContact: React.FC<StepFashionContactProps> = ({ locale, 
           <label className={`mb-1.5 block text-sm font-semibold text-slate-700 ${rtl ? 'text-right' : 'text-left'}`}>
             {t('email')}
           </label>
-          <input type="email" dir="ltr" className={inputClass(!!errors.email)} placeholder={t('emailPlaceholder')} {...register('email')} />
+          <input type="email" dir="ltr" className={profileContact.email ? disabledInputClass : inputClass(!!errors.email)} placeholder={t('emailPlaceholder')} disabled={!!profileContact.email} readOnly={!!profileContact.email} {...register('email')} />
         </div>
       </div>
 

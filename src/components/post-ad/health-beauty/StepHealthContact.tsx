@@ -6,6 +6,8 @@ import { MapPin, Phone, Mail, User, MessageSquare } from 'lucide-react';
 import { Locale, isRTL } from '@/lib/i18n/config';
 import { useCities, getManagedCityName } from '@/lib/hooks/useCities';
 import { LegalReadNotice } from '@/components/common/LegalReadNotice';
+import { ProfileFieldNotice } from '@/components/post-ad/ProfileFieldNotice';
+import type { UserProfileContact } from '@/lib/hooks/useUserProfile';
 // InputField import removed - not used in this component
 
 export interface HealthContactData {
@@ -27,6 +29,7 @@ interface StepHealthContactProps {
   locale: Locale;
   data: HealthContactData;
   onChange: (updates: Partial<HealthContactData>) => void;
+  profileContact: UserProfileContact;
 }
 
 const LocationMap: React.FC<{
@@ -108,7 +111,7 @@ const LocationMap: React.FC<{
   );
 };
 
-export const StepHealthContact: React.FC<StepHealthContactProps> = ({ locale, data, onChange }) => {
+export const StepHealthContact: React.FC<StepHealthContactProps> = ({ locale, data, onChange, profileContact }) => {
   const t = useTranslations('postAd.healthBeauty');
   const tForm = useTranslations('form');
   const rtl = isRTL(locale);
@@ -118,6 +121,8 @@ export const StepHealthContact: React.FC<StepHealthContactProps> = ({ locale, da
 
   const inputClass =
     `w-full px-4 py-2.5 border border-slate-300 rounded-lg transition focus:outline-none focus:ring-2 focus:ring-emerald-200 focus:border-emerald-500 ${rtl ? 'text-right' : 'text-left'}`;
+  const disabledInputClass =
+    `w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-slate-100 text-slate-500 cursor-not-allowed ${rtl ? 'text-right' : 'text-left'}`;
   const labelClass = `block text-sm font-medium text-slate-700 mb-1.5 ${rtl ? 'text-right' : 'text-left'}`;
 
   // Show map when city is selected
@@ -221,6 +226,8 @@ export const StepHealthContact: React.FC<StepHealthContactProps> = ({ locale, da
           {t('contactInformation')}
         </h4>
 
+        <ProfileFieldNotice locale={locale} />
+
         {/* Seller Name */}
         <div>
           <label className={labelClass}>
@@ -232,8 +239,10 @@ export const StepHealthContact: React.FC<StepHealthContactProps> = ({ locale, da
               value={data.sellerName}
               onChange={(e) => onChange({ sellerName: e.target.value })}
               placeholder={t('enterSellerName')}
-              className={inputClass}
+              className={profileContact.displayName ? disabledInputClass : inputClass}
               dir={rtl ? 'rtl' : 'ltr'}
+              disabled={!!profileContact.displayName}
+              readOnly={!!profileContact.displayName}
             />
             <User
               className={`w-4 h-4 text-slate-400 absolute top-1/2 -translate-y-1/2 pointer-events-none ${
@@ -254,8 +263,10 @@ export const StepHealthContact: React.FC<StepHealthContactProps> = ({ locale, da
               value={data.phone}
               onChange={(e) => onChange({ phone: e.target.value })}
               placeholder={t('enterPhone')}
-              className={inputClass}
+              className={profileContact.phone ? disabledInputClass : inputClass}
               dir="ltr"
+              disabled={!!profileContact.phone}
+              readOnly={!!profileContact.phone}
             />
             <Phone
               className={`w-4 h-4 text-slate-400 absolute top-1/2 -translate-y-1/2 pointer-events-none ${
@@ -308,8 +319,10 @@ export const StepHealthContact: React.FC<StepHealthContactProps> = ({ locale, da
               value={data.email}
               onChange={(e) => onChange({ email: e.target.value })}
               placeholder={t('enterEmail')}
-              className={inputClass}
+              className={profileContact.email ? disabledInputClass : inputClass}
               dir="ltr"
+              disabled={!!profileContact.email}
+              readOnly={!!profileContact.email}
             />
             <Mail
               className={`w-4 h-4 text-slate-400 absolute top-1/2 -translate-y-1/2 pointer-events-none ${

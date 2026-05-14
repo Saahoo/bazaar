@@ -11,7 +11,7 @@ interface StepSportsGeneralDetailsProps {
   subcategory: SportsHobbySubcategory | '';
   data: {
     price: number | '';
-    currency: 'AFN' | 'USD' | 'PKR' | '';
+    currency: 'USD' | 'AFN' | '';
     condition: 'New' | 'Used' | 'Refurbished' | '';
     brand: string;
     brandOther: string;
@@ -21,7 +21,7 @@ interface StepSportsGeneralDetailsProps {
   onChange: (updates: Partial<StepSportsGeneralDetailsProps['data']>) => void;
 }
 
-const CURRENCY_OPTIONS = ['AFN', 'USD', 'PKR'];
+const CURRENCY_OPTIONS = ['USD', 'AFN'];
 
 export const StepSportsGeneralDetails: React.FC<StepSportsGeneralDetailsProps> = ({ 
   locale, 
@@ -89,7 +89,7 @@ export const StepSportsGeneralDetails: React.FC<StepSportsGeneralDetailsProps> =
           </label>
           <select
             value={data.currency}
-            onChange={(e) => onChange({ currency: e.target.value as 'AFN' | 'USD' | 'PKR' | '' })}
+            onChange={(e) => onChange({ currency: e.target.value as 'USD' | 'AFN' | '' })}
             className={`${inputClass()} bg-white`}
             dir={rtl ? 'rtl' : 'ltr'}
             aria-label={t('currency')}

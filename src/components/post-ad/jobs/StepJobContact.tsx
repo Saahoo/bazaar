@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import { Phone, Mail } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { LegalReadNotice } from '@/components/common/LegalReadNotice';
+import { ProfileFieldNotice } from '@/components/post-ad/ProfileFieldNotice';
+import type { UserProfileContact } from '@/lib/hooks/useUserProfile';
 import { Locale, isRTL } from '@/lib/i18n/config';
 
 interface StepJobContactProps {
@@ -18,13 +20,17 @@ interface StepJobContactProps {
     contactEmail: string;
     termsAccepted: boolean;
   }>) => void;
+  profileContact: UserProfileContact;
 }
 
-export const StepJobContact: React.FC<StepJobContactProps> = ({ locale, data, onChange }) => {
+export const StepJobContact: React.FC<StepJobContactProps> = ({ locale, data, onChange, profileContact }) => {
   const [hasReadLegal, setHasReadLegal] = useState(false);
   const t = useTranslations('postAd.jobs');
   const tForm = useTranslations('form');
   const rtl = isRTL(locale);
+
+  const disabledInputClass = 'block w-full rounded-lg border border-slate-300 bg-slate-100 py-2.5 pl-10 pr-3 text-slate-500 cursor-not-allowed placeholder-slate-400 sm:text-sm';
+  const inputClass = 'block w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-10 pr-3 text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 sm:text-sm';
 
   return (
     <div className="space-y-6">
@@ -35,6 +41,8 @@ export const StepJobContact: React.FC<StepJobContactProps> = ({ locale, data, on
       <p className="text-slate-600">
         {t('contactDescription')}
       </p>
+
+      <ProfileFieldNotice locale={locale} />
 
       {/* Phone Number */}
       <div>
@@ -54,9 +62,11 @@ export const StepJobContact: React.FC<StepJobContactProps> = ({ locale, data, on
             id="contactPhone"
             value={data.contactPhone}
             onChange={(e) => onChange({ contactPhone: e.target.value })}
-            className="block w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-10 pr-3 text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 sm:text-sm"
+            className={profileContact.phone ? disabledInputClass : inputClass}
             placeholder={tForm('enterPhone')}
             required
+            disabled={!!profileContact.phone}
+            readOnly={!!profileContact.phone}
           />
         </div>
         <p className="mt-1 text-sm text-slate-500">
@@ -82,9 +92,11 @@ export const StepJobContact: React.FC<StepJobContactProps> = ({ locale, data, on
             id="contactEmail"
             value={data.contactEmail}
             onChange={(e) => onChange({ contactEmail: e.target.value })}
-            className="block w-full rounded-lg border border-slate-300 bg-white py-2.5 pl-10 pr-3 text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 sm:text-sm"
+            className={profileContact.email ? disabledInputClass : inputClass}
             placeholder={tForm('enterEmail')}
             required
+            disabled={!!profileContact.email}
+            readOnly={!!profileContact.email}
           />
         </div>
         <p className="mt-1 text-sm text-slate-500">

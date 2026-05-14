@@ -116,7 +116,7 @@ bazaar/
 │   │   └── 📂 constants/
 │   │       ├── categories.ts            ✅ 12+ categories (3 languages)
 │   │       ├── cities.ts                ✅ Popular cities (3 languages)
-│   │       ├── currencies.ts            ✅ AFN, USD, PKR, TRY
+│   │       ├── currencies.ts            ✅ USD, AFN
 │   │       └── validations.ts           ➖ Validation rules (template)
 │   │
 │   ├── 📂 locales/ (Translations)

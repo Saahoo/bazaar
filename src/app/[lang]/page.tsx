@@ -170,10 +170,10 @@ export default async function HomePage({ params }: PageProps) {
               <Link href="/contact-us" className="text-sm text-slate-400 transition-colors hover:text-white">
                 {t('footer.contact')}
               </Link>
-              <Link href="/search" className="text-sm text-slate-400 transition-colors hover:text-white">
+              <Link href="/terms-and-conditions" className="text-sm text-slate-400 transition-colors hover:text-white">
                 {t('footer.terms')}
               </Link>
-              <Link href="/search" className="text-sm text-slate-400 transition-colors hover:text-white">
+              <Link href="/privacy-policy" className="text-sm text-slate-400 transition-colors hover:text-white">
                 {t('footer.privacy')}
               </Link>
             </nav>

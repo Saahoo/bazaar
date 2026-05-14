@@ -66,7 +66,7 @@ export const BENEFIT_OPTIONS: BenefitOption[] = [
   { value: 'transportation-allowance', labelKey: 'benefits.transportationAllowance' }
 ];
 
-export const CURRENCIES = ['AFN', 'USD', 'PKR', 'EUR', 'GBP'] as const;
+export const CURRENCIES = ['USD', 'AFN'] as const;
 export type Currency = typeof CURRENCIES[number];
 
 // Default values for form initialization

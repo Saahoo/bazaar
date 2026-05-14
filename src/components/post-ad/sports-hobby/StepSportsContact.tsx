@@ -8,6 +8,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Phone, MessageCircle, Mail } from 'lucide-react';
 import { isRTL, Locale } from '@/lib/i18n/config';
 import { LegalReadNotice } from '@/components/common/LegalReadNotice';
+import { ProfileFieldNotice } from '@/components/post-ad/ProfileFieldNotice';
+import type { UserProfileContact } from '@/lib/hooks/useUserProfile';
 
 export interface SportsContactData {
   phone: string;
@@ -20,6 +22,7 @@ interface StepSportsContactProps {
   locale: Locale;
   data: SportsContactData;
   onChange: (data: SportsContactData) => void;
+  profileContact: UserProfileContact;
 }
 
 const schema = z.object({
@@ -31,7 +34,7 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>;
 
-export const StepSportsContact: React.FC<StepSportsContactProps> = ({ locale, data, onChange }) => {
+export const StepSportsContact: React.FC<StepSportsContactProps> = ({ locale, data, onChange, profileContact }) => {
   const t = useTranslations('postAd.sportsHobby');
   const tForm = useTranslations('form');
   const rtl = isRTL(locale);
@@ -77,6 +80,7 @@ export const StepSportsContact: React.FC<StepSportsContactProps> = ({ locale, da
         ? 'border-red-400 focus:ring-red-200 focus:border-red-500'
         : 'border-slate-300 focus:ring-primary-200 focus:border-primary-500'
     } ${rtl ? 'text-right' : 'text-left'}`;
+  const disabledInputClass = `w-full px-4 py-2.5 border border-slate-300 rounded-lg bg-slate-100 text-slate-500 cursor-not-allowed ${rtl ? 'text-right' : 'text-left'}`;
 
   return (
     <div className="space-y-6">
@@ -84,12 +88,14 @@ export const StepSportsContact: React.FC<StepSportsContactProps> = ({ locale, da
         {t('contactHeading')}
       </h3>
 
+      <ProfileFieldNotice locale={locale} />
+
       <div>
         <label className={`block text-sm font-medium text-slate-700 mb-1.5 ${rtl ? 'text-right' : 'text-left'}`}>
           {t('phone')} <span className="text-red-500">*</span>
         </label>
         <div className="relative">
-          <input type="tel" placeholder={t('phonePlaceholder')} className={inputClass(!!errors.phone)} dir="ltr" {...register('phone')} />
+          <input type="tel" placeholder={t('phonePlaceholder')} className={profileContact.phone ? disabledInputClass : inputClass(!!errors.phone)} dir="ltr" disabled={!!profileContact.phone} readOnly={!!profileContact.phone} {...register('phone')} />
           <Phone className={`w-4 h-4 text-slate-400 absolute top-1/2 -translate-y-1/2 pointer-events-none ${rtl ? 'left-3' : 'right-3'}`} />
         </div>
         {errors.phone && <p className={`mt-1 text-sm text-red-500 ${rtl ? 'text-right' : 'text-left'}`}>{tForm('required')}</p>}
@@ -106,7 +112,7 @@ export const StepSportsContact: React.FC<StepSportsContactProps> = ({ locale, da
       <div>
         <label className={`block text-sm font-medium text-slate-700 mb-1.5 ${rtl ? 'text-right' : 'text-left'}`}>{t('email')}</label>
         <div className="relative">
-          <input type="email" placeholder={t('emailPlaceholder')} className={inputClass(!!errors.email)} dir="ltr" {...register('email')} />
+          <input type="email" placeholder={t('emailPlaceholder')} className={profileContact.email ? disabledInputClass : inputClass(!!errors.email)} dir="ltr" disabled={!!profileContact.email} readOnly={!!profileContact.email} {...register('email')} />
           <Mail className={`w-4 h-4 text-slate-400 absolute top-1/2 -translate-y-1/2 pointer-events-none ${rtl ? 'left-3' : 'right-3'}`} />
         </div>
         {errors.email && <p className={`mt-1 text-sm text-red-500 ${rtl ? 'text-right' : 'text-left'}`}>{tForm('invalid')}</p>}

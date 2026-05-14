@@ -5,6 +5,8 @@ import { useTranslations } from 'next-intl';
 import { Locale, isRTL } from '@/lib/i18n/config';
 import { useCities, getManagedCityName } from '@/lib/hooks/useCities';
 import { LegalReadNotice } from '@/components/common/LegalReadNotice';
+import { ProfileFieldNotice } from '@/components/post-ad/ProfileFieldNotice';
+import type { UserProfileContact } from '@/lib/hooks/useUserProfile';
 import { InputField } from './SpareFieldControls';
 
 export interface SpareContactData {
@@ -21,6 +23,7 @@ interface StepSpareContactProps {
   locale: Locale;
   data: SpareContactData;
   onChange: (updates: Partial<SpareContactData>) => void;
+  profileContact: UserProfileContact;
 }
 
 const LocationMap: React.FC<{
@@ -102,7 +105,7 @@ const LocationMap: React.FC<{
   );
 };
 
-export const StepSpareContact: React.FC<StepSpareContactProps> = ({ locale, data, onChange }) => {
+export const StepSpareContact: React.FC<StepSpareContactProps> = ({ locale, data, onChange, profileContact }) => {
   const t = useTranslations('postAd.spareParts');
   const rtl = isRTL(locale);
   const { cities } = useCities();
@@ -114,6 +117,8 @@ export const StepSpareContact: React.FC<StepSpareContactProps> = ({ locale, data
         <h3 className="text-lg font-bold text-slate-900">{t('stepContact')}</h3>
         <p className="mt-1 text-sm text-slate-600">{t('contactDescription')}</p>
       </div>
+
+      <ProfileFieldNotice locale={locale} />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
@@ -144,6 +149,7 @@ export const StepSpareContact: React.FC<StepSpareContactProps> = ({ locale, data
           value={data.phone}
           onChange={(value) => onChange({ phone: value })}
           placeholder={t('phonePlaceholder')}
+          disabled={!!profileContact.phone}
         />
 
         <InputField
@@ -160,6 +166,7 @@ export const StepSpareContact: React.FC<StepSpareContactProps> = ({ locale, data
           value={data.email}
           onChange={(value) => onChange({ email: value })}
           placeholder={t('emailPlaceholder')}
+          disabled={!!profileContact.email}
         />
       </div>
 

@@ -8,6 +8,7 @@ import { useSearchParams } from 'next/navigation';
 import { ChevronLeft, ChevronRight, Check, LogIn, Save, Eye } from 'lucide-react';
 import { isRTL, Locale } from '@/lib/i18n/config';
 import { useAuth } from '@/lib/context/AuthContext';
+import { useUserProfile } from '@/lib/hooks/useUserProfile';
 import { createClient } from '@/lib/supabase/client';
 import { StepCategory } from './StepCategory';
 import { StepDetails, StepDetailsHandle } from './StepDetails';
@@ -29,18 +30,21 @@ import { StepVehicleCondition, VehicleConditionData } from './vehicles/StepVehic
 import { StepVehicleAddress, VehicleAddressData } from './vehicles/StepVehicleAddress';
 import { StepVehicleMedia, VehicleMediaData } from './vehicles/StepVehicleMedia';
 import { StepVehicleContact, VehicleContactData } from './vehicles/StepVehicleContact';
+// Electronics steps
 import { StepElectronicsBasicInfo } from './electronics/StepElectronicsBasicInfo';
 import { StepElectronicsSpecs } from './electronics/StepElectronicsSpecs';
 import { StepElectronicsMedia, ElectronicsMediaData } from './electronics/StepElectronicsMedia';
 import { StepElectronicsLocation } from './electronics/StepElectronicsLocation';
 import { StepElectronicsContact } from './electronics/StepElectronicsContact';
 import { StepElectronicsReview } from './electronics/StepElectronicsReview';
+// Fashion steps
 import { StepFashionBasicInfo } from './fashion/StepFashionBasicInfo';
 import { StepFashionGeneralDetails } from './fashion/StepFashionGeneralDetails';
 import { StepFashionSpecs } from './fashion/StepFashionSpecs';
 import { StepFashionMedia, FashionMediaData } from './fashion/StepFashionMedia';
 import { StepFashionContact } from './fashion/StepFashionContact';
 import { StepFashionReview } from './fashion/StepFashionReview';
+// Spare Parts steps
 import { StepSpareBasicInfo } from './spare-parts/StepSpareBasicInfo';
 import { StepSpareGeneralDetails } from './spare-parts/StepSpareGeneralDetails';
 import { StepSpareCompatibility } from './spare-parts/StepSpareCompatibility';
@@ -48,18 +52,21 @@ import { StepSpareSpecifications } from './spare-parts/StepSpareSpecifications';
 import { StepSpareMedia, SpareMediaData } from './spare-parts/StepSpareMedia';
 import { StepSpareContact } from './spare-parts/StepSpareContact';
 import { StepSpareReview } from './spare-parts/StepSpareReview';
+// Health & Beauty steps
 import { StepHealthBasicInfo } from './health-beauty/StepHealthBasicInfo';
 import { StepHealthGeneralDetails } from './health-beauty/StepHealthGeneralDetails';
 import { StepHealthSpecs } from './health-beauty/StepHealthSpecs';
 import { StepHealthMedia, HealthMediaData } from './health-beauty/StepHealthMedia';
 import { StepHealthContact } from './health-beauty/StepHealthContact';
 import { StepHealthReview } from './health-beauty/StepHealthReview';
+// Home & Furniture steps
 import { StepHomeFurnitureBasicInfo } from './home-furniture/StepHomeFurnitureBasicInfo';
 import { StepHomeFurnitureGeneralDetails } from './home-furniture/StepHomeFurnitureGeneralDetails';
 import { StepHomeFurnitureSpecs } from './home-furniture/StepHomeFurnitureSpecs';
 import { StepHomeFurnitureMedia, HomeFurnitureMediaData } from './home-furniture/StepHomeFurnitureMedia';
 import { StepHomeFurnitureContact } from './home-furniture/StepHomeFurnitureContact';
 import { StepHomeFurnitureReview } from './home-furniture/StepHomeFurnitureReview';
+// Services steps
 import { StepServicesBasicInfo } from './services/StepServicesBasicInfo';
 import { StepServicesLocation } from './services/StepServicesLocation';
 import { StepServicesPricing } from './services/StepServicesPricing';
@@ -67,6 +74,7 @@ import { StepServicesDetails } from './services/StepServicesDetails';
 import { StepServicesMedia, ServicesMediaData } from './services/StepServicesMedia';
 import { StepServicesContact } from './services/StepServicesContact';
 import { StepServicesReview } from './services/StepServicesReview';
+// Jobs steps
 import { StepJobBasicInfo } from './jobs/StepJobBasicInfo';
 import { StepJobDescription } from './jobs/StepJobDescription';
 import { StepJobCompensation } from './jobs/StepJobCompensation';
@@ -250,7 +258,7 @@ export interface SparePartsFormData {
   title: string;
   description: string;
   price: number | '';
-  currency: 'AFN' | 'USD' | 'PKR' | '';
+  currency: 'USD' | 'AFN' | '';
   condition: 'New' | 'Used' | 'Refurbished' | '';
   brand: string;
   city: string;
@@ -282,7 +290,7 @@ export interface HealthBeautyFormData {
   title: string;
   description: string;
   price: number | '';
-  currency: 'AFN' | 'USD' | 'PKR' | '';
+  currency: 'USD' | 'AFN' | '';
   condition: 'New' | 'Used' | 'Unopened' | '';
   brand: string;
   seller_type: 'Individual' | 'Dealer' | '';
@@ -398,7 +406,7 @@ export interface SportsHobbyFormData {
   title: string;
   details: string;
   price: number | '';
-  currency: 'AFN' | 'USD' | 'PKR' | '';
+  currency: 'USD' | 'AFN' | '';
   condition: 'New' | 'Used' | 'Refurbished' | '';
   brand: string;
   brandOther: string;
@@ -424,6 +432,7 @@ export interface AnimalsFormData {
   ageUnit: string;
   healthStatus: string;
   price: number | '';
+  currency: 'USD' | 'AFN' | '';
   priceType: string;
   street: string;
   city: string;
@@ -878,6 +887,7 @@ const INITIAL_ANIMALS_DATA: AnimalsFormData = {
   ageUnit: 'months',
   healthStatus: '',
   price: '',
+  currency: '',
   priceType: 'Fixed',
   street: '',
   city: '',
@@ -1418,6 +1428,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
   const tAuth = useTranslations('auth');
   const rtl = isRTL(locale);
   const { user, loading: authLoading } = useAuth();
+  const profileContact = useUserProfile(user);
   const searchParams = useSearchParams();
 
   const [currentStep, setCurrentStep] = useState(0);
@@ -1641,6 +1652,31 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
     
     setCmData((prev) => ({ ...prev, ...processedUpdates }));
   }, []);
+
+  // Sync profile contact data into all wizard form states so contact fields
+  // are always pre-populated and stay in sync with the user's profile.
+  useEffect(() => {
+    if (!user || profileContact.loading) return;
+    const { displayName, phone, email } = profileContact;
+    setFormData(prev => ({ ...prev, phone, email }));
+    setReData(prev => ({ ...prev, contact: { ...prev.contact, contactName: displayName, phone, email } }));
+    setVhData(prev => ({ ...prev, contact: { ...prev.contact, phone, email } }));
+    setElData(prev => ({ ...prev, phone, email }));
+    setFaData(prev => ({ ...prev, phone, email }));
+    setSpData(prev => ({ ...prev, phone, email }));
+    setHbData(prev => ({ ...prev, sellerName: displayName, phone, email }));
+    setHfData(prev => ({ ...prev, phone, email }));
+    setSrvData(prev => ({ ...prev, contact_name: displayName, phone, email }));
+    setJobsData(prev => ({ ...prev, contactPhone: phone, contactEmail: email }));
+    setShData(prev => ({ ...prev, phone, email }));
+    setAnData(prev => ({ ...prev, sellerName: displayName, phone, email }));
+    setFagData(prev => ({ ...prev, sellerName: displayName, phone, email }));
+    setBeData(prev => ({ ...prev, sellerName: displayName, phone, email }));
+    setBkData(prev => ({ ...prev, sellerName: displayName, phone, email }));
+    setBiData(prev => ({ ...prev, sellerName: displayName, phone, email }));
+    setSgData(prev => ({ ...prev, sellerName: displayName, phone, email }));
+    setCmData(prev => ({ ...prev, sellerName: displayName, phone, email }));
+  }, [user, profileContact.displayName, profileContact.phone, profileContact.email, profileContact.loading]);
 
   const handleCategorySelect = useCallback(
     (categoryId: number, categorySlug?: string, categoryName?: string) => {
@@ -2520,7 +2556,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
           return typeof value === 'string' && value.trim().length > 0;
         });
         
-        return allValid;
+        return allValid && anData.currency !== '';
       }
       case 'anStepLocationContact':
         return (
@@ -3186,6 +3222,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
           ageUnit: anData.ageUnit,
           healthStatus: anData.healthStatus,
           priceType: anData.priceType,
+          currency: anData.currency,
           ...anData.specs,
           location: {
             street: anData.street,
@@ -3206,6 +3243,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         title = anData.title || title;
         description = anData.description || description;
         price = Number(anData.price) || price;
+        currency = anData.currency || currency;
         city = anData.city || city;
         _phone = anData.phone || _phone;
         condition = (condition || 'good') as string;
@@ -3774,6 +3812,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         return (
           <StepContact
             locale={locale}
+            profileContact={profileContact}
             data={{
               city: formData.city,
               phone: formData.phone,
@@ -3885,6 +3924,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         return (
           <StepRealEstateContactReview
             locale={locale}
+            profileContact={profileContact}
             contact={reData.contact}
             location={reData.address}
             pricing={{
@@ -3987,6 +4027,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         return (
           <StepVehicleContact
             locale={locale}
+            profileContact={profileContact}
             data={vhData.contact}
             onChange={(data) =>
               setVhData((prev) => ({
@@ -4060,6 +4101,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         return (
           <StepElectronicsContact
             locale={locale}
+            profileContact={profileContact}
             data={{
               phone: elData.phone,
               whatsapp: elData.whatsapp,
@@ -4175,6 +4217,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         return (
           <StepFashionContact
             locale={locale}
+            profileContact={profileContact}
             data={{
               city: faData.city,
               lat: faData.lat,
@@ -4285,6 +4328,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         return (
           <StepSpareContact
             locale={locale}
+            profileContact={profileContact}
             data={{
               city: spData.city,
               lat: spData.lat,
@@ -4397,6 +4441,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         return (
           <StepHealthContact
             locale={locale}
+            profileContact={profileContact}
             data={{
               city: hbData.city,
               street: hbData.street,
@@ -4501,6 +4546,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         return (
           <StepHomeFurnitureContact
             locale={locale}
+            profileContact={profileContact}
             data={{
               city: hfData.city,
               lat: hfData.lat,
@@ -4612,6 +4658,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         return (
           <StepServicesContact
             locale={locale}
+            profileContact={profileContact}
             data={{
               contact_name: srvData.contact_name,
               city: srvData.city,
@@ -4734,6 +4781,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         return (
           <StepJobContact
             locale={locale}
+            profileContact={profileContact}
             data={{
               contactPhone: jobsData.contactPhone,
               contactEmail: jobsData.contactEmail,
@@ -4849,6 +4897,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         return (
           <StepSportsContact
             locale={locale}
+            profileContact={profileContact}
             data={{
               phone: shData.phone,
               whatsapp: shData.whatsapp,
@@ -4907,6 +4956,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
               ageUnit: anData.ageUnit,
               healthStatus: anData.healthStatus,
               price: anData.price === '' ? '' : String(anData.price),
+              currency: anData.currency,
               priceType: anData.priceType,
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               specs: anData.specs as any,
@@ -4918,6 +4968,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         return (
           <StepAnimalsLocationContact
             locale={locale}
+            profileContact={profileContact}
             data={{
               street: anData.street,
               city: anData.city,
@@ -4955,6 +5006,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
             ageUnit={anData.ageUnit}
             healthStatus={anData.healthStatus}
             price={anData.price}
+            currency={anData.currency}
             priceType={anData.priceType}
             street={anData.street}
             city={anData.city}
@@ -5025,6 +5077,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         return (
           <StepFoodAgricultureLocationContact
             locale={locale}
+            profileContact={profileContact}
             data={{
               street: fagData.street,
               city: fagData.city,
@@ -5130,6 +5183,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         return (
           <StepBooksEducationLocationContact
             locale={locale}
+            profileContact={profileContact}
             data={{
               street: beData.street,
               city: beData.city,
@@ -5220,6 +5274,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         return (
           <StepBabyKidsLocationContact
             locale={locale}
+            profileContact={profileContact}
             data={{
               street: bkData.street,
               city: bkData.city,
@@ -5302,6 +5357,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         return (
           <StepBusinessIndustryLocationContact
             locale={locale}
+            profileContact={profileContact}
             data={{
               street: biData.street,
               city: biData.city,
@@ -5408,6 +5464,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         return (
           <StepShoppingGroceriesLocationContact
             locale={locale}
+            profileContact={profileContact}
             data={{
               street: sgData.street,
               city: sgData.city,
@@ -5514,6 +5571,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
         return (
           <StepConstructionMaterialsLocationContact
             locale={locale}
+            profileContact={profileContact}
             data={{
               street: cmData.street,
               city: cmData.city,
@@ -5918,7 +5976,7 @@ export const PostAdWizard: React.FC<PostAdWizardProps> = ({ locale }) => {
                   <div><span className="font-semibold text-slate-700">{tAN('title')}:</span> {anData.title || '-'}</div>
                   <div><span className="font-semibold text-slate-700">{tAN('breed')}:</span> {anData.breed || '-'}</div>
                   <div><span className="font-semibold text-slate-700">{tAN('quantity')}:</span> {anData.quantity === '' ? '-' : anData.quantity}</div>
-                  <div><span className="font-semibold text-slate-700">{tAN('price')}:</span> {anData.price === '' ? '-' : `${anData.price} ${anData.priceType === 'negotiable' ? tAN('priceNegotiable') : tAN('priceFixed')}`}</div>
+                  <div><span className="font-semibold text-slate-700">{tAN('price')}:</span> {anData.price === '' ? '-' : `${anData.currency ? anData.currency + ' ' : ''}${anData.price} ${anData.priceType === 'negotiable' ? tAN('priceNegotiable') : tAN('priceFixed')}`}</div>
                   <div><span className="font-semibold text-slate-700">{tAN('city')}:</span> {anData.city || '-'}</div>
                   <div><span className="font-semibold text-slate-700">{tAN('phone')}:</span> {anData.phone || '-'}</div>
                   <div><span className="font-semibold text-slate-700">{tAN('photos')}:</span> {anData.media.photos.length}</div>

@@ -15,6 +15,7 @@ interface InputFieldProps extends BaseFieldProps {
   onChange: (value: string) => void;
   type?: 'text' | 'number';
   placeholder?: string;
+  disabled?: boolean;
 }
 
 interface TextAreaFieldProps extends BaseFieldProps {
@@ -56,7 +57,7 @@ const labelClass = (rtl: boolean) => `block text-sm font-semibold text-slate-700
 const inputClass = (rtl: boolean) =>
   `w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm shadow-sm transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 ${rtl ? 'text-right' : 'text-left'}`;
 
-export const InputField: React.FC<InputFieldProps> = ({ label, required, rtl, value, onChange, type = 'text', placeholder }) => (
+export const InputField: React.FC<InputFieldProps> = ({ label, required, rtl, value, onChange, type = 'text', placeholder, disabled }) => (
   <div>
     <label className={labelClass(rtl)}>
       {label} {required && <span className="text-red-500">*</span>}
@@ -66,7 +67,8 @@ export const InputField: React.FC<InputFieldProps> = ({ label, required, rtl, va
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className={inputClass(rtl)}
+      disabled={disabled}
+      className={`${inputClass(rtl)} ${disabled ? 'cursor-not-allowed bg-slate-100 text-slate-500' : ''}`}
       dir={type === 'number' ? 'ltr' : rtl ? 'rtl' : 'ltr'}
     />
   </div>

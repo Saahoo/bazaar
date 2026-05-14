@@ -121,7 +121,7 @@ export const MATERIALS = [
 ];
 
 // Currency options
-export const CURRENCY_OPTIONS = ['AFN', 'USD', 'PKR'];
+export const CURRENCY_OPTIONS = ['USD', 'AFN'];
 
 // Seller type options
 export const SELLER_TYPE_OPTIONS = ['Individual', 'Dealer'];

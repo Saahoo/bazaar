@@ -27,6 +27,7 @@ export function PageTransition({ children }: { children: React.ReactNode }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
       className="flex min-h-screen flex-col"
+      suppressHydrationWarning
     >
       {children}
     </motion.div>

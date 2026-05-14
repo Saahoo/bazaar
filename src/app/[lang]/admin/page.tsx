@@ -1,5 +1,4 @@
 import { notFound } from 'next/navigation';
-import { Header } from '@/components/layout/Header';
 import { Locale, LOCALES } from '@/lib/i18n/config';
 import { createClient } from '@/lib/supabase/server';
 import { AdminPanel } from '@/components/admin/AdminPanel';
@@ -36,12 +35,6 @@ export default async function AdminPage({ params }: PageProps) {
     notFound();
   }
 
-  return (
-    <>
-      <Header locale={locale} />
-      <main className="flex-1 bg-gradient-to-b from-slate-50 via-white/30 to-slate-50 py-6">
-        <AdminPanel locale={locale} />
-      </main>
-    </>
-  );
+  // AdminPanel has its own sidebar layout, so no Header wrapper needed
+  return <AdminPanel locale={locale} />;
 }

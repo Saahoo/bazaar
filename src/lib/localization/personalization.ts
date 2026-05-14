@@ -80,7 +80,7 @@ export const PERSONALIZATION_RULES: Record<Locale, PersonalizationRule> = {
     locale: 'fa',
     region: 'IR',
     priorityFields: ['year', 'make', 'model', 'mileage', 'price', 'technical_inspection'],
-    defaultCurrency: 'IRR',
+    defaultCurrency: 'AFN',
     measurementSystem: 'metric',
     contactPreference: 'chat',
     priceDisplay: 'negotiable',

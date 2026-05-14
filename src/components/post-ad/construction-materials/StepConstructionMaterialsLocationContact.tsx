@@ -5,6 +5,8 @@ import { useTranslations } from 'next-intl';
 import { MapPin, Phone, Mail, User } from 'lucide-react';
 import { isRTL, Locale } from '@/lib/i18n/config';
 import { useCities, getManagedCityName } from '@/lib/hooks/useCities';
+import { ProfileFieldNotice } from '@/components/post-ad/ProfileFieldNotice';
+import { UserProfileContact } from '@/lib/hooks/useUserProfile';
 
 export interface ConstructionMaterialsLocationContactData {
   street: string;
@@ -23,6 +25,7 @@ interface StepConstructionMaterialsLocationContactProps {
   locale: Locale;
   data: ConstructionMaterialsLocationContactData;
   onChange: (updates: Partial<ConstructionMaterialsLocationContactData>) => void;
+  profileContact: UserProfileContact;
 }
 
 // Lazy-loaded Leaflet map component
@@ -125,10 +128,12 @@ export const StepConstructionMaterialsLocationContact: React.FC<StepConstruction
   locale,
   data,
   onChange,
+  profileContact,
 }) => {
   const t = useTranslations('postAd.constructionMaterials');
   const rtl = isRTL(locale);
   const { cities } = useCities();
+  const disabledInputClass = 'bg-slate-100 text-slate-500 cursor-not-allowed';
 
   return (
     <div className="space-y-6">
@@ -207,6 +212,7 @@ export const StepConstructionMaterialsLocationContact: React.FC<StepConstruction
         <h3 className={`text-sm font-semibold text-slate-800 ${rtl ? 'text-right' : 'text-left'}`}>
           {t('contact')}
         </h3>
+        <ProfileFieldNotice locale={locale} />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Seller Name */}
@@ -221,7 +227,9 @@ export const StepConstructionMaterialsLocationContact: React.FC<StepConstruction
                 value={data.sellerName}
                 onChange={(e) => onChange({ sellerName: e.target.value })}
                 placeholder={t('fields.sellerNamePlaceholder')}
-                className={`w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 ${rtl ? 'text-right' : 'text-left'}`}
+                className={`w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 ${rtl ? 'text-right' : 'text-left'} ${profileContact.displayName ? disabledInputClass : ''}`}
+                disabled={!!profileContact.displayName}
+                readOnly={!!profileContact.displayName}
               />
               <User className={`absolute top-2.5 ${rtl ? 'left-3' : 'right-3'} h-4 w-4 text-slate-400 pointer-events-none`} />
             </div>
@@ -239,7 +247,9 @@ export const StepConstructionMaterialsLocationContact: React.FC<StepConstruction
                 value={data.phone}
                 onChange={(e) => onChange({ phone: e.target.value })}
                 placeholder={t('fields.phonePlaceholder')}
-                className={`w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 ${rtl ? 'text-right' : 'text-left'}`}
+                className={`w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 ${rtl ? 'text-right' : 'text-left'} ${profileContact.phone ? disabledInputClass : ''}`}
+                disabled={!!profileContact.phone}
+                readOnly={!!profileContact.phone}
               />
               <Phone className={`absolute top-2.5 ${rtl ? 'left-3' : 'right-3'} h-4 w-4 text-slate-400 pointer-events-none`} />
             </div>
@@ -266,7 +276,9 @@ export const StepConstructionMaterialsLocationContact: React.FC<StepConstruction
                 value={data.email}
                 onChange={(e) => onChange({ email: e.target.value })}
                 placeholder={t('fields.emailPlaceholder')}
-                className={`w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 ${rtl ? 'text-right' : 'text-left'}`}
+                className={`w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 ${rtl ? 'text-right' : 'text-left'} ${profileContact.email ? disabledInputClass : ''}`}
+                disabled={!!profileContact.email}
+                readOnly={!!profileContact.email}
               />
               <Mail className={`absolute top-2.5 ${rtl ? 'left-3' : 'right-3'} h-4 w-4 text-slate-400 pointer-events-none`} />
             </div>

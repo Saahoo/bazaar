@@ -5,6 +5,8 @@ import { useTranslations } from 'next-intl';
 import { Locale, isRTL } from '@/lib/i18n/config';
 import { useCities, getManagedCityName } from '@/lib/hooks/useCities';
 import { MapPin, User, Phone, Mail } from 'lucide-react';
+import { ProfileFieldNotice } from '@/components/post-ad/ProfileFieldNotice';
+import { UserProfileContact } from '@/lib/hooks/useUserProfile';
 
 export interface BabyKidsLocationContactData {
   street: string;
@@ -23,6 +25,7 @@ interface StepBabyKidsLocationContactProps {
   locale: Locale;
   data: BabyKidsLocationContactData;
   onChange: (updates: Partial<BabyKidsLocationContactData>) => void;
+  profileContact: UserProfileContact;
 }
 
 // ─── Location Map (dynamic Leaflet import) ────────────────────────────────────
@@ -127,10 +130,12 @@ export const StepBabyKidsLocationContact: React.FC<StepBabyKidsLocationContactPr
   locale,
   data,
   onChange,
+  profileContact,
 }) => {
   const t = useTranslations('postAd.babyKids');
   const rtl = isRTL(locale);
   const { cities } = useCities();
+  const disabledInputClass = 'bg-slate-100 text-slate-500 cursor-not-allowed';
 
   useEffect(() => {
     if (data.city) {
@@ -211,6 +216,7 @@ export const StepBabyKidsLocationContact: React.FC<StepBabyKidsLocationContactPr
         <h3 className={`text-sm font-semibold text-slate-800 ${rtl ? 'text-right' : ''}`}>
           {t('contactInformation')}
         </h3>
+        <ProfileFieldNotice locale={locale} />
 
         <div className="relative">
           <User className={`absolute top-3 ${rtl ? 'right-3' : 'left-3'} h-4 w-4 text-slate-400`} />
@@ -219,7 +225,9 @@ export const StepBabyKidsLocationContact: React.FC<StepBabyKidsLocationContactPr
             value={data.sellerName}
             onChange={(e) => onChange({ sellerName: e.target.value })}
             placeholder={t('enterSellerName')}
-            className={`w-full rounded-lg border border-slate-300 bg-white ${rtl ? 'pr-10 pl-3' : 'pl-10 pr-3'} py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 ${rtl ? 'text-right' : ''}`}
+            className={`w-full rounded-lg border border-slate-300 bg-white ${rtl ? 'pr-10 pl-3' : 'pl-10 pr-3'} py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 ${rtl ? 'text-right' : ''} ${profileContact.displayName ? disabledInputClass : ''}`}
+            disabled={!!profileContact.displayName}
+            readOnly={!!profileContact.displayName}
           />
         </div>
 
@@ -230,7 +238,9 @@ export const StepBabyKidsLocationContact: React.FC<StepBabyKidsLocationContactPr
             value={data.phone}
             onChange={(e) => onChange({ phone: e.target.value })}
             placeholder={t('enterPhone')}
-            className={`w-full rounded-lg border border-slate-300 bg-white ${rtl ? 'pr-10 pl-3' : 'pl-10 pr-3'} py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 ${rtl ? 'text-right' : ''}`}
+            className={`w-full rounded-lg border border-slate-300 bg-white ${rtl ? 'pr-10 pl-3' : 'pl-10 pr-3'} py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 ${rtl ? 'text-right' : ''} ${profileContact.phone ? disabledInputClass : ''}`}
+            disabled={!!profileContact.phone}
+            readOnly={!!profileContact.phone}
           />
         </div>
 
@@ -254,7 +264,9 @@ export const StepBabyKidsLocationContact: React.FC<StepBabyKidsLocationContactPr
             value={data.email}
             onChange={(e) => onChange({ email: e.target.value })}
             placeholder={t('enterEmail')}
-            className={`w-full rounded-lg border border-slate-300 bg-white ${rtl ? 'pr-10 pl-3' : 'pl-10 pr-3'} py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 ${rtl ? 'text-right' : ''}`}
+            className={`w-full rounded-lg border border-slate-300 bg-white ${rtl ? 'pr-10 pl-3' : 'pl-10 pr-3'} py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 ${rtl ? 'text-right' : ''} ${profileContact.email ? disabledInputClass : ''}`}
+            disabled={!!profileContact.email}
+            readOnly={!!profileContact.email}
           />
         </div>
 

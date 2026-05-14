@@ -75,6 +75,16 @@ const nextConfig = {
   },
   // Enable compression
   compress: true,
+  allowedDevOrigins: [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://192.168.1.12:3000',
+    'http://192.168.1.12',
+    '192.168.1.12:3000',
+    '192.168.1.12',
+    'localhost',
+    '127.0.0.1',
+  ],
   webpack: (config: any, { webpack }: { webpack: any }) => {
     // Fix Windows case-sensitivity issues for locale JSON files
     // This prevents "multiple modules with names that only differ in casing" warnings

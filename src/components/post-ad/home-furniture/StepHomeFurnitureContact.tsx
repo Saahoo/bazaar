@@ -5,6 +5,8 @@ import { useTranslations } from 'next-intl';
 import { Locale, isRTL } from '@/lib/i18n/config';
 import { useCities, getManagedCityName } from '@/lib/hooks/useCities';
 import { LegalReadNotice } from '@/components/common/LegalReadNotice';
+import { ProfileFieldNotice } from '@/components/post-ad/ProfileFieldNotice';
+import type { UserProfileContact } from '@/lib/hooks/useUserProfile';
 import { InputField } from './HomeFurnitureFieldControls';
 
 export interface HomeFurnitureContactData {
@@ -21,6 +23,7 @@ interface StepHomeFurnitureContactProps {
   locale: Locale;
   data: HomeFurnitureContactData;
   onChange: (updates: Partial<HomeFurnitureContactData>) => void;
+  profileContact: UserProfileContact;
 }
 
 const LocationMap: React.FC<{
@@ -106,6 +109,7 @@ export const StepHomeFurnitureContact: React.FC<StepHomeFurnitureContactProps> =
   locale,
   data,
   onChange,
+  profileContact,
 }) => {
   const t = useTranslations('postAd.homeFurniture');
   const rtl = isRTL(locale);
@@ -127,6 +131,8 @@ export const StepHomeFurnitureContact: React.FC<StepHomeFurnitureContactProps> =
         <h3 className="text-lg font-bold text-slate-900">{t('stepContact')}</h3>
         <p className="mt-1 text-sm text-slate-600">{t('contactDescription')}</p>
       </div>
+
+      <ProfileFieldNotice locale={locale} />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
@@ -159,6 +165,7 @@ export const StepHomeFurnitureContact: React.FC<StepHomeFurnitureContactProps> =
           value={data.phone}
           onChange={(value) => onChange({ phone: value })}
           placeholder={t('phonePlaceholder')}
+          disabled={!!profileContact.phone}
         />
 
         <InputField
@@ -175,6 +182,7 @@ export const StepHomeFurnitureContact: React.FC<StepHomeFurnitureContactProps> =
           value={data.email}
           onChange={(value) => onChange({ email: value })}
           placeholder={t('emailPlaceholder')}
+          disabled={!!profileContact.email}
         />
       </div>
 

@@ -51,6 +51,7 @@ export interface AnimalsLivestockFilterState {
   ageUnit: string;
   healthStatus: string;
   price: string;
+  currency: string;
   priceType: string;
   color: string;
   weight: string;
@@ -87,6 +88,7 @@ export const EMPTY_ANIMALS_LIVESTOCK_FILTERS: AnimalsLivestockFilterState = {
   ageUnit: '',
   healthStatus: '',
   price: '',
+  currency: '',
   priceType: '',
   color: '',
   weight: '',
@@ -1918,8 +1920,78 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
     );
   };
 
-  // dedupedDbCategories fallback
-  const dedupedDbCategories = typeof dbCategories !== 'undefined' ? dbCategories : [];
+  // dedupedDbCategories with fashion deduplication
+  const dedupedDbCategories = React.useMemo(() => {
+    if (dbCategories.length === 0) return dbCategories;
+
+    const normalize = (value: string | null | undefined): string =>
+      (value || '')
+        .toLowerCase()
+        .replace(/[&]/g, 'and')
+        .replace(/[\s\-_/\\]+/g, '')
+        .trim();
+
+    const FASHION_NAME_ALIASES = new Set([
+      'fashion',
+      'fashionclothing',
+      'fashionandclothing',
+      'فیشناوجامې',
+      'مدولباس',
+      'فېشناوکالي',
+    ]);
+
+    const keyFor = (category: DbCategory): string => {
+      const slug = normalize(category.slug);
+      const enName = normalize(category.name_en);
+      const psName = normalize(category.name_ps);
+      const faName = normalize(category.name_fa);
+
+      if (
+        slug === 'fashion' ||
+        slug === 'fashionclothing' ||
+        slug === 'fashionandclothing' ||
+        FASHION_NAME_ALIASES.has(enName) ||
+        FASHION_NAME_ALIASES.has(psName) ||
+        FASHION_NAME_ALIASES.has(faName)
+      ) {
+        return 'fashion-family';
+      }
+
+      if (slug) return `slug-${slug}`;
+      if (enName) return `name-en-${enName}`;
+      if (psName) return `name-ps-${psName}`;
+      if (faName) return `name-fa-${faName}`;
+      return `id-${category.id}`;
+    };
+
+    const bestByKey = new Map<string, DbCategory>();
+
+    for (const category of dbCategories) {
+      const key = keyFor(category);
+      const prev = bestByKey.get(key);
+      if (!prev) {
+        bestByKey.set(key, category);
+        continue;
+      }
+
+      // Choose the best category based on sort_order then id
+      const prevSort = prev.sort_order ?? Number.MAX_SAFE_INTEGER;
+      const nextSort = category.sort_order ?? Number.MAX_SAFE_INTEGER;
+
+      if (nextSort < prevSort) {
+        bestByKey.set(key, category);
+      } else if (nextSort === prevSort && category.id < prev.id) {
+        bestByKey.set(key, category);
+      }
+    }
+
+    return Array.from(bestByKey.values()).sort((a, b) => {
+      const aSort = a.sort_order ?? Number.MAX_SAFE_INTEGER;
+      const bSort = b.sort_order ?? Number.MAX_SAFE_INTEGER;
+      if (aSort !== bSort) return aSort - bSort;
+      return a.id - b.id;
+    });
+  }, [dbCategories]);
 
   // Correct selected category ID if it's wrong
   const correctedSelectedCategory = React.useMemo(() => {
@@ -2147,7 +2219,7 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
       <Section label={t('filter')} isRtl={isRtl}>
         <Sel id="category-filter" value={selectedCategory?.toString() ?? ''} onChange={(v) => onCategoryChange(v === '' ? null : Number(v))} isRtl={isRtl}>
           <option value="">{tCommon('all')}</option>
-          {dbCategories.map((cat) => (
+          {dedupedDbCategories.map((cat) => (
             <option key={cat.id} value={cat.id}>{getLocalizedDbCategoryName(cat)}</option>
           ))}
         </Sel>
@@ -2273,9 +2345,8 @@ export const FilterSidebar: React.FC<FilterSidebarProps> = ({
           <Section label={tRE('currency')} isRtl={isRtl}>
             <Sel value={realEstateFilters.currency} onChange={(v) => setREF({ currency: v })} isRtl={isRtl}>
               <option value="">{tCommon('all')}</option>
-              <option value="AFN">{tRE('afd')}</option>
-              <option value="PKR">{tRE('pkr')}</option>
               <option value="USD">{tRE('usd')}</option>
+              <option value="AFN">{tRE('afd')}</option>
             </Sel>
           </Section>
 

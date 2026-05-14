@@ -153,6 +153,66 @@ export const UnitField: React.FC<UnitFieldProps> = ({
   );
 };
 
+interface CurrencyFieldProps {
+  label: string;
+  required?: boolean;
+  rtl: boolean;
+  value: string;
+  currencyValue: string;
+  onChange: (value: string) => void;
+  onCurrencyChange: (currency: string) => void;
+  currencyOptions: Option[];
+  placeholder?: string;
+  error?: string;
+}
+
+export const CurrencyField: React.FC<CurrencyFieldProps> = ({
+  label,
+  required,
+  rtl,
+  value,
+  currencyValue,
+  onChange,
+  onCurrencyChange,
+  currencyOptions,
+  placeholder,
+  error,
+}) => {
+  return (
+    <div>
+      <label className={`block text-sm font-semibold text-slate-700 mb-1.5 ${rtl ? 'text-right' : 'text-left'}`}>
+        {label} {required && <span className="text-red-500">*</span>}
+      </label>
+      <div className={`flex gap-2 ${rtl ? 'flex-row-reverse' : ''}`}>
+        <input
+          type="number"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className={`flex-1 rounded-xl border ${error ? 'border-red-500' : 'border-slate-300'} bg-white px-4 py-2.5 text-sm shadow-sm transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100 ${rtl ? 'text-right' : 'text-left'}`}
+          placeholder={placeholder}
+          dir={rtl ? 'rtl' : 'ltr'}
+        />
+        <select
+          value={currencyValue}
+          onChange={(e) => onCurrencyChange(e.target.value)}
+          className="w-28 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm shadow-sm transition focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
+          dir={rtl ? 'rtl' : 'ltr'}
+        >
+          {currencyOptions.map((option) => {
+            const normalized = normalizeOption(option);
+            return (
+              <option key={normalized.value} value={normalized.value}>
+                {normalized.label}
+              </option>
+            );
+          })}
+        </select>
+      </div>
+      {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+    </div>
+  );
+};
+
 interface ToggleFieldProps {
   label: string;
   rtl: boolean;
